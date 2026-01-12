@@ -147,7 +147,7 @@ header, footer {
 
 /* WhatsApp Icon Styles - Prevent color bleeding */
 .whatsapp-icon {
-    background-color: #25D366;
+    background-color: transparent;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -158,19 +158,12 @@ header, footer {
 }
 
 .whatsapp-icon::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background-color: #25D366;
-    z-index: 0;
+    display: none;
 }
 
-.whatsapp-icon svg {
+.whatsapp-icon img {
     position: relative;
     z-index: 1;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
-    background: transparent;
 }
 
 /* Print Styles */
