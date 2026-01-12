@@ -9,22 +9,26 @@
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://whiskerwise.in/">
+    <meta property="og:site_name" content="Whisker Wise">
     <meta property="og:title" content="Whisker Wise: The Ultimate Haven for Cat parents">
     <meta property="og:description" content="Scan & decode any pet food for your cat instantly">
-    <meta property="og:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v1">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
+    <meta property="og:image:secure_url" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
+    <meta property="og:image:width" content="736">
+    <meta property="og:image:height" content="680">
     <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="Whisker Wise: The Ultimate Haven for Cat parents">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://whiskerwise.in/">
     <meta name="twitter:title" content="Whisker Wise: The Ultimate Haven for Cat parents">
     <meta name="twitter:description" content="Scan & decode any pet food for your cat instantly">
-    <meta name="twitter:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v1">
+    <meta name="twitter:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
     
     <!-- Additional meta for better sharing -->
     <meta name="description" content="Scan & decode any pet food for your cat instantly">
+    <link rel="canonical" href="https://whiskerwise.in/">
     
     <!-- Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,26 +83,6 @@
             } catch (e) {
                 console.log('Using default Tailwind config values');
             }
-            
-            // #region agent log - WhatsApp image path debugging
-            setTimeout(function() {
-                const whatsappImg = document.getElementById('whatsapp-img');
-                const whatsappLink = document.getElementById('whatsapp-link');
-                if (whatsappImg) {
-                    const img = whatsappImg;
-                    const resolvedSrc = img.currentSrc || img.src;
-                    const baseURI = img.baseURI || document.baseURI || window.location.href;
-                    fetch('http://127.0.0.1:7242/ingest/7921dce7-622b-4768-9d45-3d136911f003',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:DOMContentLoaded',message:'WhatsApp image path check',data:{src:img.src,resolvedSrc:resolvedSrc,baseURI:baseURI,currentUrl:window.location.href,complete:img.complete,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,clientWidth:img.clientWidth,clientHeight:img.clientHeight,offsetWidth:img.offsetWidth,offsetHeight:img.offsetHeight,pathname:window.location.pathname,origin:window.location.origin},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
-                    
-                    // Test if image exists by trying to fetch it
-                    fetch(resolvedSrc, {method: 'HEAD', mode: 'no-cors'}).then(() => {
-                        fetch('http://127.0.0.1:7242/ingest/7921dce7-622b-4768-9d45-3d136911f003',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:fetch-test',message:'WhatsApp image fetch test - success',data:{resolvedSrc:resolvedSrc},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                    }).catch((err) => {
-                        fetch('http://127.0.0.1:7242/ingest/7921dce7-622b-4768-9d45-3d136911f003',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:fetch-test',message:'WhatsApp image fetch test - failed',data:{resolvedSrc:resolvedSrc,error:err.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,D'})}).catch(()=>{});
-                    });
-                }
-            }, 1500);
-            // #endregion
         });
     </script>
 </head>
@@ -193,15 +177,11 @@
                         class="whatsapp-icon w-8 h-8 sm:w-10 sm:h-10 hover:scale-110 transition-transform shadow-lg flex items-center justify-center rounded-full overflow-hidden"
                         style="background-color: transparent;"
                         aria-label="Chat with us on WhatsApp"
-                        id="whatsapp-link"
                     >
                         <img 
-                            src="assets/images/whatsapp.png" 
+                            src="/assets/images/whatsapp.png" 
                             alt="WhatsApp" 
                             class="w-full h-full object-contain"
-                            id="whatsapp-img"
-                            onload="fetch('http://127.0.0.1:7242/ingest/7921dce7-622b-4768-9d45-3d136911f003',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:img-onload',message:'WhatsApp image loaded',data:{src:this.src,resolvedSrc:this.currentSrc||this.src,baseURI:this.baseURI,complete:this.complete,naturalWidth:this.naturalWidth,naturalHeight:this.naturalHeight,clientWidth:this.clientWidth,clientHeight:this.clientHeight,currentUrl:window.location.href,baseUrl:document.baseURI},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});"
-                            onerror="fetch('http://127.0.0.1:7242/ingest/7921dce7-622b-4768-9d45-3d136911f003',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:img-onerror',message:'WhatsApp image failed to load',data:{src:this.src,resolvedSrc:this.currentSrc||this.src,baseURI:this.baseURI,currentUrl:window.location.href,baseUrl:document.baseURI,error:'Image load error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,C,D'})}).catch(()=>{});"
                         >
                     </a>
                 </div>
