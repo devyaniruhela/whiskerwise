@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitButton = form.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
             
-            if (email && isValidEmail(email)) {
+            if (email && (isValidEmail(email) || isValidPhoneNumber(email))) {
                 // Disable button and show loading state
                 submitButton.disabled = true;
                 submitButton.textContent = 'Submitting...';
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitButton.classList.remove('opacity-75', 'cursor-not-allowed');
                 }
             } else {
-                showMessage('Please enter a valid email address.', 'error');
+                showMessage('Please enter a valid email address or 10-digit phone number.', 'error');
             }
         });
     }
@@ -73,6 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
+    }
+    
+    function isValidPhoneNumber(phone) {
+        // Remove all non-digit characters for validation
+        const digitsOnly = phone.replace(/\D/g, '');
+        // Check if it's exactly 10 digits
+        return digitsOnly.length === 10 && /^\d{10}$/.test(digitsOnly);
     }
     
     function showMessage(message, type) {
