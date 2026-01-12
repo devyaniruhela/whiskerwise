@@ -40,6 +40,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
                         
+                        // Trigger confetti animation
+                        if (typeof window.createConfetti === 'function') {
+                            window.createConfetti();
+                        }
+                        
                         // Reset form
                         emailInput.value = '';
                     } else {

@@ -83,14 +83,14 @@
     </script>
 </head>
 <body class="font-sans bg-neutral h-screen overflow-hidden flex flex-col">
-    <!-- Header -->
-    <header class="w-full py-2 md:py-4 px-4 flex justify-center items-center flex-shrink-0">
-        <img src="assets/images/logo.png" alt="Whisker Wise Logo" class="h-16 sm:h-24 md:h-32 lg:h-48 object-contain">
+    <!-- Header - 25% of screen -->
+    <header class="w-full flex justify-center items-center flex-shrink-0" id="header" style="height: 25vh;">
+        <img src="assets/images/logo.png" alt="Whisker Wise Logo" id="logo-image" class="object-contain" style="max-height: 90%; width: auto;">
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex items-center justify-center px-2 sm:px-4 py-2 md:py-4 overflow-hidden min-h-0" id="main-content">
-        <div class="white-box-container w-[75vw] max-w-[90vw]">
+    <!-- Main Content - 60% of screen -->
+    <main class="flex items-center justify-center overflow-hidden flex-shrink-0" id="main-content" style="height: 60vh;">
+        <div class="white-box-container" id="white-box-container">
             <div class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 h-full flex flex-col lg:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-12 overflow-hidden">
                 
                 <!-- Left Section - Text Content -->
@@ -125,6 +125,9 @@
                 <!-- Right Section - Hero Image -->
                 <div class="flex-1 flex justify-center lg:justify-end w-full lg:w-auto items-center flex-shrink-0 hero-image-wrapper">
                     <div class="relative hero-image-container w-full h-full flex items-center justify-center">
+                        <!-- Confetti Container -->
+                        <div id="confetti-container" class="absolute inset-0 pointer-events-none z-20" style="overflow: hidden;"></div>
+                        
                         <!-- Elevated shadow layers -->
                         <div class="absolute inset-0 rounded-full bg-primary/20 blur-xl transform scale-110 -z-10"></div>
                         <div class="absolute inset-0 rounded-full bg-primary/10 blur-2xl transform scale-125 -z-10"></div>
@@ -143,8 +146,8 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="w-full py-3 sm:py-4 md:py-6 px-4 border-t border-secondary/10 flex-shrink-0">
+    <!-- Footer - 15% of screen -->
+    <footer class="w-full px-4 border-t border-secondary/10 flex-shrink-0 flex items-center justify-center" id="footer" style="height: 15vh;">
         <div class="max-w-6xl mx-auto">
             <div class="flex flex-col md:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
                 <p class="text-secondary font-medium text-sm sm:text-base md:text-lg">Let's talk Cats.</p>
@@ -190,26 +193,33 @@
     <!-- Layout Adjustment Script -->
     <script>
         function adjustLayout() {
+            const header = document.getElementById('header');
             const main = document.getElementById('main-content');
-            const whiteBoxContainer = document.querySelector('.white-box-container');
+            const footer = document.getElementById('footer');
+            const logoImage = document.getElementById('logo-image');
+            const whiteBoxContainer = document.getElementById('white-box-container');
             const whiteBox = whiteBoxContainer ? whiteBoxContainer.querySelector('.bg-white') : null;
             const heroImageWrapper = document.querySelector('.hero-image-wrapper');
             const heroImageCircle = document.querySelector('.hero-image-circle');
             
-            if (!main || !whiteBoxContainer || !whiteBox || !heroImageWrapper || !heroImageCircle) return;
+            if (!header || !main || !footer || !logoImage || !whiteBoxContainer || !whiteBox || !heroImageWrapper || !heroImageCircle) return;
             
-            // Calculate available height (viewport height minus header and footer)
-            const header = document.querySelector('header');
-            const footer = document.querySelector('footer');
-            const headerHeight = header ? header.offsetHeight : 0;
-            const footerHeight = footer ? footer.offsetHeight : 0;
-            const mainPadding = parseFloat(getComputedStyle(main).paddingTop) + parseFloat(getComputedStyle(main).paddingBottom);
-            const availableHeight = window.innerHeight - headerHeight - footerHeight - mainPadding;
+            // Set fixed heights based on viewport
+            const viewportHeight = window.innerHeight;
+            header.style.height = `${viewportHeight * 0.25}px`;
+            main.style.height = `${viewportHeight * 0.60}px`;
+            footer.style.height = `${viewportHeight * 0.15}px`;
             
-            // Set white box height with margins (using 90% of available height to ensure margins)
-            const whiteBoxHeight = Math.max(300, availableHeight * 0.9); // Minimum 300px
-            whiteBoxContainer.style.height = `${whiteBoxHeight}px`;
-            whiteBox.style.height = '100%';
+            // Logo sizing: 5% margin top and bottom = 90% of header height
+            const headerHeight = header.offsetHeight;
+            logoImage.style.maxHeight = `${headerHeight * 0.9}px`;
+            
+            // White box container: 75% width with margins, 90% height for vertical margins
+            const mainHeight = main.offsetHeight;
+            const mainWidth = main.offsetWidth;
+            whiteBoxContainer.style.width = `${Math.min(mainWidth * 0.75, 1200)}px`;
+            whiteBoxContainer.style.height = `${mainHeight * 0.9}px`;
+            whiteBoxContainer.style.maxWidth = '90vw';
             
             // Wait for layout to update, then calculate hero image size
             requestAnimationFrame(() => {
@@ -264,5 +274,8 @@
         setTimeout(adjustLayout, 100);
         setTimeout(adjustLayout, 500);
     </script>
+    
+    <!-- Confetti Animation Script -->
+    <script src="assets/js/confetti.js"></script>
 </body>
 </html>

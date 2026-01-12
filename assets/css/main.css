@@ -79,24 +79,6 @@ footer a:hover {
     .hero-image-container {
         animation: none;
     }
-    
-    /* Ensure content fits on mobile */
-    main {
-        padding: 0.25rem;
-    }
-}
-
-/* Ensure no scrolling on any device */
-@media (max-height: 600px) {
-    header {
-        padding-top: 0.25rem;
-        padding-bottom: 0.25rem;
-    }
-    
-    footer {
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
-    }
 }
 
 /* White box container - dynamically sized */
@@ -112,6 +94,23 @@ footer a:hover {
     width: 100%;
     height: 100%;
     display: flex;
+}
+
+/* Ensure header and footer stay fixed */
+header, footer {
+    position: relative;
+    z-index: 10;
+}
+
+/* Confetti container */
+#confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 20;
 }
 
 /* Hero image wrapper */
