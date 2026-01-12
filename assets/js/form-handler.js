@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (response.ok) {
                         // Show success message
-                        showMessage('Thank you! We\'ll notify you when we launch.', 'success');
+                        showMessage('You have Pawered up! We are happy to have you.', 'success');
                         
                         // Play success audio
                         if (successAudio) {
@@ -81,9 +81,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageEl = document.createElement('div');
         messageEl.className = `notification-message fixed top-4 right-4 px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-lg z-50 max-w-xs sm:max-w-sm ${
             type === 'success' 
-                ? 'bg-green-500 text-white' 
+                ? '' 
                 : 'bg-red-500 text-white'
         }`;
+        
+        // Apply pastel sage green styling for success messages
+        if (type === 'success') {
+            messageEl.style.backgroundColor = '#a8c5a0'; // Pastel sage green
+            messageEl.style.color = '#1f3d1f'; // Dark green for contrast
+        }
+        
         messageEl.textContent = message;
         messageEl.style.fontSize = '0.875rem';
         
