@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisker Wise - Coming Soon</title>
+    <link rel="icon" type="image/png" href="https://whiskerwise.in/favicon.png">
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://whiskerwise.in/">
+    <meta property="og:site_name" content="Whisker Wise">
+    <meta property="og:title" content="Whisker Wise: The Ultimate Haven for Cat parents">
+    <meta property="og:description" content="Scan & decode any pet food for your cat instantly">
+    <meta property="og:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
+    <meta property="og:image:secure_url" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
+    <meta property="og:image:width" content="736">
+    <meta property="og:image:height" content="680">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="Whisker Wise: The Ultimate Haven for Cat parents">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://whiskerwise.in/">
+    <meta name="twitter:title" content="Whisker Wise: The Ultimate Haven for Cat parents">
+    <meta name="twitter:description" content="Scan & decode any pet food for your cat instantly">
+    <meta name="twitter:image" content="https://whiskerwise.in/assets/images/og-preview.jpeg?v2">
+    
+    <!-- Additional meta for better sharing -->
+    <meta name="description" content="Scan & decode any pet food for your cat instantly">
+    <link rel="canonical" href="https://whiskerwise.in/">
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    
+    <script>
+        // Initialize Tailwind with CSS variable defaults
+        // These will be overridden by CSS variables where applicable
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#893336', // Default, can be overridden by CSS var
+                        secondary: '#3d3d3d',
+                        neutral: '#faf6ed',
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+        
+        // Update Tailwind config with CSS variables after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const rootStyles = getComputedStyle(document.documentElement);
+                const primaryColor = rootStyles.getPropertyValue('--color-primary').trim();
+                const secondaryColor = rootStyles.getPropertyValue('--color-secondary').trim();
+                const neutralColor = rootStyles.getPropertyValue('--color-neutral').trim();
+                const fontFamily = rootStyles.getPropertyValue('--font-family').trim();
+                
+                if (primaryColor) {
+                    tailwind.config.theme.extend.colors.primary = primaryColor;
+                }
+                if (secondaryColor) {
+                    tailwind.config.theme.extend.colors.secondary = secondaryColor;
+                }
+                if (neutralColor) {
+                    tailwind.config.theme.extend.colors.neutral = neutralColor;
+                }
+                if (fontFamily) {
+                    tailwind.config.theme.extend.fontFamily.sans = fontFamily.split(',').map(f => f.trim());
+                }
+            } catch (e) {
+                console.log('Using default Tailwind config values');
+            }
+        });
+    </script>
+</head>
+<body class="font-sans bg-neutral h-screen overflow-hidden flex flex-col">
+    <!-- Header - 25% of screen -->
+    <header class="w-full flex justify-center items-center flex-shrink-0" id="header" style="height: 25vh;">
+        <img src="assets/images/logo.png" alt="Whisker Wise Logo" id="logo-image" class="object-contain" style="max-height: 90%; width: auto;">
+    </header>
+
+    <!-- Main Content - 60% of screen -->
+    <main class="flex items-center justify-center overflow-hidden flex-shrink-0" id="main-content" style="height: 60vh;">
+        <div class="white-box-container" id="white-box-container">
+            <div class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 h-full flex flex-col lg:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-12 overflow-hidden">
+                
+                <!-- Left Section - Text Content -->
+                <div class="flex-1 w-full lg:w-auto flex flex-col justify-center min-w-0">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-secondary leading-tight mb-1 sm:mb-2 md:mb-3">
+                        Wisdom for Cat parents.<br>
+                        <span class="text-primary">Coming soon.</span>
+                    </h1>
+                    <p class="text-xs sm:text-sm md:text-base lg:text-lg text-secondary/80 mb-2 sm:mb-3 md:mb-4 lg:mb-6 font-light">
+                        Curated with Care. Trusted by Whiskers.
+                    </p>
+                    
+                    <!-- Email Input Form -->
+                    <form id="notify-form" action="https://formspree.io/f/xeeejyrq" method="POST" class="flex flex-col gap-2">
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input 
+                                type="email" 
+                                name="email"
+                                id="email-input"
+                                placeholder="Join our community of Cat parents" 
+                                required
+                                class="flex-1 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-lg border-2 border-secondary/20 focus:border-primary focus:outline-none text-secondary placeholder:text-secondary/50 transition-colors text-xs sm:text-sm md:text-base h-10 sm:h-11 md:h-12"
+                            >
+                            <button 
+                                type="submit"
+                                class="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap text-xs sm:text-sm md:text-base h-10 sm:h-11 md:h-12"
+                            >
+                                Count me in!
+                            </button>
+                        </div>
+                        <p class="text-xs text-secondary/60 mt-1 text-center sm:text-left">Write in your email address.</p>
+                    </form>
+                </div>
+
+                <!-- Right Section - Hero Image -->
+                <div class="flex-1 flex justify-center lg:justify-end w-full lg:w-auto items-center flex-shrink-0 hero-image-wrapper">
+                    <div class="relative hero-image-container w-full h-full flex items-center justify-center">
+                        <!-- Confetti Container -->
+                        <div id="confetti-container" class="absolute inset-0 pointer-events-none z-20" style="overflow: hidden;"></div>
+                        
+                        <!-- Elevated shadow layers -->
+                        <div class="absolute inset-0 rounded-full bg-primary/20 blur-xl transform scale-110 -z-10"></div>
+                        <div class="absolute inset-0 rounded-full bg-primary/10 blur-2xl transform scale-125 -z-10"></div>
+                        
+                        <!-- Main image circle with colored outline - dynamically sized -->
+                        <div class="hero-image-circle rounded-full overflow-hidden shadow-2xl border-2 sm:border-4 border-primary/40 transform hover:scale-105 transition-transform duration-300 relative z-10" style="aspect-ratio: 1 / 1;">
+                            <img 
+                                src="assets/images/hero.jpeg" 
+                                alt="Cat" 
+                                class="w-full h-full object-cover"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer - 15% of screen -->
+    <footer class="w-full px-4 border-t border-secondary/10 flex-shrink-0 flex items-center justify-center" id="footer" style="height: 15vh;">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+                <p class="text-secondary font-medium text-sm sm:text-base md:text-lg">Let's talk Cats.</p>
+                <div class="flex items-center gap-4 sm:gap-6">
+                    <!-- Instagram -->
+                    <a 
+                        href="https://www.instagram.com/whiskerwise.in/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 hover:scale-110 transition-transform shadow-lg"
+                        aria-label="Follow us on Instagram"
+                    >
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </a>
+                    
+                    <!-- WhatsApp -->
+                    <a 
+                        href="https://wa.me/919682387557" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="whatsapp-icon w-8 h-8 sm:w-10 sm:h-10 hover:scale-110 transition-transform shadow-lg flex items-center justify-center rounded-full overflow-hidden"
+                        style="background-color: transparent;"
+                        aria-label="Chat with us on WhatsApp"
+                    >
+                        <img 
+                            src="/assets/images/whatsapp.png" 
+                            alt="WhatsApp" 
+                            class="w-full h-full object-contain"
+                        >
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Audio element for success notification -->
+    <audio id="success-audio" preload="auto">
+        <source src="assets/audio/notify_success.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Form Handler Script -->
+    <script src="assets/js/form-handler.js"></script>
+    
+    <!-- Layout Adjustment Script -->
+    <script>
+        function adjustLayout() {
+            const header = document.getElementById('header');
+            const main = document.getElementById('main-content');
+            const footer = document.getElementById('footer');
+            const logoImage = document.getElementById('logo-image');
+            const whiteBoxContainer = document.getElementById('white-box-container');
+            const whiteBox = whiteBoxContainer ? whiteBoxContainer.querySelector('.bg-white') : null;
+            const heroImageWrapper = document.querySelector('.hero-image-wrapper');
+            const heroImageCircle = document.querySelector('.hero-image-circle');
+            
+            if (!header || !main || !footer || !logoImage || !whiteBoxContainer || !whiteBox || !heroImageWrapper || !heroImageCircle) return;
+            
+            // Set fixed heights based on viewport
+            const viewportHeight = window.innerHeight;
+            header.style.height = `${viewportHeight * 0.25}px`;
+            main.style.height = `${viewportHeight * 0.60}px`;
+            footer.style.height = `${viewportHeight * 0.15}px`;
+            
+            // Logo sizing: 5% margin top and bottom = 90% of header height
+            const headerHeight = header.offsetHeight;
+            logoImage.style.maxHeight = `${headerHeight * 0.9}px`;
+            
+            // White box container: 75% width with margins, 90% height for vertical margins
+            const mainHeight = main.offsetHeight;
+            const mainWidth = main.offsetWidth;
+            whiteBoxContainer.style.width = `${Math.min(mainWidth * 0.75, 1200)}px`;
+            whiteBoxContainer.style.height = `${mainHeight * 0.9}px`;
+            whiteBoxContainer.style.maxWidth = '90vw';
+            
+            // Wait for layout to update, then calculate hero image size
+            requestAnimationFrame(() => {
+                if (window.innerWidth >= 1024) {
+                    // Desktop: size based on available height in the right section
+                    const wrapperHeight = heroImageWrapper.offsetHeight || whiteBox.offsetHeight;
+                    const wrapperWidth = heroImageWrapper.offsetWidth || (whiteBox.offsetWidth * 0.45);
+                    // Calculate base size with multiplier first
+                    const baseSize = Math.min(
+                        wrapperHeight * 0.75, // 75% of wrapper height
+                        wrapperWidth * 0.9    // 90% of wrapper width
+                    ) * 1.25; // 25% bigger than original
+                    // Then apply container constraints with margins
+                    const maxSize = (whiteBoxContainer.offsetWidth * 0.35) - 20; // 35% of container width minus margin
+                    const imageSize = Math.min(baseSize, maxSize, wrapperHeight * 0.85); // Ensure it fits with margins
+                    heroImageCircle.style.width = `${imageSize}px`;
+                    heroImageCircle.style.height = `${imageSize}px`;
+                } else if (window.innerWidth >= 640) {
+                    // Tablet: size based on container width with responsive scaling
+                    const containerWidth = whiteBoxContainer.offsetWidth;
+                    const baseSize = (containerWidth * 0.35) * 1.25; // 25% bigger than original
+                    // Apply constraints with margins
+                    const maxSize = Math.min(containerWidth * 0.4, 250) - 15; // Max 40% of width or 250px, minus margin
+                    const imageSize = Math.min(baseSize, maxSize);
+                    heroImageCircle.style.width = `${imageSize}px`;
+                    heroImageCircle.style.height = `${imageSize}px`;
+                } else {
+                    // Mobile: smaller size that adapts to screen
+                    const containerWidth = whiteBoxContainer.offsetWidth;
+                    const baseSize = (containerWidth * 0.3) * 1.25; // 30% of width, 25% bigger
+                    // Apply constraints with margins for small screens
+                    const maxSize = Math.min(containerWidth * 0.35, 180) - 10; // Max 35% or 180px, minus margin
+                    const imageSize = Math.min(baseSize, maxSize);
+                    heroImageCircle.style.width = `${imageSize}px`;
+                    heroImageCircle.style.height = `${imageSize}px`;
+                }
+            });
+        }
+        
+        // Debounce function for resize
+        let resizeTimeout;
+        function debouncedAdjustLayout() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(adjustLayout, 100);
+        }
+        
+        // Adjust on load and resize
+        window.addEventListener('load', adjustLayout);
+        window.addEventListener('resize', debouncedAdjustLayout);
+        
+        // Also adjust after delays to ensure all elements are rendered
+        setTimeout(adjustLayout, 100);
+        setTimeout(adjustLayout, 500);
+    </script>
+    
+    <!-- Confetti Animation Script -->
+    <script src="assets/js/confetti.js"></script>
+</body>
+</html>
