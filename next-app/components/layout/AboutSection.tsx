@@ -14,37 +14,27 @@ export default function AboutSection() {
         {/* Upper Half: About Whisker Wise */}
         <div className="mb-16 bg-white/60 backdrop-blur-sm rounded-3xl p-8 sm:p-10 border border-emerald-100/50 shadow-soft">
           <h2 className="text-3xl font-serif text-gray-900 mb-8">About Whisker Wise</h2>
-          
-        {/* Problem Statement */}
-        <div className="mb-8">
-          <p className="text-lg text-gray-700 mb-6">Are you tired of:</p>
-            <ul className="space-y-3 text-lg text-gray-700 ml-6">
-              <li className="flex items-start">
-                <span className="text-primary-600 mr-3">•</span>
-                <span>Scrolling through "options" that don't feel like real choices?</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary-600 mr-3">•</span>
-                <span>Conflicting information that raises more questions than answers?</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary-600 mr-3">•</span>
-                <span>Wasting hours on WhatsApp groups and Reddit threads for advice you don't know you can trust?</span>
-              </li>
-            </ul>
-          </div>
 
-          {/* Mission Statement */}
           <div className="space-y-4 text-lg text-gray-700">
-            <p className="text-xl">
-              Whisker Wise is here to cut through the noise.
+            <p>
+              Whisker Wise started with a simple mission: help cats be more understood, and empower you to care for your cats the way you want to—making good decisions, without the confusion and worry.
             </p>
             <p>
-              Our mission is to simplify the lives of cat parents & empower them to care for their cats, the right way. 
-              We translate research-based facts into clear, actionable insights across cat care: helping you add years 
-              to your cat's life through good decisions.
+              From one cat parent to another, we know you want to give your cat the longest, healthiest life possible. But figuring out how means navigating contradictory advice, confusing labels, and products with tall claims that all look the same.
             </p>
-            <p className="text-2xl font-serif text-gray-900 pt-4">
+            <p className="font-bold italic text-gray-900">
+              It shouldn&apos;t be this hard.
+            </p>
+            <p>
+              Whisker Wise is India&apos;s first research-backed cat care platform for parents who want to do right by their cats.
+            </p>
+            <p>
+              We translate veterinary research into clear, actionable insights across cat care. Our guidance is based on established standards—WSAVA guidelines, AAFCO standards, NRC recommendations, and peer-reviewed research—adapted for Indian cat parents.
+            </p>
+            <p>
+              Our mission is to help you add years to your cat&apos;s life through good decisions.
+            </p>
+            <p className="font-bold text-gray-900 pt-2">
               Less time confused. More years together.
             </p>
           </div>

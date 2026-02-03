@@ -101,6 +101,49 @@ export default function ReportPage() {
             <p className="text-gray-600">Review the details we extracted from your images</p>
           </header>
 
+          {/* Verification Section - at top */}
+          <div className="bg-gradient-to-br from-primary-50 to-emerald-50 rounded-3xl p-8 border-2 border-primary-200 shadow-soft-lg mb-8">
+            <h2 className="text-2xl font-serif text-gray-900 mb-2 text-center">
+              Does this information look right to you?
+            </h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Match it with the information on the images uploaded by you.
+            </p>
+
+            {/* Feedback Text Area */}
+            <div className="mb-6">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Please share comments/feedback here"
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 outline-none transition-all resize-none text-sm"
+              />
+            </div>
+
+            {/* Verification CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <button
+                onClick={() => handleVerification('match')}
+                className="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-dark text-white font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
+              >
+                Yes! Correct & complete
+              </button>
+              <button
+                onClick={() => handleVerification('incorrect')}
+                className="flex-1 sm:flex-none bg-white border-2 border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-full hover:bg-gray-50 hover:border-gray-400 hover:-translate-y-1 active:translate-y-0 transition-all duration-200"
+              >
+                No, one/more fields wrong or missing
+              </button>
+              <button
+                onClick={() => handleVerification('unable')}
+                className="text-primary-600 hover:text-primary-700 font-medium underline text-sm transition-colors"
+              >
+                Can&apos;t check right now
+              </button>
+            </div>
+          </div>
+
           {/* Extracted Data Display */}
           <div className="space-y-6 mb-12">
             {/* Basic Information */}
@@ -309,49 +352,6 @@ export default function ReportPage() {
                 </div>
               )}
             </section>
-          </div>
-
-          {/* Verification Section */}
-          <div className="bg-gradient-to-br from-primary-50 to-emerald-50 rounded-3xl p-8 border-2 border-primary-200 shadow-soft-lg">
-            <h2 className="text-2xl font-serif text-gray-900 mb-2 text-center">
-              Does this information look right to you?
-            </h2>
-            <p className="text-gray-600 mb-6 text-center">
-              Match it with the information on the images uploaded by you.
-            </p>
-
-            {/* Feedback Text Area */}
-            <div className="mb-6">
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Please share comments/feedback here"
-                rows={2}
-                className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 outline-none transition-all resize-none text-sm"
-              />
-            </div>
-
-            {/* Verification CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => handleVerification('match')}
-                className="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-dark text-white font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
-              >
-                Yes, it's a match!
-              </button>
-              <button
-                onClick={() => handleVerification('incorrect')}
-                className="flex-1 sm:flex-none bg-white border-2 border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-full hover:bg-gray-50 hover:border-gray-400 hover:-translate-y-1 active:translate-y-0 transition-all duration-200"
-              >
-                No, some fields are incorrect
-              </button>
-              <button
-                onClick={() => handleVerification('unable')}
-                className="flex-1 sm:flex-none bg-white border-2 border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-full hover:bg-gray-50 hover:border-gray-400 hover:-translate-y-1 active:translate-y-0 transition-all duration-200"
-              >
-                Unable to check
-              </button>
-            </div>
           </div>
         </div>
       </main>

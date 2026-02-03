@@ -14,6 +14,30 @@ export interface CatProfile {
   healthConditions: string[];
   otherHealthDesc?: string;
   selected: boolean;
+  /** Profile page: optional passport fields */
+  weightKg?: number | null;
+  dob?: string | null;
+  neuteringStatus?: 'neutered' | 'not_neutered' | 'unknown' | null;
+  outdoorAccess?: boolean | null;
+  activityLevel?: 'lightly' | 'moderately' | 'very' | null;
+}
+
+export interface ProfileUser {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  /** Country code for phone, e.g. +91. Default +91. */
+  countryCode?: string;
+}
+
+export interface ScanHistoryItem {
+  id: string;
+  thumbnails: string[];
+  reportRating?: string | null;
+  brand?: string;
+  variant?: string;
+  scannedAt?: string;
 }
 
 export interface BodyCondition {

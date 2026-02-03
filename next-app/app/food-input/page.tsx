@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Upload, Check, AlertCircle, Loader2, X, Plus, Cat, ChevronDown, Lightbulb, Edit2 } from 'lucide-react';
 import { CAT_AVATARS, BODY_CONDITIONS, HEALTH_CONDITIONS } from '@/constants/cat-data';
 import type { CatProfile, QCState } from '@/types';
+import { validateImageClient } from '@/lib/imageValidation';
 
 interface UploadZoneProps {
   label: string;
@@ -14,7 +15,7 @@ interface UploadZoneProps {
   zoneKey: 'front' | 'back';
   state: QCState;
   imageSrc: string | null;
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File, clientError?: string) => void;
   onRemove: () => void;
   errorMsg?: string;
 }
@@ -22,20 +23,17 @@ interface UploadZoneProps {
 function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRemove, errorMsg }: UploadZoneProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid image file (JPG, PNG, HEIC, or WEBP)');
-        return;
-      }
-      // Validate file size (10MB = 10 * 1024 * 1024 bytes)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB');
-        return;
-      }
-      onFileSelect(file);
+    if (!file) return;
+    const clientResult = validateImageClient(file);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[QC ${zoneKey}] Client validation:`, clientResult.valid ? 'pass' : 'fail', clientResult.valid ? undefined : clientResult.error);
     }
+    if (!clientResult.valid) {
+      onFileSelect(file, clientResult.error);
+      return;
+    }
+    onFileSelect(file);
+    e.target.value = '';
   };
 
   return (
@@ -74,9 +72,7 @@ function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRem
           {(state === 'uploading' || state === 'checking') && (
             <div className="flex flex-col items-center text-center">
               <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-3" />
-              <span className="text-sm text-gray-600">
-                {state === 'uploading' ? 'Uploading...' : 'Checking readiness...'}
-              </span>
+              <span className="text-sm text-gray-600">Checking...</span>
             </div>
           )}
           
@@ -98,7 +94,9 @@ function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRem
           )}
           
           {state === 'pass' && (
-            <p className="text-sm text-primary-600 font-medium mt-3 text-center">Ready ✓</p>
+            <p className="text-sm text-primary-600 font-medium mt-3 text-center inline-flex items-center justify-center gap-1.5">
+              <Check className="w-4 h-4 text-primary-600" aria-hidden /> Ready
+            </p>
           )}
           
           {state === 'fail' && errorMsg && (
@@ -157,52 +155,88 @@ function FoodInputPageContent() {
   const [frontError, setFrontError] = useState('');
   const [backError, setBackError] = useState('');
 
-  const simulateQC = (callback: (pass: boolean, error: string) => void) => {
-    const errors = [
-      "This one's a bit blurry. Hold steady and try again?",
-      "Can't quite read the label. Try bright light without glare",
-      "We need a higher quality image to give you quality insights",
-      "Hmm, this doesn't look like cat food. Wrong photo?"
-    ];
-    setTimeout(() => {
-      const pass = Math.random() < 0.9;
-      callback(pass, pass ? '' : errors[Math.floor(Math.random() * errors.length)]);
-    }, 2000 + Math.random() * 2000);
-  };
-
-  const handleFileSelect = (zoneKey: 'front' | 'back', file: File) => {
-    if (!file.name) {
-      if (zoneKey === 'front') {
-        setFrontState('empty');
-        setFrontImage(null);
-      } else {
-        setBackState('empty');
-        setBackImage(null);
+  // Retain user & cat details within session: load from storage when profile/input is opened
+  const preselectCatId = searchParams.get('preselectCat');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const storedUser = localStorage.getItem('ww_userProfile');
+      const storedUserName = localStorage.getItem('ww_userName');
+      const storedCats = localStorage.getItem('ww_cats');
+      let initialName = '';
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser) as { firstName?: string };
+        if (parsed.firstName?.trim()) initialName = parsed.firstName.trim();
       }
-      return;
+      if (!initialName && storedUserName?.trim()) initialName = storedUserName.trim();
+      if (initialName) setName(initialName);
+      if (storedCats) {
+        const parsed = JSON.parse(storedCats) as CatProfile[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const withSelection = preselectCatId
+            ? parsed.map((c) => ({ ...c, selected: c.id === preselectCatId }))
+            : parsed.map((c) => ({ ...c, selected: c.selected !== false }));
+          setCats(withSelection);
+        }
+      }
+    } catch (_) {
+      // ignore parse errors
     }
+  }, [preselectCatId]);
 
+  const handleFileSelect = async (zoneKey: 'front' | 'back', file: File, clientError?: string) => {
     const setState = zoneKey === 'front' ? setFrontState : setBackState;
     const setImage = zoneKey === 'front' ? setFrontImage : setBackImage;
     const setError = zoneKey === 'front' ? setFrontError : setBackError;
 
+    if (!file?.name) {
+      setState('empty');
+      setImage(null);
+      setError('');
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const dataUrl = reader.result as string;
       setImage(dataUrl);
-      setState('uploading');
-      
-      setTimeout(() => {
-        setState('checking');
-        simulateQC((pass, error) => {
-          if (pass) {
-            setState('pass');
-          } else {
-            setState('fail');
-            setError(error);
-          }
+      setError('');
+
+      if (clientError) {
+        setState('fail');
+        setError(`Error: ${clientError}`);
+        return;
+      }
+
+      setState('checking');
+      const formData = new FormData();
+      formData.append('image', file);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[QC ${zoneKey}] Server validation: calling /api/validate-image...`);
+      }
+      try {
+        const res = await fetch('/api/validate-image', {
+          method: 'POST',
+          body: formData,
         });
-      }, 300);
+        const data = await res.json();
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[QC ${zoneKey}] Server response:`, data.valid ? 'pass' : 'fail', data);
+        }
+        if (data.valid) {
+          setState('pass');
+          setError('');
+        } else {
+          setState('fail');
+          setError(data.error ? `Error: ${data.error}` : 'Image validation failed.');
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[QC ${zoneKey}] Server validation error:`, err);
+        }
+        setState('fail');
+        setError('Error: Could not validate image. Please try again.');
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -239,6 +273,7 @@ function FoodInputPageContent() {
     
     const updatedCats = [...cats, newCat];
     setCats(updatedCats);
+    localStorage.setItem('ww_cats', JSON.stringify(updatedCats));
     
     // Reset for next cat with new random avatar
     setExpandedCatId(null);
@@ -327,6 +362,7 @@ function FoodInputPageContent() {
     );
     
     setCats(updatedCats);
+    localStorage.setItem('ww_cats', JSON.stringify(updatedCats));
     setExpandedCatId(null);
     setEditingCatId(null);
     setCurrentCat({
@@ -404,14 +440,18 @@ function FoodInputPageContent() {
     localStorage.setItem('ww_detectedVariant', 'Adult Chicken');
     // Only set personalizing flag to true if user has selected at least one cat
     localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
+    // Persist full cat list so profile shows all cats; pass only selected names to loading
+    localStorage.setItem('ww_cats', JSON.stringify(cats));
     if (selectedCats.length > 0) {
-      localStorage.setItem('ww_cats', JSON.stringify(selectedCats));
+      localStorage.setItem('ww_selectedCatNames', JSON.stringify(selectedCats.map(c => c.name)));
+    } else {
+      localStorage.removeItem('ww_selectedCatNames');
     }
     router.push('/loading-page');
   };
 
-  const bothImagesUploaded = frontImage !== null && backImage !== null;
-  const allRequiredFieldsFilled = name.trim() !== '' && bothImagesUploaded;
+  const bothImagesValid = frontState === 'pass' && backState === 'pass';
+  const allRequiredFieldsFilled = name.trim() !== '' && bothImagesValid;
 
   return (
     <>
@@ -443,10 +483,27 @@ function FoodInputPageContent() {
             </div>
 
             {/* Personalized Flow - Inline Cat Section */}
-            {isPersonalizedFlow && (
+            {isPersonalizedFlow && (() => {
+              const selectedCats = cats.filter((c) => c.selected);
+              const selectedNames = selectedCats.map((c) => c.name);
+              const personaliseTitle =
+                selectedNames.length >= 1
+                  ? selectedNames.length === 1
+                    ? selectedNames[0]
+                    : selectedNames.length === 2
+                      ? `${selectedNames[0]} and ${selectedNames[1]}`
+                      : `${selectedNames.slice(0, -1).join(', ')}, and ${selectedNames[selectedNames.length - 1]}`
+                  : null;
+              const mainTitle =
+                selectedNames.length >= 1
+                  ? `Personalising for ${personaliseTitle}`
+                  : cats.length >= 1
+                    ? 'Select cats for personalising insights'
+                    : 'Tell us about your cat';
+              return (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-serif text-gray-900">Tell us about your cat</h3>
+                  <h3 className="text-lg font-serif text-gray-900">{mainTitle}</h3>
                   <button
                     type="button"
                     onClick={() => router.push('/food-input')}
@@ -482,7 +539,7 @@ function FoodInputPageContent() {
                             onClick={() => handleEditCat(cat.id)}
                             className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                           >
-                            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                               <Image 
                                 src={CAT_AVATARS.find(a => a.id === cat.avatar)?.image || '/cats-orange1.png'} 
                                 alt={cat.name}
@@ -520,9 +577,15 @@ function FoodInputPageContent() {
                   </button>
                 )}
 
-                {/* Inline Cat Form */}
+                {/* Inline Cat Form - with heading just above edit section */}
                 {(showInlineCatForm || editingCatId !== null) && (
-                  <div className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft space-y-6">
+                  <>
+                    <h3 className="text-lg font-serif text-gray-900">
+                      {editingCatId
+                        ? `Update details for ${cats.find((c) => c.id === editingCatId)?.name ?? 'cat'}`
+                        : 'Tell us about your cat'}
+                    </h3>
+                    <div className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft space-y-6">
                     {/* Cat Name & Avatar */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -533,7 +596,7 @@ function FoodInputPageContent() {
                         <button
                           type="button"
                           onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-                          className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center overflow-hidden transition-all duration-200 relative group ${
+                          className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center transition-all duration-200 relative group ${
                             currentCat.avatar 
                               ? 'ring-2 ring-primary-300'
                               : 'bg-gray-100 ring-2 ring-red-200'
@@ -541,17 +604,20 @@ function FoodInputPageContent() {
                         >
                           {currentCat.avatar ? (
                             <>
-                              <Image 
-                                src={CAT_AVATARS.find(a => a.id === currentCat.avatar)?.image || '/cats-orange1.png'} 
-                                alt="Cat avatar"
-                                width={56}
-                                height={56}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                                <Edit2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-80 transition-opacity duration-200" />
+                              <div className="w-full h-full rounded-full overflow-hidden absolute inset-0">
+                                <Image 
+                                  src={CAT_AVATARS.find(a => a.id === currentCat.avatar)?.image || '/cats-orange1.png'} 
+                                  alt="Cat avatar"
+                                  width={56}
+                                  height={56}
+                                  className="w-full h-full object-cover"
+                                  unoptimized
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                               </div>
+                              <span className="absolute left-[48px] top-[48px] w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-300 opacity-90 group-hover:opacity-100 transition-opacity duration-200" aria-hidden>
+                                <Edit2 className="w-2.5 h-2.5 text-gray-600" />
+                              </span>
                             </>
                           ) : (
                             <Cat className="w-7 h-7 text-gray-400" />
@@ -828,6 +894,7 @@ function FoodInputPageContent() {
                       </button>
                     </div>
                   </div>
+                  </>
                 )}
 
                 {/* Error Message */}
@@ -838,7 +905,8 @@ function FoodInputPageContent() {
                   </div>
                 )}
               </div>
-            )}
+              );
+            })()}
 
             {/* Base Flow: checkbox on one line; note (when checked) above CTA; CTA on next line */}
             {!isPersonalizedFlow && (
@@ -874,16 +942,19 @@ function FoodInputPageContent() {
                   {cats.length > 0 ? 'Personalising' : 'Personalise for my cat'}
                 </button>
               </div>
-              {cats.length > 0 && (
-                <p className="text-sm text-gray-600 pl-0">
-                  For {cats.length === 1 
-                    ? cats[0].name 
-                    : cats.length === 2
-                      ? `${cats[0].name} and ${cats[1].name}`
-                      : `${cats.slice(0, -1).map(c => c.name).join(', ')}, and ${cats[cats.length - 1].name}`
-                  }
-                </p>
-              )}
+              {(() => {
+                const selectedForDisplay = cats.filter(c => c.selected);
+                return selectedForDisplay.length > 0 && (
+                  <p className="text-sm text-gray-600 pl-0">
+                    For {selectedForDisplay.length === 1
+                      ? selectedForDisplay[0].name
+                      : selectedForDisplay.length === 2
+                        ? `${selectedForDisplay[0].name} and ${selectedForDisplay[1].name}`
+                        : `${selectedForDisplay.slice(0, -1).map(c => c.name).join(', ')}, and ${selectedForDisplay[selectedForDisplay.length - 1].name}`
+                    }
+                  </p>
+                );
+              })()}
             </div>
             )}
 
@@ -904,35 +975,37 @@ function FoodInputPageContent() {
               {/* Upload zones */}
               <div className="grid sm:grid-cols-2 gap-6 items-start">
                 <UploadZone
-                  label="Front panel"
+                  label="Front panel *"
                   hint="Capture the complete front of the pack with the brand name & variant"
                   zoneKey="front"
                   state={frontState}
                   imageSrc={frontImage}
-                  onFileSelect={(file) => handleFileSelect('front', file)}
+                  onFileSelect={(file, clientError) => handleFileSelect('front', file, clientError)}
                   onRemove={() => {
                     setFrontState('empty');
                     setFrontImage(null);
+                    setFrontError('');
                   }}
                   errorMsg={frontError}
                 />
                 <UploadZone
-                  label="Back panel"
+                  label="Back panel *"
                   hint="Get the complete ingredient list and nutrition facts"
                   zoneKey="back"
                   state={backState}
                   imageSrc={backImage}
-                  onFileSelect={(file) => handleFileSelect('back', file)}
+                  onFileSelect={(file, clientError) => handleFileSelect('back', file, clientError)}
                   onRemove={() => {
                     setBackState('empty');
                     setBackImage(null);
+                    setBackError('');
                   }}
                   errorMsg={backError}
                 />
               </div>
 
               <p className="text-xs text-gray-500 text-center">
-                Accepted: JPG, PNG, HEIC, WEBP (max 10MB per file)
+                Accepted: JPG, PNG, HEIC, WEBP (max 15MB per file)
               </p>
             </div>
 
@@ -948,7 +1021,7 @@ function FoodInputPageContent() {
                 </button>
                 {!allRequiredFieldsFilled && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                    {!name.trim() ? 'Please enter your name' : 'Waiting for images of both sides…'}
+                    {!name.trim() ? 'Please enter your name' : 'Upload and validate both label images to continue'}
                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                   </div>
                 )}
@@ -1016,7 +1089,7 @@ function FoodInputPageContent() {
                             onClick={() => handleEditCat(cat.id)}
                             className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                           >
-                            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                               <Image 
                                 src={CAT_AVATARS.find(a => a.id === cat.avatar)?.image || '/cats-orange1.png'} 
                                 alt={cat.name}
@@ -1045,6 +1118,11 @@ function FoodInputPageContent() {
                 {/* Form is shown when: not editing OR editing a specific cat */}
                 {(expandedCatId === null || editingCatId !== null) && (
                 <>
+                <h3 className="text-lg font-serif text-gray-900">
+                  {editingCatId
+                    ? `Update details for ${cats.find((c) => c.id === editingCatId)?.name ?? 'cat'}`
+                    : 'Tell us about your cat'}
+                </h3>
                 {/* Cat Name & Avatar */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1055,7 +1133,7 @@ function FoodInputPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-                      className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center overflow-hidden transition-all duration-200 relative group ${
+                      className={`w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center transition-all duration-200 relative group ${
                         currentCat.avatar 
                           ? 'ring-2 ring-primary-300'
                           : 'bg-gray-100 ring-2 ring-red-200'
@@ -1063,17 +1141,20 @@ function FoodInputPageContent() {
                     >
                       {currentCat.avatar ? (
                         <>
-                          <Image 
-                            src={CAT_AVATARS.find(a => a.id === currentCat.avatar)?.image || '/cats-orange1.png'} 
-                            alt="Cat avatar"
-                            width={56}
-                            height={56}
-                            className="w-full h-full object-cover"
-                            unoptimized
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                            <Edit2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-80 transition-opacity duration-200" />
+                          <div className="w-full h-full rounded-full overflow-hidden absolute inset-0">
+                            <Image 
+                              src={CAT_AVATARS.find(a => a.id === currentCat.avatar)?.image || '/cats-orange1.png'} 
+                              alt="Cat avatar"
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover"
+                              unoptimized
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                           </div>
+                          <span className="absolute left-[48px] top-[48px] w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-300 opacity-90 group-hover:opacity-100 transition-opacity duration-200" aria-hidden>
+                            <Edit2 className="w-2.5 h-2.5 text-gray-600" />
+                          </span>
                         </>
                       ) : (
                         <Cat className="w-7 h-7 text-gray-400" />
@@ -1352,14 +1433,39 @@ function FoodInputPageContent() {
                 )}
                 <button
                   type="button"
-                  onClick={editingCatId ? handleUpdateCat : handleSaveCat}
-                  disabled={
-                    !currentCat.name || 
-                    !currentCat.bodyCondition || 
-                    (currentCat.healthConditions || []).length === 0 ||
-                    ((currentCat.ageYears || 0) === 0 && (currentCat.ageMonths || 0) === 0) ||
-                    (currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim())
-                  }
+                  onClick={() => {
+                    const formFilled =
+                      !!currentCat.name?.trim() &&
+                      !!currentCat.bodyCondition &&
+                      (currentCat.healthConditions || []).length > 0 &&
+                      ((currentCat.ageYears || 0) > 0 || (currentCat.ageMonths || 0) > 0) &&
+                      !(currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim());
+                    const atLeastOneSelected = cats.some((c) => c.selected);
+                    if (editingCatId) {
+                      handleUpdateCat();
+                    } else if (formFilled) {
+                      handleSaveCat();
+                    } else if (cats.length > 0 && atLeastOneSelected) {
+                      localStorage.setItem('ww_cats', JSON.stringify(cats));
+                      setShowCatPanel(false);
+                    }
+                  }}
+                  disabled={(() => {
+                    const formFilled =
+                      !!currentCat.name?.trim() &&
+                      !!currentCat.bodyCondition &&
+                      (currentCat.healthConditions || []).length > 0 &&
+                      ((currentCat.ageYears || 0) > 0 || (currentCat.ageMonths || 0) > 0) &&
+                      !(currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim());
+                    const atLeastOneSelected = cats.some((c) => c.selected);
+                    if (editingCatId) {
+                      return !formFilled;
+                    }
+                    if (cats.length === 0) {
+                      return !formFilled;
+                    }
+                    return !formFilled && !atLeastOneSelected;
+                  })()}
                   className="px-6 py-3 bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold rounded-full shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingCatId ? 'Update Cat' : 'Save & Continue'}

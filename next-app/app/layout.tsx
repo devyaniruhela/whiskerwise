@@ -4,6 +4,11 @@ import "@/styles/globals.css";
 export const metadata: Metadata = {
   title: "Whisker Wise — Curated with care. Trusted by whiskers.",
   description: "Research-backed cat nutrition. Get evidence-based insights with Wiser, our cat food analysis tool.",
+  icons: {
+    icon: "/logo-light.png",
+    shortcut: "/logo-light.png",
+    apple: "/logo-light.png",
+  },
 };
 
 export default function RootLayout({

@@ -33,7 +33,7 @@ export default function NowWiserPage() {
                 ].map((item, i) => (
                   <div 
                     key={i}
-                    className="group bg-white rounded-2xl p-6 border-2 border-emerald-100 hover:border-primary-500 hover:-translate-y-2 transition-all duration-300 hover:shadow-soft-lg flex flex-col items-center text-center"
+                    className="group bg-white rounded-2xl p-6 border-2 border-emerald-100 flex flex-col items-center text-center"
                   >
                     <div className="w-12 h-12 rounded-xl bg-gradient-warm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                       <item.icon className="w-6 h-6 text-white" />

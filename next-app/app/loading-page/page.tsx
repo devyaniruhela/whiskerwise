@@ -42,11 +42,17 @@ export default function LoadingPage() {
     setIsPersonalizing(personalizingFlag);
     
     let parsedCatNames: string[] = [];
-    if (catsData) {
-      const cats = JSON.parse(catsData);
-      parsedCatNames = cats.map((c: any) => c.name);
-      setCatNames(parsedCatNames);
+    const selectedNamesRaw = localStorage.getItem('ww_selectedCatNames');
+    if (selectedNamesRaw) {
+      try {
+        parsedCatNames = JSON.parse(selectedNamesRaw);
+      } catch (_) {}
     }
+    if (parsedCatNames.length === 0 && catsData) {
+      const cats = JSON.parse(catsData);
+      parsedCatNames = (cats || []).map((c: any) => c.name);
+    }
+    setCatNames(parsedCatNames);
 
     // Progress simulation
     const newSteps = [...steps];

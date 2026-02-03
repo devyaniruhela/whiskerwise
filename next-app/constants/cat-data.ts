@@ -59,6 +59,57 @@ export const HEALTH_CONDITIONS = [
   'Other (please describe)',
 ];
 
+export const NEUTERING_OPTIONS = [
+  { value: 'neutered', label: 'Neutered' },
+  { value: 'not_neutered', label: 'Not neutered' },
+  { value: 'unknown', label: 'Unknown' },
+] as const;
+
+export const OUTDOOR_OPTIONS = [
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+] as const;
+
+export const ACTIVITY_LEVELS = [
+  { value: 'lightly', label: 'Lightly active' },
+  { value: 'moderately', label: 'Moderately active' },
+  { value: 'very', label: 'Very active' },
+] as const;
+
+/** Country codes for phone: code and label. +91 default. Scrollable select. */
+export const COUNTRY_CODES: { code: string; label: string }[] = [
+  { code: '+91', label: 'India (+91)' },
+  { code: '+1', label: 'US/Canada (+1)' },
+  { code: '+44', label: 'UK (+44)' },
+  { code: '+61', label: 'Australia (+61)' },
+  { code: '+81', label: 'Japan (+81)' },
+  { code: '+86', label: 'China (+86)' },
+  { code: '+49', label: 'Germany (+49)' },
+  { code: '+33', label: 'France (+33)' },
+  { code: '+39', label: 'Italy (+39)' },
+  { code: '+34', label: 'Spain (+34)' },
+  { code: '+31', label: 'Netherlands (+31)' },
+  { code: '+65', label: 'Singapore (+65)' },
+  { code: '+971', label: 'UAE (+971)' },
+  { code: '+966', label: 'Saudi Arabia (+966)' },
+  { code: '+27', label: 'South Africa (+27)' },
+  { code: '+55', label: 'Brazil (+55)' },
+  { code: '+52', label: 'Mexico (+52)' },
+  { code: '+7', label: 'Russia (+7)' },
+  { code: '+82', label: 'South Korea (+82)' },
+  { code: '+90', label: 'Turkey (+90)' },
+  { code: '+20', label: 'Egypt (+20)' },
+  { code: '+234', label: 'Nigeria (+234)' },
+  { code: '+254', label: 'Kenya (+254)' },
+  { code: '+62', label: 'Indonesia (+62)' },
+  { code: '+60', label: 'Malaysia (+60)' },
+  { code: '+63', label: 'Philippines (+63)' },
+  { code: '+66', label: 'Thailand (+66)' },
+  { code: '+84', label: 'Vietnam (+84)' },
+  { code: '+64', label: 'New Zealand (+64)' },
+  { code: '+353', label: 'Ireland (+353)' },
+];
+
 export const QC_ERROR_MESSAGES: Record<string, string> = {
   unsupported_format: "Oops! We need PNG, JPEG, HEIC, or WEBP formats",
   file_too_large: "Image is too large. Please use files under 10MB",
