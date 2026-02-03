@@ -333,8 +333,8 @@ All buttons, badges, borders, and primary-colored elements will update automatic
 ## 📦 File Structure
 
 ```
-next-app/
-├── design-system.json           # Central design tokens
+├── config/
+│   └── design-system.json       # Central design tokens
 ├── lib/
 │   └── design-system.ts         # TypeScript utilities
 ├── components/
@@ -343,7 +343,8 @@ next-app/
 │       ├── Input.tsx            # Input component
 │       └── Badge.tsx            # Badge component
 ├── tailwind.config.ts           # Tailwind configuration
-└── DESIGN_SYSTEM_SUMMARY.md     # This file
+└── docs/
+    └── DESIGN_SYSTEM_SUMMARY.md  # This file
 ```
 
 ---

@@ -114,18 +114,26 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+@media (min-width: 640px) {
+  .header-content-wrapper {
+    padding: 0 24px;
+  }
+}
 
+/* Minimum 44px touch target for accessibility (WCAG) */
 .header-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   transition: all 0.2s ease;
   color: #FFFEF5;

@@ -3,7 +3,6 @@
 ## ✅ Reorganized with Best Practices (Next.js 15 + React)
 
 ```
-next-app/
 ├── app/                          # Next.js 15 App Router
 │   ├── page.tsx                  # Home/Landing page
 │   ├── layout.tsx                # Root layout

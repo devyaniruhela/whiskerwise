@@ -79,16 +79,17 @@ function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRem
           {(state === 'pass' || state === 'fail' || state === 'uploading' || state === 'checking') && imageSrc && (
             <div className="relative">
               <img src={imageSrc} alt={label} className="w-full h-32 object-cover rounded-lg" />
-              {/* Remove button - smaller and at corner */}
+              {/* Remove button - 44px min touch target for accessibility */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemove();
                 }}
-                className="absolute top-1 right-1 w-5 h-5 bg-white hover:bg-red-50 rounded-full flex items-center justify-center border border-gray-300 hover:border-red-500 shadow-sm transition-all duration-200 z-10"
+                className="absolute top-0 right-0 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white hover:bg-red-50 rounded-full border border-gray-300 hover:border-red-500 shadow-sm transition-all duration-200 z-10"
                 type="button"
+                aria-label="Remove image"
               >
-                <X className="w-3 h-3 text-gray-600 hover:text-red-600" />
+                <X className="w-4 h-4 text-gray-600 hover:text-red-600" />
               </button>
             </div>
           )}
@@ -1015,17 +1016,24 @@ function FoodInputPageContent() {
                 <button
                   type="submit"
                   disabled={!allRequiredFieldsFilled}
-                  className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-primary-600 disabled:hover:text-white"
+                  className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-primary-600 disabled:hover:text-white min-h-[48px]"
                 >
                   Analyse Food
                 </button>
+                {/* Tooltip on hover (desktop) */}
                 {!allRequiredFieldsFilled && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 hidden sm:block">
                     {!name.trim() ? 'Please enter your name' : 'Upload and validate both label images to continue'}
                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                   </div>
                 )}
               </div>
+              {/* Inline hint when disabled (visible on touch/mobile where hover doesn't work) */}
+              {!allRequiredFieldsFilled && (
+                <p className="text-sm text-center text-gray-500 sm:hidden">
+                  {!name.trim() ? 'Please enter your name' : 'Upload and validate both label images to continue'}
+                </p>
+              )}
               {allRequiredFieldsFilled && (
                 <p className="text-sm text-center text-gray-500">
                   Usually takes a few seconds

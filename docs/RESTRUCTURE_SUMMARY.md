@@ -8,8 +8,9 @@ Your Next.js application has been reorganized following industry best practices 
 
 ## 📦 New Directory Structure
 
+(Project root — no nested next-app folder.)
+
 ```
-next-app/
 ├── 📁 app/                      # Pages (Next.js App Router)
 ├── 📁 components/
 │   ├── 📁 layout/               # Header, Footer, AboutSection

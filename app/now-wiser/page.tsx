@@ -1,10 +1,45 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import AboutSection from '@/components/layout/AboutSection';
 import Footer from '@/components/layout/Footer';
 import { Camera, FileCheck, Search } from 'lucide-react';
 
-export default function Home() {
+const WHY_WISER_CARDS = [
+  {
+    title: 'Ingredient Quality Check',
+    icon: '🔬',
+    back: 'We evaluate ingredients based on obligate carnivore requirements*',
+    note: '*Based on WSAVA & NRC guidelines\n**World Small Animal Veterinary Association (the WHO for Cats & Dogs)',
+    hasCTA: false
+  },
+  {
+    title: 'Global Nutrition Standards',
+    icon: '🌍',
+    back: 'Nutrition measured against Indian (IS 11968:2019), American (AAFCO) and European (FEDIAF) standards to check for nutritional adequacy',
+    note: '',
+    hasCTA: false
+  },
+  {
+    title: 'Personalized for Your Cat',
+    icon: '💚',
+    back: "We share insights & food recommendations tailored to your cat's unique profile.",
+    note: '',
+    hasCTA: true
+  },
+  {
+    title: 'Never worry about hidden red flags',
+    icon: '⚠️',
+    back: 'We highlight concerning ingredients, label malpractices, and brand transparency',
+    note: '',
+    hasCTA: false
+  }
+];
+
+export default function NowWiserPage() {
+  const [flipped, setFlipped] = useState<boolean[]>(() => WHY_WISER_CARDS.map(() => false));
   return (
     <>
       <Header />
@@ -72,41 +107,30 @@ export default function Home() {
             </p>
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-              {[
-                {
-                  title: 'Ingredient Quality Check',
-                  icon: '🔬',
-                  back: 'We evaluate ingredients based on obligate carnivore requirements*',
-                  note: '*Based on WSAVA & NRC guidelines\n**World Small Animal Veterinary Association (the WHO for Cats & Dogs)',
-                  hasCTA: false
-                },
-                {
-                  title: 'Global Nutrition Standards',
-                  icon: '🌍',
-                  back: 'Nutrition measured against Indian (IS 11968:2019), American (AAFCO) and European (FEDIAF) standards to check for nutritional adequacy',
-                  note: '',
-                  hasCTA: false
-                },
-                {
-                  title: 'Personalized for Your Cat',
-                  icon: '💚',
-                  back: "We share insights & food recommendations tailored to your cat's unique profile.",
-                  note: '',
-                  hasCTA: true
-                },
-                {
-                  title: 'Never worry about hidden red flags',
-                  icon: '⚠️',
-                  back: 'We highlight concerning ingredients, label malpractices, and brand transparency',
-                  note: '',
-                  hasCTA: false
-                }
-              ].map((card, i) => (
-                <div 
+              {WHY_WISER_CARDS.map((card, i) => (
+                <div
                   key={i}
-                  className="group relative h-72 [perspective:1000px]"
+                  role="button"
+                  tabIndex={0}
+                  className="group relative h-72 [perspective:1000px] cursor-pointer"
+                  onClick={() => setFlipped(prev => {
+                    const next = [...prev];
+                    next[i] = !next[i];
+                    return next;
+                  })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setFlipped(prev => {
+                        const next = [...prev];
+                        next[i] = !next[i];
+                        return next;
+                      });
+                    }
+                  }}
+                  aria-label={flipped[i] ? `Show front: ${card.title}` : `Show back: ${card.title}`}
                 >
-                  <div className="relative h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                  <div className={`relative h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped[i] ? '[transform:rotateY(180deg)]' : ''}`}>
                     {/* Front */}
                     <div className="absolute inset-0 bg-white rounded-3xl p-6 border-2 border-emerald-100 shadow-soft [backface-visibility:hidden] flex flex-col items-center justify-center text-center">
                       <div className="text-6xl mb-4">{card.icon}</div>
@@ -119,9 +143,10 @@ export default function Home() {
                         <p className="text-xs text-gray-500 font-mono text-center whitespace-pre-line mt-2">{card.note}</p>
                       )}
                       {card.hasCTA && (
-                        <Link 
+                        <Link
                           href="/food-input?personalize=true"
                           className="mt-4 flex items-center justify-center text-center bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-6 py-2 rounded-full shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft transition-all duration-200 text-sm w-full"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <span className="w-full text-center">Get personalised insights</span>
                         </Link>
@@ -133,7 +158,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
       </main>
       
       {/* About Section */}

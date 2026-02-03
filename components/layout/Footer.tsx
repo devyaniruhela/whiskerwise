@@ -14,12 +14,12 @@ export default function Footer() {
           Join hundreds others in our community of cat parents!
         </p>
         
-        <div className="flex items-center justify-center gap-6 pt-4">
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4">
           <a 
             href="https://www.instagram.com/whiskerwise.in/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110"
+            className="flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110"
           >
             <Instagram className="w-6 h-6" />
             <span className="font-sans font-medium">Instagram</span>
@@ -28,7 +28,7 @@ export default function Footer() {
             href="https://wa.me/919682387557" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110"
+            className="flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110"
           >
             <Image 
               src="/whatsapp.png" 
