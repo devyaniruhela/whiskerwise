@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       // Avoid 404 when browser requests /favicon.ico
-      { source: "/favicon.ico", destination: "/logo-light.png" },
+      { source: "/favicon.ico", destination: "/favicon.png" },
     ];
   },
 };

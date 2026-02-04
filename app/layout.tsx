@@ -6,13 +6,30 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: "Whisker Wise — Curated with care. Trusted by whiskers.",
   description: "Research-backed cat nutrition. Get evidence-based insights with Wiser, our cat food analysis tool.",
   icons: {
-    icon: "/logo-light.png",
-    shortcut: "/logo-light.png",
-    apple: "/logo-light.png",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
+  openGraph: {
+    title: "Whisker Wise — Curated with care. Trusted by whiskers.",
+    description: "Research-backed cat nutrition. Get evidence-based insights with Wiser, our cat food analysis tool.",
+    images: ["/logo-dark2.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Whisker Wise — Curated with care. Trusted by whiskers.",
+    description: "Research-backed cat nutrition. Get evidence-based insights with Wiser, our cat food analysis tool.",
+    images: ["/logo-dark2.png"],
   },
 };
 
