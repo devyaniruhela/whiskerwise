@@ -68,3 +68,4 @@ Visit [http://localhost:3000](http://localhost:3000)
 - Prata font only supports 400 weight - never use `font-bold` with `font-serif`
 - All ports automatically assigned by Next.js (3000+)
 - LocalStorage used for cross-page data persistence
+
