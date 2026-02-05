@@ -82,8 +82,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ValidateI
       );
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[validate-image] OK', { width, height });
+    const sessionId = request.headers.get('X-Session-Id')?.trim() || null;
+    if (process.env.NODE_ENV === 'development' && sessionId) {
+      console.log('[validate-image] OK', { width, height, sessionId });
     }
     return NextResponse.json({
       valid: true,

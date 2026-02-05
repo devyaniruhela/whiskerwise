@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
+import SessionTracker from "@/components/SessionTracker";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="grain bg-gradient-to-b from-emerald-50 via-green-50 to-emerald-50 min-h-screen pt-20">
+        <SessionTracker />
         {children}
       </body>
     </html>

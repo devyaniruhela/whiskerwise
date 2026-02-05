@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Check, Lock, Sparkles, Unlock, AlertCircle } from 'lucide-react';
 import { QC_ERROR_MESSAGES } from '@/constants/cat-data';
 import type { StepState, StepData } from '@/types';
+import { useSession } from '@/hooks/useSession';
 
 export default function LoadingPage() {
   const router = useRouter();
+  const { trackAnalysisComplete } = useSession();
+  const analysisTrackedRef = useRef(false);
   const [userName, setUserName] = useState('there');
   const [brand, setBrand] = useState('Your food');
   const [variant, setVariant] = useState('');
@@ -114,12 +117,20 @@ export default function LoadingPage() {
                     setTimeout(() => {
                       newSteps[4] = 'complete';
                       setSteps([...newSteps]);
+                      if (!analysisTrackedRef.current) {
+                        analysisTrackedRef.current = true;
+                        trackAnalysisComplete(true);
+                      }
                       setTimeout(() => setShowModal(true), 500);
                     }, 2000 + Math.random() * 1000);
                   }, 800); // Unlock animation duration
                 }, 300); // Small delay before unlock starts
               } else {
                 // No personalization, go straight to modal
+                if (!analysisTrackedRef.current) {
+                  analysisTrackedRef.current = true;
+                  trackAnalysisComplete(false);
+                }
                 setTimeout(() => setShowModal(true), 500);
               }
             }, 2000 + Math.random() * 1000);

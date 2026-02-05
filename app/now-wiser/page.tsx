@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import AboutSection from '@/components/layout/AboutSection';
 import Footer from '@/components/layout/Footer';
 import { Camera, FileCheck, Search } from 'lucide-react';
+import { useSession } from '@/hooks/useSession';
 
 const WHY_WISER_CARDS = [
   {
@@ -40,6 +41,7 @@ const WHY_WISER_CARDS = [
 
 export default function NowWiserPage() {
   const [flipped, setFlipped] = useState<boolean[]>(() => WHY_WISER_CARDS.map(() => false));
+  const { trackCTAClick } = useSession();
   return (
     <>
       <Header />
@@ -82,6 +84,7 @@ export default function NowWiserPage() {
               <div className="pt-8">
                 <Link 
                   href="/food-input"
+                  onClick={() => trackCTAClick('landing_main')}
                   className="inline-block bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 text-lg"
                 >
                   Analyse Cat Food
@@ -146,7 +149,10 @@ export default function NowWiserPage() {
                         <Link
                           href="/food-input?personalize=true"
                           className="mt-4 flex items-center justify-center text-center bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-6 py-2 rounded-full shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft transition-all duration-200 text-sm w-full"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            trackCTAClick('landing_personalise');
+                          }}
                         >
                           <span className="w-full text-center">Get personalised insights</span>
                         </Link>

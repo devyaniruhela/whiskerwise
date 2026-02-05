@@ -8,6 +8,7 @@ import { Upload, Check, AlertCircle, Loader2, X, Plus, Cat, ChevronDown, Lightbu
 import { CAT_AVATARS, BODY_CONDITIONS, HEALTH_CONDITIONS } from '@/constants/cat-data';
 import type { CatProfile, QCState } from '@/types';
 import { validateImageClient } from '@/lib/imageValidation';
+import { useSession } from '@/hooks/useSession';
 
 interface UploadZoneProps {
   label: string;
@@ -128,6 +129,7 @@ function FoodInputPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isPersonalizedFlow = searchParams.get('personalize') === 'true';
+  const { sessionId, trackAction, trackImageUpload } = useSession();
   
   const [name, setName] = useState('');
   const [hasSpecialNeeds, setHasSpecialNeeds] = useState(false);
@@ -206,18 +208,22 @@ function FoodInputPageContent() {
       if (clientError) {
         setState('fail');
         setError(`Error: ${clientError}`);
+        trackAction('qc_fail');
         return;
       }
 
       setState('checking');
       const formData = new FormData();
       formData.append('image', file);
+      const headers: Record<string, string> = {};
+      if (sessionId) headers['X-Session-Id'] = sessionId;
       if (process.env.NODE_ENV === 'development') {
         console.log(`[QC ${zoneKey}] Server validation: calling /api/validate-image...`);
       }
       try {
         const res = await fetch('/api/validate-image', {
           method: 'POST',
+          headers: Object.keys(headers).length > 0 ? headers : undefined,
           body: formData,
         });
         const data = await res.json();
@@ -227,9 +233,11 @@ function FoodInputPageContent() {
         if (data.valid) {
           setState('pass');
           setError('');
+          trackImageUpload();
         } else {
           setState('fail');
           setError(data.error ? `Error: ${data.error}` : 'Image validation failed.');
+          trackAction('qc_fail');
         }
       } catch (err) {
         if (process.env.NODE_ENV === 'development') {
@@ -436,9 +444,11 @@ function FoodInputPageContent() {
       return;
     }
     
+    trackAction('analysis_start');
     localStorage.setItem('ww_userName', name);
     localStorage.setItem('ww_detectedBrand', 'Sample Brand');
     localStorage.setItem('ww_detectedVariant', 'Adult Chicken');
+    if (sessionId) localStorage.setItem('ww_session_id', sessionId);
     // Only set personalizing flag to true if user has selected at least one cat
     localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
     // Persist full cat list so profile shows all cats; pass only selected names to loading

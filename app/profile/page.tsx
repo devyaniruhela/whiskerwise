@@ -38,6 +38,7 @@ import {
   filterPhoneDigits,
 } from '@/lib/validation';
 import type { CatProfile, ProfileUser, ScanHistoryItem } from '@/types';
+import { useSession } from '@/hooks/useSession';
 
 const STORAGE_USER = 'ww_userProfile';
 const STORAGE_USER_NAME = 'ww_userName';
@@ -126,6 +127,7 @@ const SAMPLE_SCANS: ScanHistoryItem[] = [
 ];
 
 export default function ProfilePage() {
+  const { captureEmail, capturePhone, trackCTAClick } = useSession();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<ProfileUser>(defaultUser);
   const [userNameFallback, setUserNameFallback] = useState('');
@@ -259,6 +261,8 @@ export default function ProfilePage() {
     setUserValidationErrors(errors);
     if (Object.keys(errors).length > 0) return;
     saveUser(user);
+    if (user.email?.trim()) captureEmail(user.email.trim());
+    if (user.phone?.trim()) capturePhone((user.countryCode ?? '+91') + user.phone.trim());
     setShowUserEdit(false);
   };
 
@@ -927,6 +931,7 @@ export default function ProfilePage() {
                           </button>
                           <Link
                             href={`/food-input?personalize=true&preselectCat=${encodeURIComponent(cat.id)}`}
+                            onClick={() => trackCTAClick('profile')}
                             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
                             aria-label="Scan food for this cat"
                           >
@@ -1098,6 +1103,7 @@ export default function ProfilePage() {
                       <div className="pt-2">
                         <Link
                           href="/food-input"
+                          onClick={() => trackCTAClick('profile')}
                           className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                         >
                           Analyse new food
@@ -1116,6 +1122,7 @@ export default function ProfilePage() {
                         </button>
                         <Link
                           href="/food-input"
+                          onClick={() => trackCTAClick('profile')}
                           className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                         >
                           Analyse new food
@@ -1232,6 +1239,7 @@ export default function ProfilePage() {
                       </button>
                       <Link
                         href="/food-input"
+                        onClick={() => trackCTAClick('profile')}
                         className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                       >
                         Analyse new food
@@ -1245,6 +1253,7 @@ export default function ProfilePage() {
                 <p className="text-gray-500 font-mono text-sm mb-4">You are yet to check your cat&apos;s food. Start scanning now!</p>
                 <Link
                   href="/food-input"
+                  onClick={() => trackCTAClick('profile')}
                   className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                 >
                   Analyse new food
