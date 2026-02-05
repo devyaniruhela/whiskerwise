@@ -930,7 +930,7 @@ export default function ProfilePage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <Link
-                            href={`/food-input?personalize=true&preselectCat=${encodeURIComponent(cat.id)}`}
+                            href={`/food-input?from=profile&personalize=true&preselectCat=${encodeURIComponent(cat.id)}`}
                             onClick={() => trackCTAClick('profile')}
                             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
                             aria-label="Scan food for this cat"
@@ -1102,7 +1102,7 @@ export default function ProfilePage() {
                     {reportCount <= 2 && (
                       <div className="pt-2">
                         <Link
-                          href="/food-input"
+                          href="/food-input?from=profile"
                           onClick={() => trackCTAClick('profile')}
                           className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                         >
@@ -1121,7 +1121,7 @@ export default function ProfilePage() {
                           <ChevronRight className="w-4 h-4" />
                         </button>
                         <Link
-                          href="/food-input"
+                          href="/food-input?from=profile"
                           onClick={() => trackCTAClick('profile')}
                           className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                         >
@@ -1238,7 +1238,7 @@ export default function ProfilePage() {
                         <ChevronRight className="w-4 h-4" />
                       </button>
                       <Link
-                        href="/food-input"
+                        href="/food-input?from=profile"
                         onClick={() => trackCTAClick('profile')}
                         className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                       >
@@ -1252,7 +1252,7 @@ export default function ProfilePage() {
               <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
                 <p className="text-gray-500 font-mono text-sm mb-4">You are yet to check your cat&apos;s food. Start scanning now!</p>
                 <Link
-                  href="/food-input"
+                  href="/food-input?from=profile"
                   onClick={() => trackCTAClick('profile')}
                   className="inline-flex items-center justify-center w-fit px-8 py-4 rounded-full bg-primary-600 hover:bg-primary-dark text-white font-semibold shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
                 >

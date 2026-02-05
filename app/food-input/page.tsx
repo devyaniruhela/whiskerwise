@@ -9,6 +9,12 @@ import { CAT_AVATARS, BODY_CONDITIONS, HEALTH_CONDITIONS } from '@/constants/cat
 import type { CatProfile, QCState } from '@/types';
 import { validateImageClient } from '@/lib/imageValidation';
 import { useSession } from '@/hooks/useSession';
+import { uploadImageToCloudinary } from '@/lib/cloudinaryUpload';
+import {
+  ANALYSIS_IMAGES_STORAGE_KEY,
+  type StoredAnalysisImage,
+  type ImageData,
+} from '@/types/analysis';
 
 interface UploadZoneProps {
   label: string;
@@ -73,7 +79,7 @@ function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRem
           {(state === 'uploading' || state === 'checking') && (
             <div className="flex flex-col items-center text-center">
               <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-3" />
-              <span className="text-sm text-gray-600">Checking...</span>
+              <span className="text-sm text-gray-600">{state === 'uploading' ? 'Uploading…' : 'Checking...'}</span>
             </div>
           )}
           
@@ -129,6 +135,7 @@ function FoodInputPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isPersonalizedFlow = searchParams.get('personalize') === 'true';
+  const fromProfile = searchParams.get('from') === 'profile';
   const { sessionId, trackAction, trackImageUpload } = useSession();
   
   const [name, setName] = useState('');
@@ -157,6 +164,20 @@ function FoodInputPageContent() {
   const [backImage, setBackImage] = useState<string | null>(null);
   const [frontError, setFrontError] = useState('');
   const [backError, setBackError] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState('');
+
+  function removeStoredImage(category: 'front' | 'back') {
+    try {
+      const raw = localStorage.getItem(ANALYSIS_IMAGES_STORAGE_KEY);
+      const arr: StoredAnalysisImage[] = raw ? JSON.parse(raw) : [];
+      const next = arr.filter((i) => i.category !== category);
+      if (next.length) localStorage.setItem(ANALYSIS_IMAGES_STORAGE_KEY, JSON.stringify(next));
+      else localStorage.removeItem(ANALYSIS_IMAGES_STORAGE_KEY);
+    } catch (_) {
+      /* ignore */
+    }
+  }
 
   // Retain user & cat details within session: load from storage when profile/input is opened
   const preselectCatId = searchParams.get('preselectCat');
@@ -231,9 +252,32 @@ function FoodInputPageContent() {
           console.log(`[QC ${zoneKey}] Server response:`, data.valid ? 'pass' : 'fail', data);
         }
         if (data.valid) {
-          setState('pass');
-          setError('');
-          trackImageUpload();
+          try {
+            setState('uploading');
+            const result = await uploadImageToCloudinary(file, zoneKey);
+            const stored: StoredAnalysisImage = {
+              imageId: result.imageId,
+              cloudinaryUrl: result.cloudinaryUrl,
+              category: zoneKey,
+              uploadedAt: new Date().toISOString(),
+              qcPassed: true,
+            };
+            const key = ANALYSIS_IMAGES_STORAGE_KEY;
+            const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+            const existing: StoredAnalysisImage[] = raw ? JSON.parse(raw) : [];
+            const merged = existing.filter((i) => i.category !== zoneKey).concat(stored);
+            localStorage.setItem(key, JSON.stringify(merged));
+            trackImageUpload();
+            setState('pass');
+            setError('');
+          } catch (err) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error(`[QC ${zoneKey}] Cloudinary upload error:`, err);
+            }
+            setState('fail');
+            setError('Error: Upload failed. Please try again.');
+            trackAction('qc_fail');
+          }
         } else {
           setState('fail');
           setError(data.error ? `Error: ${data.error}` : 'Image validation failed.');
@@ -433,32 +477,70 @@ function FoodInputPageContent() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allRequiredFieldsFilled) return;
-    
-    // Check if personalized flow requires at least one selected cat
-    const selectedCats = cats.filter(cat => cat.selected);
+
+    const selectedCats = cats.filter((cat) => cat.selected);
     if (isPersonalizedFlow && selectedCats.length === 0) {
       setPersonalizationError('Tell us about your cat so we can personalise insights & recommendations');
       return;
     }
-    
+
+    setAnalyzeError('');
+    setIsAnalyzing(true);
     trackAction('analysis_start');
-    localStorage.setItem('ww_userName', name);
-    localStorage.setItem('ww_detectedBrand', 'Sample Brand');
-    localStorage.setItem('ww_detectedVariant', 'Adult Chicken');
-    if (sessionId) localStorage.setItem('ww_session_id', sessionId);
-    // Only set personalizing flag to true if user has selected at least one cat
-    localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
-    // Persist full cat list so profile shows all cats; pass only selected names to loading
-    localStorage.setItem('ww_cats', JSON.stringify(cats));
-    if (selectedCats.length > 0) {
-      localStorage.setItem('ww_selectedCatNames', JSON.stringify(selectedCats.map(c => c.name)));
-    } else {
-      localStorage.removeItem('ww_selectedCatNames');
+
+    const analysisId = crypto.randomUUID();
+    const sid = sessionId ?? '';
+    const rawImages = typeof window !== 'undefined' ? localStorage.getItem(ANALYSIS_IMAGES_STORAGE_KEY) : null;
+    const storedImages: StoredAnalysisImage[] = rawImages ? JSON.parse(rawImages) : [];
+    const images: ImageData[] = storedImages.map((i) => ({
+      imageId: i.imageId,
+      cloudinaryUrl: i.cloudinaryUrl,
+      category: i.category,
+    }));
+
+    const cta_source = fromProfile ? 'profile' : isPersonalizedFlow ? 'landing_personalise' : 'landing_main';
+    const payload = {
+      analysis_id: analysisId,
+      session_id: sid,
+      personalise_flag: selectedCats.length > 0,
+      cat_ids: selectedCats.map((c) => c.id),
+      images,
+      cta_source,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAnalyzeError((data?.error as string) || 'Analysis failed. Please try again.');
+        setIsAnalyzing(false);
+        return;
+      }
+      localStorage.setItem('ww_userName', name);
+      localStorage.setItem('ww_detectedBrand', 'Sample Brand');
+      localStorage.setItem('ww_detectedVariant', 'Adult Chicken');
+      if (sid) localStorage.setItem('ww_session_id', sid);
+      localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
+      localStorage.setItem('ww_cats', JSON.stringify(cats));
+      if (selectedCats.length > 0) {
+        localStorage.setItem('ww_selectedCatNames', JSON.stringify(selectedCats.map((c) => c.name)));
+      } else {
+        localStorage.removeItem('ww_selectedCatNames');
+      }
+      router.push('/loading-page');
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') console.error('[analyze]', err);
+      setAnalyzeError('Network error. Please try again.');
+      setIsAnalyzing(false);
     }
-    router.push('/loading-page');
   };
 
   const bothImagesValid = frontState === 'pass' && backState === 'pass';
@@ -993,6 +1075,7 @@ function FoodInputPageContent() {
                   imageSrc={frontImage}
                   onFileSelect={(file, clientError) => handleFileSelect('front', file, clientError)}
                   onRemove={() => {
+                    removeStoredImage('front');
                     setFrontState('empty');
                     setFrontImage(null);
                     setFrontError('');
@@ -1007,6 +1090,7 @@ function FoodInputPageContent() {
                   imageSrc={backImage}
                   onFileSelect={(file, clientError) => handleFileSelect('back', file, clientError)}
                   onRemove={() => {
+                    removeStoredImage('back');
                     setBackState('empty');
                     setBackImage(null);
                     setBackError('');
@@ -1022,13 +1106,19 @@ function FoodInputPageContent() {
 
             {/* Submit */}
             <div className="space-y-3">
+              {analyzeError && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {analyzeError}
+                </div>
+              )}
               <div className="relative group">
                 <button
                   type="submit"
-                  disabled={!allRequiredFieldsFilled}
+                  disabled={!allRequiredFieldsFilled || isAnalyzing}
                   className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-primary-600 disabled:hover:text-white min-h-[48px]"
                 >
-                  Analyse Food
+                  {isAnalyzing ? 'Analysing…' : 'Analyse Food'}
                 </button>
                 {/* Tooltip on hover (desktop) */}
                 {!allRequiredFieldsFilled && (
