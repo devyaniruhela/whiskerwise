@@ -1,20 +1,29 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Check, Lock, Sparkles, Unlock, AlertCircle } from 'lucide-react';
-import { QC_ERROR_MESSAGES } from '@/constants/cat-data';
 import type { StepState, StepData } from '@/types';
 import { useSession } from '@/hooks/useSession';
+import { ANALYZE_RESULT_PREFIX, ANALYSIS_IMAGES_STORAGE_KEY } from '@/types/analysis';
+import type { StoredAnalyzeResult } from '@/types/analysis';
+import { getErrorMessage } from '@/lib/errorMessages';
+import { normalizeWebhookExtract, normalizeN8nSuccessResponse } from '@/lib/extractNormalizer';
 
-export default function LoadingPage() {
+const EXTRACT_STORAGE_KEY = 'ww_extract';
+const POLL_INTERVAL_MS = 500;
+const STEP_DURATIONS_MS = [3000, 5000, 6000]; // step 0, 1, 2; step 3 waits for response
+const REMAINING_STEP_DURATION_MS = 2000; // each remaining step on success
+
+function LoadingPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const analysisId = searchParams.get('analysis_id');
+  const returnPath = searchParams.get('return') || '/food-input';
   const { trackAnalysisComplete } = useSession();
   const analysisTrackedRef = useRef(false);
   const [userName, setUserName] = useState('there');
-  const [brand, setBrand] = useState('Your food');
-  const [variant, setVariant] = useState('');
   const [catNames, setCatNames] = useState<string[]>([]);
   const [isPersonalizing, setIsPersonalizing] = useState(false);
   const [frontImage, setFrontImage] = useState<string | null>(null);
@@ -26,24 +35,23 @@ export default function LoadingPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImage, setModalImage] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState('');
+  const resultHandledRef = useRef(false);
+  /** Index of step currently in progress (0–3 before response; used for error/remaining steps) */
+  const inProgressStepRef = useRef(0);
 
+  // Load user data and images from localStorage (set by food-input before navigate)
   useEffect(() => {
-    // Load from localStorage
     const name = localStorage.getItem('ww_userName') || 'there';
-    const detectedBrand = localStorage.getItem('ww_detectedBrand') || 'Sample Brand';
-    const detectedVariant = localStorage.getItem('ww_detectedVariant') || 'Adult Chicken';
     const front = localStorage.getItem('ww_imageFront');
     const back = localStorage.getItem('ww_imageBack');
     const catsData = localStorage.getItem('ww_cats');
     const personalizingFlag = localStorage.getItem('ww_personalizing') === 'true';
-    
     setUserName(name);
-    setBrand(detectedBrand);
-    setVariant(detectedVariant);
     setFrontImage(front);
     setBackImage(back);
     setIsPersonalizing(personalizingFlag);
-    
     let parsedCatNames: string[] = [];
     const selectedNamesRaw = localStorage.getItem('ww_selectedCatNames');
     if (selectedNamesRaw) {
@@ -52,99 +60,281 @@ export default function LoadingPage() {
       } catch (_) {}
     }
     if (parsedCatNames.length === 0 && catsData) {
-      const cats = JSON.parse(catsData);
-      parsedCatNames = (cats || []).map((c: any) => c.name);
+      try {
+        const cats = JSON.parse(catsData);
+        parsedCatNames = (cats || []).map((c: { name?: string }) => c.name);
+      } catch (_) {}
     }
     setCatNames(parsedCatNames);
-
-    // Progress simulation
-    const newSteps = [...steps];
-    const newErrors = [...stepErrors];
-    
-    // Set initial step 5 state based on personalization flag
-    if (personalizingFlag && parsedCatNames.length > 0) {
-      newSteps[4] = 'locked'; // Start as locked
-    } else {
-      newSteps[4] = 'locked'; // Keep locked if not personalizing
-    }
-    
-    // Simulate QC pass/fail (for demo, can be replaced with actual backend response)
-    const qcPass = Math.random() < 0.9; // 90% success rate for demo
-    const qcErrorCode = qcPass ? null : Object.keys(QC_ERROR_MESSAGES)[Math.floor(Math.random() * Object.keys(QC_ERROR_MESSAGES).length)];
-    
-    // Step 1: Reading the label (3 seconds)
-    newSteps[0] = 'in-progress';
-    setSteps([...newSteps]);
-
-    setTimeout(() => {
-      if (qcPass) {
-        newSteps[0] = 'complete';
-        newSteps[1] = 'in-progress';
-        setSteps([...newSteps]);
-        
-        // Step 2: Evaluating ingredient quality (2-4 seconds)
-        setTimeout(() => {
-          newSteps[1] = 'complete';
-          newSteps[2] = 'in-progress';
-          setSteps([...newSteps]);
-          
-          // Step 3: Analyzing nutritional profile (2-4 seconds)
-          setTimeout(() => {
-            newSteps[2] = 'complete';
-            newSteps[3] = 'in-progress';
-            setSteps([...newSteps]);
-            
-            // Step 4: Preparing insights (2-3 seconds)
-            setTimeout(() => {
-              newSteps[3] = 'complete';
-              setSteps([...newSteps]);
-              
-              // Check if we should personalize
-              if (personalizingFlag && parsedCatNames.length > 0) {
-                // Start unlock animation
-                setTimeout(() => {
-                  newSteps[4] = 'unlocking';
-                  setSteps([...newSteps]);
-                  setShowConfetti(true); // Trigger confetti
-                  
-                  // After unlock animation, start loading
-                  setTimeout(() => {
-                    setShowConfetti(false); // Stop confetti
-                    newSteps[4] = 'in-progress';
-                    setSteps([...newSteps]);
-                    
-                    // Step 5: Personalizing (2-3 seconds)
-                    setTimeout(() => {
-                      newSteps[4] = 'complete';
-                      setSteps([...newSteps]);
-                      if (!analysisTrackedRef.current) {
-                        analysisTrackedRef.current = true;
-                        trackAnalysisComplete(true);
-                      }
-                      setTimeout(() => setShowModal(true), 500);
-                    }, 2000 + Math.random() * 1000);
-                  }, 800); // Unlock animation duration
-                }, 300); // Small delay before unlock starts
-              } else {
-                // No personalization, go straight to modal
-                if (!analysisTrackedRef.current) {
-                  analysisTrackedRef.current = true;
-                  trackAnalysisComplete(false);
-                }
-                setTimeout(() => setShowModal(true), 500);
-              }
-            }, 2000 + Math.random() * 1000);
-          }, 2000 + Math.random() * 2000);
-        }, 2000 + Math.random() * 2000);
-      } else {
-        // QC Failed
-        newSteps[0] = 'failed';
-        newErrors[0] = qcErrorCode ? QC_ERROR_MESSAGES[qcErrorCode] : 'Unknown error occurred';
-        setSteps([...newSteps]);
-        setStepErrors([...newErrors]);
-      }
-    }, 3000);
   }, []);
+
+  // Redirect if no analysis_id
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!analysisId) {
+      router.replace('/food-input');
+      return;
+    }
+  }, [analysisId, router]);
+
+  // Step progression: one step in progress at a time. Step 0: 3s, Step 1: 5s, Step 2: 6s, Step 3: wait for response.
+  useEffect(() => {
+    if (!analysisId) return;
+    inProgressStepRef.current = 0;
+    setSteps(['in-progress', 'pending', 'pending', 'pending', 'locked']);
+
+    const t0 = setTimeout(() => {
+      if (resultHandledRef.current) return;
+      inProgressStepRef.current = 1;
+      setSteps((s) => ['complete', 'in-progress', s[2], s[3], s[4]] as StepState[]);
+    }, STEP_DURATIONS_MS[0]);
+
+    const t1 = setTimeout(() => {
+      if (resultHandledRef.current) return;
+      inProgressStepRef.current = 2;
+      setSteps((s) => ['complete', 'complete', 'in-progress', s[3], s[4]] as StepState[]);
+    }, STEP_DURATIONS_MS[0] + STEP_DURATIONS_MS[1]);
+
+    const t2 = setTimeout(() => {
+      if (resultHandledRef.current) return;
+      inProgressStepRef.current = 3;
+      setSteps((s) => ['complete', 'complete', 'complete', 'in-progress', s[4]] as StepState[]);
+    }, STEP_DURATIONS_MS[0] + STEP_DURATIONS_MS[1] + STEP_DURATIONS_MS[2]);
+
+    return () => {
+      clearTimeout(t0);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [analysisId]);
+
+  // Poll for analyze result
+  useEffect(() => {
+    if (!analysisId || resultHandledRef.current) return;
+    const key = ANALYZE_RESULT_PREFIX + analysisId;
+    const poll = () => {
+      if (resultHandledRef.current) return;
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      if (!raw) return;
+      try {
+        const result = JSON.parse(raw) as StoredAnalyzeResult;
+        resultHandledRef.current = true;
+        const data = result.data;
+        const isNetworkError = (data as { _network?: boolean } | undefined)?._network === true;
+
+        // #region agent log
+        const dataShape = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+        fetch('http://127.0.0.1:7245/ingest/d35b102a-7877-4b1a-8e3d-b3c0eb84a7bc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loading-page poll',message:'result received',data:{isArray:Array.isArray(data),hasExtract:Array.isArray(dataShape.extract),dataStatus:dataShape.status,hasErrors:Array.isArray(dataShape.errors),resultOk:result.ok},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+
+        const failAtStep = inProgressStepRef.current;
+        const setErrorAtCurrentStep = (msg: string) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/d35b102a-7877-4b1a-8e3d-b3c0eb84a7bc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loading-page setErrorAtCurrentStep',message:'called',data:{failAtStep,msg:msg.slice(0,80)},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+          // #endregion
+          setStepErrors((e) => {
+            const n = [...e];
+            n[failAtStep] = msg;
+            return n;
+          });
+          setSteps((s) => {
+            const n = [...s];
+            n[failAtStep] = 'failed';
+            return n as StepState[];
+          });
+          setErrorModalMessage(msg);
+          setShowErrorModal(true);
+        };
+
+        if (!result.ok || isNetworkError) {
+          setErrorAtCurrentStep('Network error. Please try again.');
+          return;
+        }
+
+        // Normalize payload: n8n may send array as data, or as data.extract, or as data.data
+        const dataObjLegacy = data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+        const n8nArray =
+          Array.isArray(data)
+            ? data
+            : Array.isArray(dataObjLegacy.extract)
+              ? (dataObjLegacy.extract as unknown[])
+              : Array.isArray(dataObjLegacy.data)
+                ? (dataObjLegacy.data as unknown[])
+                : null;
+
+        // Error format: object with data.status === "error" and data.errors[] (each with error_codes)
+        if (dataObjLegacy.status === 'error' && Array.isArray(dataObjLegacy.errors)) {
+          const errList = dataObjLegacy.errors as Array<{ error_codes?: string[] | null }>;
+          const messages: string[] = [];
+          for (const e of errList) {
+            if (Array.isArray(e.error_codes) && e.error_codes.length > 0) {
+              messages.push(getErrorMessage(e.error_codes[0]));
+            }
+          }
+          const errMsg = messages.length > 0 ? messages.join(' ') : 'One or both images could not be processed. Please try again.';
+          setErrorAtCurrentStep(errMsg);
+          return;
+        }
+
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/d35b102a-7877-4b1a-8e3d-b3c0eb84a7bc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loading-page n8nArray',message:'computed',data:{n8nArrayIsNull:n8nArray==null,n8nArrayLen:n8nArray?.length,dataStatus:dataObjLegacy.status,hasErrors:Array.isArray(dataObjLegacy.errors)},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+
+        // N8n error format: [{ all_passed: false, error_codes?: string[], images?: [{ image_id, category, error_codes[] }, ...] }]
+        if (n8nArray && n8nArray.length > 0) {
+          const first = n8nArray[0] as {
+            all_passed?: boolean;
+            error_codes?: string[];
+            images?: Array<{ error_codes?: string[] | null; category?: string }>;
+          };
+          const enteredOldErrorBlock = first.all_passed === false;
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/d35b102a-7877-4b1a-8e3d-b3c0eb84a7bc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loading-page old error block',message:'check',data:{enteredOldErrorBlock,allPassed:first.all_passed,hasImages:Array.isArray(first.images)},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
+          if (enteredOldErrorBlock) {
+            const messages: string[] = [];
+            if (Array.isArray(first.error_codes) && first.error_codes.length > 0) {
+              messages.push(getErrorMessage(first.error_codes[0]));
+            }
+            if (messages.length === 0 && Array.isArray(first.images)) {
+              for (const img of first.images) {
+                if (Array.isArray(img.error_codes) && img.error_codes.length > 0) {
+                  messages.push(getErrorMessage(img.error_codes[0]));
+                }
+              }
+            }
+            const errMsg = messages.length > 0 ? messages.join(' ') : 'One or both images could not be processed. Please try again.';
+            setErrorAtCurrentStep(errMsg);
+            return;
+          }
+        }
+
+        // N8n success format: [{ status: 'success', extracted_data: [ {...}, {...} ] }]
+        const n8nExtract = normalizeN8nSuccessResponse(n8nArray ?? data);
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/d35b102a-7877-4b1a-8e3d-b3c0eb84a7bc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loading-page after success check',message:'branch',data:{n8nExtractNotNull:!!n8nExtract},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
+        if (n8nExtract) {
+          localStorage.setItem(EXTRACT_STORAGE_KEY, JSON.stringify(n8nExtract));
+          localStorage.setItem('ww_detectedBrand', n8nExtract.brand || '');
+          localStorage.setItem('ww_detectedVariant', n8nExtract.variant || '');
+          const personalizing = isPersonalizing && catNames.length > 0;
+
+          const runRemainingSteps = (fromIndex: number) => {
+            if (fromIndex > 4) {
+              if (!analysisTrackedRef.current) {
+                analysisTrackedRef.current = true;
+                trackAnalysisComplete(personalizing);
+              }
+              setTimeout(() => setShowModal(true), 500);
+              return;
+            }
+            setSteps((s) => {
+              const n = [...s];
+              for (let i = 0; i < fromIndex; i++) n[i] = 'complete';
+              n[fromIndex] = fromIndex === 4 && personalizing ? 'unlocking' : 'in-progress';
+              return n as StepState[];
+            });
+            if (fromIndex === 4 && personalizing) {
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 800);
+              setTimeout(() => {
+                setSteps((s) => {
+                  const n = [...s];
+                  n[4] = 'in-progress';
+                  return n as StepState[];
+                });
+                setTimeout(() => {
+                  setSteps((s) => {
+                    const n = [...s];
+                    n[4] = 'complete';
+                    return n as StepState[];
+                  });
+                  runRemainingSteps(5);
+                }, REMAINING_STEP_DURATION_MS);
+              }, 800);
+            } else {
+              setTimeout(() => {
+                setSteps((s) => {
+                  const n = [...s];
+                  n[fromIndex] = 'complete';
+                  return n as StepState[];
+                });
+                runRemainingSteps(fromIndex + 1);
+              }, REMAINING_STEP_DURATION_MS);
+            }
+          };
+          runRemainingSteps(inProgressStepRef.current);
+          return;
+        }
+
+        // Legacy: single object with data.image_errors or data.extract
+        const imageErrors = dataObjLegacy.image_errors as Array<{ image_id: string; error_code: string }> | undefined;
+        if (!result.ok && imageErrors && Array.isArray(imageErrors) && imageErrors.length > 0) {
+          setErrorAtCurrentStep(getErrorMessage(imageErrors[0].error_code));
+          return;
+        }
+        const rawExtract = dataObjLegacy.extract;
+        if (rawExtract && typeof rawExtract === 'object') {
+          const extract = normalizeWebhookExtract(rawExtract as Record<string, unknown>);
+          localStorage.setItem(EXTRACT_STORAGE_KEY, JSON.stringify(extract));
+          localStorage.setItem('ww_detectedBrand', extract.brand || '');
+          localStorage.setItem('ww_detectedVariant', extract.variant || '');
+          const personalizing = isPersonalizing && catNames.length > 0;
+
+          const runRemainingSteps = (fromIndex: number) => {
+            if (fromIndex > 4) {
+              if (!analysisTrackedRef.current) {
+                analysisTrackedRef.current = true;
+                trackAnalysisComplete(personalizing);
+              }
+              setTimeout(() => setShowModal(true), 500);
+              return;
+            }
+            setSteps((s) => {
+              const n = [...s];
+              for (let i = 0; i < fromIndex; i++) n[i] = 'complete';
+              n[fromIndex] = fromIndex === 4 && personalizing ? 'unlocking' : 'in-progress';
+              return n as StepState[];
+            });
+            if (fromIndex === 4 && personalizing) {
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 800);
+              setTimeout(() => {
+                setSteps((s) => { const n = [...s]; n[4] = 'in-progress'; return n as StepState[]; });
+                setTimeout(() => {
+                  setSteps((s) => { const n = [...s]; n[4] = 'complete'; return n as StepState[]; });
+                  runRemainingSteps(5);
+                }, REMAINING_STEP_DURATION_MS);
+              }, 800);
+            } else {
+              setTimeout(() => {
+                setSteps((s) => { const n = [...s]; n[fromIndex] = 'complete'; return n as StepState[]; });
+                runRemainingSteps(fromIndex + 1);
+              }, REMAINING_STEP_DURATION_MS);
+            }
+          };
+          runRemainingSteps(inProgressStepRef.current);
+        }
+      } catch (_) {
+        // ignore parse error, keep polling
+      }
+    };
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    poll();
+    return () => clearInterval(interval);
+  }, [analysisId, isPersonalizing, catNames.length, trackAnalysisComplete]);
+
+  const handleTryAgain = useCallback(() => {
+    if (analysisId) {
+      localStorage.removeItem(ANALYZE_RESULT_PREFIX + analysisId);
+    }
+    localStorage.removeItem(ANALYSIS_IMAGES_STORAGE_KEY);
+    localStorage.removeItem('ww_imageFront');
+    localStorage.removeItem('ww_imageBack');
+    setShowErrorModal(false);
+    router.push(returnPath);
+  }, [analysisId, returnPath, router]);
 
   const stepData: StepData[] = [
     { label: 'Reading the label', detail: "Understanding what's actually in the pack" },
@@ -257,11 +447,6 @@ export default function LoadingPage() {
                   </div>
                 )}
               </div>
-
-              <p className="text-sm font-mono uppercase tracking-wider text-gray-500 text-center">
-                Detected: <span className="text-gray-700 font-semibold">{brand}</span>
-                {variant && <> — {variant}</>}
-              </p>
             </div>
           </div>
 
@@ -333,7 +518,7 @@ export default function LoadingPage() {
                         <div className="w-6 h-6 rounded-full bg-primary-500 animate-in zoom-in duration-300"></div>
                       )}
                       {steps[i] === 'failed' && (
-                        <div className="w-6 h-6 rounded-full bg-red-600 animate-in zoom-in duration-300"></div>
+                        <AlertCircle className="w-6 h-6 text-red-600 animate-in zoom-in duration-300" aria-hidden />
                       )}
                       {steps[i] === 'locked' && (
                         <Lock className="w-5 h-5 text-gray-400" />
@@ -382,13 +567,38 @@ export default function LoadingPage() {
         </div>
       )}
 
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300"
+          onClick={() => setShowErrorModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-soft-xl border-2 border-red-100 animate-in zoom-in-95 duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-3xl font-serif mb-3 text-gray-900">Something went wrong</h2>
+            <p className="text-gray-600 mb-8">{errorModalMessage}</p>
+            <button
+              onClick={handleTryAgain}
+              className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Completion Modal */}
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300"
           onClick={() => router.push('/report')}
         >
-          <div 
+          <div
             className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-soft-xl border-2 border-primary-100 animate-in zoom-in-95 duration-500"
             onClick={(e) => e.stopPropagation()}
           >
@@ -396,8 +606,7 @@ export default function LoadingPage() {
               <Sparkles className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-3xl font-serif mb-3 text-gray-900">Time to get Wiser!</h2>
-            <p className="text-gray-600 mb-2">Assessment ready for</p>
-            <p className="font-semibold text-lg text-primary-700 mb-8">{brand} {variant && `— ${variant}`}</p>
+            <p className="text-gray-600 mb-8">Your assessment is ready.</p>
             <button
               onClick={() => router.push('/report')}
               className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200"
@@ -433,5 +642,17 @@ export default function LoadingPage() {
         }
       `}</style>
     </>
+  );
+}
+
+export default function LoadingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoadingPageContent />
+    </Suspense>
   );
 }

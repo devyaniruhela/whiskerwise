@@ -12,6 +12,7 @@ import { useSession } from '@/hooks/useSession';
 import { uploadImageToCloudinary } from '@/lib/cloudinaryUpload';
 import {
   ANALYSIS_IMAGES_STORAGE_KEY,
+  ANALYZE_RESULT_PREFIX,
   type StoredAnalysisImage,
   type ImageData,
 } from '@/types/analysis';
@@ -477,7 +478,7 @@ function FoodInputPageContent() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!allRequiredFieldsFilled) return;
 
@@ -512,35 +513,39 @@ function FoodInputPageContent() {
       timestamp: new Date().toISOString(),
     };
 
-    try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAnalyzeError((data?.error as string) || 'Analysis failed. Please try again.');
-        setIsAnalyzing(false);
-        return;
-      }
-      localStorage.setItem('ww_userName', name);
-      localStorage.setItem('ww_detectedBrand', 'Sample Brand');
-      localStorage.setItem('ww_detectedVariant', 'Adult Chicken');
-      if (sid) localStorage.setItem('ww_session_id', sid);
-      localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
-      localStorage.setItem('ww_cats', JSON.stringify(cats));
-      if (selectedCats.length > 0) {
-        localStorage.setItem('ww_selectedCatNames', JSON.stringify(selectedCats.map((c) => c.name)));
-      } else {
-        localStorage.removeItem('ww_selectedCatNames');
-      }
-      router.push('/loading-page');
-    } catch (err) {
-      if (process.env.NODE_ENV === 'development') console.error('[analyze]', err);
-      setAnalyzeError('Network error. Please try again.');
-      setIsAnalyzing(false);
+    // Persist session & images so loading page can show them; result will be stored when fetch completes
+    localStorage.setItem('ww_userName', name);
+    if (sid) localStorage.setItem('ww_session_id', sid);
+    localStorage.setItem('ww_personalizing', selectedCats.length > 0 ? 'true' : 'false');
+    localStorage.setItem('ww_cats', JSON.stringify(cats));
+    if (selectedCats.length > 0) {
+      localStorage.setItem('ww_selectedCatNames', JSON.stringify(selectedCats.map((c) => c.name)));
+    } else {
+      localStorage.removeItem('ww_selectedCatNames');
     }
+    const frontUrl = storedImages.find((i) => i.category === 'front')?.cloudinaryUrl;
+    const backUrl = storedImages.find((i) => i.category === 'back')?.cloudinaryUrl;
+    if (frontUrl) localStorage.setItem('ww_imageFront', frontUrl);
+    if (backUrl) localStorage.setItem('ww_imageBack', backUrl);
+
+    const returnPath = '/food-input' + (typeof window !== 'undefined' && window.location.search ? window.location.search : '');
+
+    fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then((res) =>
+        res.json().then((data) => ({ ok: res.ok, status: res.status, data: data as Record<string, unknown> })).catch(() => ({ ok: false, status: res.status, data: {} as Record<string, unknown> }))
+      )
+      .then((result) => {
+        localStorage.setItem(ANALYZE_RESULT_PREFIX + analysisId, JSON.stringify(result));
+      })
+      .catch(() => {
+        localStorage.setItem(ANALYZE_RESULT_PREFIX + analysisId, JSON.stringify({ ok: false, data: { _network: true } }));
+      });
+
+    router.push('/loading-page?analysis_id=' + encodeURIComponent(analysisId) + '&return=' + encodeURIComponent(returnPath));
   };
 
   const bothImagesValid = frontState === 'pass' && backState === 'pass';

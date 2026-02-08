@@ -32,19 +32,19 @@ function buildMockDataForId(id: string): ExtractedData {
     ],
     additives: ['Vitamin E (600 IU)', 'Vitamin A (18000 IU)', 'Zinc Sulphate'],
     guaranteedAnalysis: {
-      protein: 0.28,
-      fat: 0.14,
-      fibre: 0.03,
-      ash: 0.08,
-      moisture: 0.10,
-      others: [{ calcium: 0.012 }, { phosphorus: 0.010 }],
+      protein: 28,
+      fat: 14,
+      fibre: 3,
+      ash: 8,
+      moisture: 10,
+      others: [{ label: 'Calcium', value: '0.012%' }, { label: 'Phosphorus', value: '0.010%' }],
     },
     taurineAdded: true,
     weight: 1500,
     price: 450,
     priceCurrency: 'INR',
     metEnergy100g: '380 kcal',
-    manufaturerName: 'Sample Pet Foods Pvt Ltd',
+    manufacturerName: 'Sample Pet Foods Pvt Ltd',
     manufacturerContact: '+91-1234567890',
     countryOrigin: 'India',
     dateManufacture: '2025-10-15',
@@ -162,7 +162,7 @@ export default function ReportByIdPage() {
                 <DataField label="Type" value={extractedData.type} badge />
                 <DataField label="Adequacy" value={extractedData.adequacy} badge />
                 <DataField label="Texture" value={extractedData.texture} />
-                <DataField label="Weight" value={`${extractedData.weight}g`} />
+                <DataField label="Weight" value={extractedData.weight != null ? `${extractedData.weight}g` : null} />
               </div>
             </section>
 
@@ -172,21 +172,14 @@ export default function ReportByIdPage() {
                 Guaranteed Analysis
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {extractedData.guaranteedAnalysis.protein != null && (
-                  <NutrientCard label="Protein" value={extractedData.guaranteedAnalysis.protein} />
-                )}
-                {extractedData.guaranteedAnalysis.fat != null && (
-                  <NutrientCard label="Fat" value={extractedData.guaranteedAnalysis.fat} />
-                )}
-                {extractedData.guaranteedAnalysis.fibre != null && (
-                  <NutrientCard label="Fibre" value={extractedData.guaranteedAnalysis.fibre} />
-                )}
-                {extractedData.guaranteedAnalysis.ash != null && (
-                  <NutrientCard label="Ash" value={extractedData.guaranteedAnalysis.ash} />
-                )}
-                {extractedData.guaranteedAnalysis.moisture != null && (
-                  <NutrientCard label="Moisture" value={extractedData.guaranteedAnalysis.moisture} />
-                )}
+                <NutrientCard label="Protein" value={extractedData.guaranteedAnalysis.protein} />
+                <NutrientCard label="Fat" value={extractedData.guaranteedAnalysis.fat} />
+                <NutrientCard label="Fibre" value={extractedData.guaranteedAnalysis.fibre} />
+                <NutrientCard label="Ash" value={extractedData.guaranteedAnalysis.ash} />
+                <NutrientCard label="Moisture" value={extractedData.guaranteedAnalysis.moisture} />
+                {extractedData.guaranteedAnalysis.others.map((other, idx) => (
+                  <NutrientCardOther key={idx} label={other.label} value={other.value} />
+                ))}
               </div>
             </section>
 
@@ -196,26 +189,14 @@ export default function ReportByIdPage() {
                 Manufacturer Information
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {extractedData.manufaturerName && (
-                  <DataField label="Manufacturer" value={extractedData.manufaturerName} />
-                )}
-                {extractedData.manufacturerContact && (
-                  <DataField label="Contact" value={extractedData.manufacturerContact} icon={<Phone className="w-4 h-4" />} />
-                )}
-                {extractedData.countryOrigin && (
-                  <DataField label="Country of Origin" value={extractedData.countryOrigin} icon={<MapPin className="w-4 h-4" />} />
-                )}
-                {extractedData.dateExpiry && (
-                  <DataField
-                    label="Expiry Date"
-                    value={new Date(extractedData.dateExpiry).toLocaleDateString('en-IN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                    icon={<Calendar className="w-4 h-4" />}
-                  />
-                )}
+                <DataField label="Manufacturer" value={extractedData.manufacturerName} />
+                <DataField label="Contact" value={extractedData.manufacturerContact} icon={<Phone className="w-4 h-4" />} />
+                <DataField label="Country of Origin" value={extractedData.countryOrigin} icon={<MapPin className="w-4 h-4" />} />
+                <DataField
+                  label="Expiry Date"
+                  value={extractedData.dateExpiry ? new Date(extractedData.dateExpiry).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null}
+                  icon={<Calendar className="w-4 h-4" />}
+                />
               </div>
             </section>
           </div>
@@ -258,31 +239,46 @@ function DataField({
   badge?: boolean;
   icon?: React.ReactNode;
 }) {
-  if (!value) return null;
+  const display = value != null && value !== '' ? value : '—';
   return (
     <div>
       <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">{label}</span>
       {badge ? (
         <span className="inline-block px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium capitalize">
-          {value}
+          {display}
         </span>
       ) : (
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-sm text-gray-900 font-medium">{value}</span>
+          <span className={`text-sm font-medium ${display === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{display}</span>
         </div>
       )}
     </div>
   );
 }
 
-function NutrientCard({ label, value }: { label: string; value: number }) {
+function NutrientCard({ label, value }: { label: string; value: number | null }) {
+  const display = value != null ? (value % 1 === 0 ? `${value}%` : `${value.toFixed(1)}%`) : '—';
   return (
     <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
       <span className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-1 capitalize">
         {label}
       </span>
-      <span className="text-lg font-bold text-primary-700">{(value * 100).toFixed(1)}%</span>
+      <span className={`text-lg font-bold ${value != null ? 'text-primary-700' : 'text-gray-400'}`}>
+        {display}
+      </span>
+    </div>
+  );
+}
+
+function NutrientCardOther({ label, value }: { label: string; value: string }) {
+  const display = value != null && value !== '' ? value : '—';
+  return (
+    <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+      <span className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-1 capitalize">
+        {label}
+      </span>
+      <span className={`text-lg font-bold ${display === '—' ? 'text-gray-400' : 'text-primary-700'}`}>{display}</span>
     </div>
   );
 }

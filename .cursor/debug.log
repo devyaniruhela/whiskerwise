@@ -1,0 +1,15 @@
+{"location":"loading-page poll","message":"result received","data":{"isArray":false,"hasExtract":false,"hasErrors":false,"resultOk":false},"timestamp":1770550285304,"hypothesisId":"H1"}
+{"location":"loading-page setErrorAtCurrentStep","message":"called","data":{"failAtStep":0,"msg":"Network error. Please try again."},"timestamp":1770550285307,"hypothesisId":"H3"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":false,"hasExtract":false,"dataStatus":"error","hasErrors":true,"resultOk":true},"timestamp":1770550374255,"hypothesisId":"H1"}
+{"location":"loading-page n8nArray","message":"computed","data":{"n8nArrayIsNull":true},"timestamp":1770550374257,"hypothesisId":"H1"}
+{"location":"loading-page after success check","message":"branch","data":{"n8nExtractNotNull":false},"timestamp":1770550374258,"hypothesisId":"H4"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":false,"hasExtract":false,"dataStatus":"error","hasErrors":true,"resultOk":true},"timestamp":1770550593172,"hypothesisId":"H1"}
+{"location":"loading-page setErrorAtCurrentStep","message":"called","data":{"failAtStep":2,"msg":"One or both images could not be processed. Please try again."},"timestamp":1770550593174,"hypothesisId":"H3"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":false,"hasExtract":false,"dataStatus":"error","hasErrors":true,"resultOk":true},"timestamp":1770550798536,"hypothesisId":"H1"}
+{"location":"loading-page setErrorAtCurrentStep","message":"called","data":{"failAtStep":2,"msg":"One or both images could not be processed. Please try again."},"timestamp":1770550798539,"hypothesisId":"H3"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":false,"hasExtract":false,"dataStatus":"error","hasErrors":true,"resultOk":true},"timestamp":1770550860640,"hypothesisId":"H1"}
+{"location":"loading-page setErrorAtCurrentStep","message":"called","data":{"failAtStep":3,"msg":"Image is blurry or out of focus. Hold your camera steady and try again."},"timestamp":1770550860643,"hypothesisId":"H3"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":true,"hasExtract":false,"hasErrors":false,"resultOk":true},"timestamp":1770550997052,"hypothesisId":"H1"}
+{"location":"loading-page n8nArray","message":"computed","data":{"n8nArrayIsNull":false,"n8nArrayLen":1,"hasErrors":false},"timestamp":1770550997054,"hypothesisId":"H1"}
+{"location":"loading-page old error block","message":"check","data":{"enteredOldErrorBlock":false,"hasImages":false},"timestamp":1770550997055,"hypothesisId":"H1"}
+{"location":"loading-page after success check","message":"branch","data":{"n8nExtractNotNull":true},"timestamp":1770550997059,"hypothesisId":"H4"}

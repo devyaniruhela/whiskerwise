@@ -72,19 +72,22 @@ export interface ExtractedData {
     fibre: number | null;
     ash: number | null;
     moisture: number | null;
-    others: Array<{ [key: string]: number }>;
+    /** Exact string values as sent; no numeric conversion or % formatting */
+    others: Array<{ label: string; value: string }>;
   };
   taurineAdded: boolean | null;
-  weight: number;
+  weight: number | null;
   price: number | null;
   priceCurrency: string;
   metEnergy100g: string | null;
-  manufaturerName: string | null;
+  manufacturerName: string | null;
   manufacturerContact: string | null;
   countryOrigin: string | null;
   dateManufacture: string | null;
   dateExpiry: string | null;
   translatedFlag: boolean;
+  /** Between 0-1; null if not provided */
+  confidence?: number | null;
 }
 
 export interface StepData {

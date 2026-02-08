@@ -1,19 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
-import { Check, X, AlertCircle, Package, Droplets, Award, Calendar, MapPin, Phone, User } from 'lucide-react';
+import { Check, X, AlertCircle, Droplets, Award, Calendar, MapPin, Phone, User, RotateCw } from 'lucide-react';
 import type { ExtractedData } from '@/types';
+
+const IMAGE_FRONT_KEY = 'ww_imageFront';
+const IMAGE_BACK_KEY = 'ww_imageBack';
 
 export default function ReportPage() {
   const router = useRouter();
   const [feedback, setFeedback] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [frontImage, setFrontImage] = useState<string | null>(null);
+  const [backImage, setBackImage] = useState<string | null>(null);
+  const [overlayImage, setOverlayImage] = useState<string | null>(null);
+  const [mobileShowFront, setMobileShowFront] = useState(true);
+
+  const openOverlay = useCallback((src: string) => setOverlayImage(src), []);
+  const closeOverlay = useCallback(() => setOverlayImage(null), []);
 
   useEffect(() => {
-    // Mock extracted data - in production, this will come from backend
+    const front = localStorage.getItem(IMAGE_FRONT_KEY);
+    const back = localStorage.getItem(IMAGE_BACK_KEY);
+    if (front) setFrontImage(front);
+    if (back) setBackImage(back);
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('ww_extract');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as ExtractedData;
+        setExtractedData(parsed);
+        return;
+      } catch (_) {
+        // fall through to mock
+      }
+    }
     const mockData: ExtractedData = {
       brand: localStorage.getItem('ww_detectedBrand') || 'Sample Brand',
       variant: localStorage.getItem('ww_detectedVariant') || 'Adult Chicken',
@@ -37,26 +63,25 @@ export default function ReportPage() {
       ],
       additives: ['Vitamin E (600 IU)', 'Vitamin A (18000 IU)', 'Zinc Sulphate'],
       guaranteedAnalysis: {
-        protein: 0.28,
-        fat: 0.14,
-        fibre: 0.03,
-        ash: 0.08,
-        moisture: 0.10,
-        others: [{ calcium: 0.012 }, { phosphorus: 0.010 }]
+        protein: 28,
+        fat: 14,
+        fibre: 3,
+        ash: 8,
+        moisture: 10,
+        others: [{ label: 'Calcium', value: '0.012%' }, { label: 'Phosphorus', value: '0.010%' }]
       },
       taurineAdded: true,
       weight: 1500,
       price: 450,
       priceCurrency: 'INR',
       metEnergy100g: '380 kcal',
-      manufaturerName: 'Sample Pet Foods Pvt Ltd',
+      manufacturerName: 'Sample Pet Foods Pvt Ltd',
       manufacturerContact: '+91-1234567890',
       countryOrigin: 'India',
       dateManufacture: '2025-10-15',
       dateExpiry: '2026-10-15',
       translatedFlag: false
     };
-
     setExtractedData(mockData);
   }, []);
 
@@ -144,15 +169,74 @@ export default function ReportPage() {
             </div>
           </div>
 
-          {/* Extracted Data Display */}
-          <div className="space-y-6 mb-12">
-            {/* Basic Information */}
-            <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
-              <h2 className="text-xl font-serif text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-primary-600" />
-                Basic Information
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Uploaded images + basic details (below user validation) */}
+          <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft mb-8">
+            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-stretch">
+              {/* Images: desktop = side by side; mobile = single with turn icon */}
+              <div className="flex flex-col md:flex-row gap-4 md:min-w-0 md:flex-1">
+                {/* Desktop: two images side by side */}
+                <div className="hidden md:flex md:flex-1 gap-4">
+                  {frontImage && (
+                    <div
+                      className="flex-1 min-w-0 rounded-xl overflow-hidden border-2 border-emerald-100 bg-gray-50 cursor-pointer hover:border-primary-300 transition-colors"
+                      onDoubleClick={() => openOverlay(frontImage)}
+                      title="Double-click to enlarge"
+                    >
+                      <img src={frontImage} alt="Front of package" className="w-full h-full min-h-[200px] object-contain" />
+                    </div>
+                  )}
+                  {backImage && (
+                    <div
+                      className="flex-1 min-w-0 rounded-xl overflow-hidden border-2 border-emerald-100 bg-gray-50 cursor-pointer hover:border-primary-300 transition-colors"
+                      onDoubleClick={() => openOverlay(backImage)}
+                      title="Double-click to enlarge"
+                    >
+                      <img src={backImage} alt="Back label" className="w-full h-full min-h-[200px] object-contain" />
+                    </div>
+                  )}
+                  {!frontImage && !backImage && (
+                    <div className="flex-1 min-h-[200px] rounded-xl border-2 border-dashed border-emerald-200 bg-gray-50 flex items-center justify-center text-gray-500 text-sm">
+                      No uploaded images
+                    </div>
+                  )}
+                </div>
+                {/* Mobile: single image + turn icon */}
+                <div className="md:hidden relative w-full aspect-[4/3] max-h-[280px] rounded-xl overflow-hidden border-2 border-emerald-100 bg-gray-50">
+                  {frontImage && backImage && (
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 z-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-white/90 shadow-md border border-gray-200 text-gray-700 hover:bg-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileShowFront((prev) => !prev);
+                      }}
+                      aria-label={mobileShowFront ? 'Show back panel' : 'Show front panel'}
+                    >
+                      <RotateCw className="w-5 h-5" />
+                    </button>
+                  )}
+                  {(mobileShowFront ? frontImage : backImage) ? (
+                    <button
+                      type="button"
+                      className="absolute inset-0 w-full h-full flex items-center justify-center"
+                      onClick={() => openOverlay(mobileShowFront ? frontImage! : backImage!)}
+                      aria-label="Enlarge image"
+                    >
+                      <img
+                        src={(mobileShowFront ? frontImage : backImage) || ''}
+                        alt={mobileShowFront ? 'Front of package' : 'Back label'}
+                        className="w-full h-full object-contain"
+                      />
+                    </button>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
+                      No uploaded images
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Basic details beside images (no "Basic Information" header) */}
+              <div className="md:w-72 flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 content-start">
                 <DataField label="Brand" value={extractedData.brand} />
                 <DataField label="Variant" value={extractedData.variant} />
                 <DataField label="Life Stage" value={extractedData.lifestage} badge />
@@ -160,10 +244,31 @@ export default function ReportPage() {
                 <DataField label="Type Method" value={extractedData.typeMethod} />
                 <DataField label="Adequacy" value={extractedData.adequacy} badge />
                 <DataField label="Texture" value={extractedData.texture} />
-                <DataField label="Weight" value={`${extractedData.weight}g`} />
+                <DataField label="Weight" value={extractedData.weight != null ? `${extractedData.weight}g` : null} />
               </div>
-            </section>
+            </div>
+          </section>
 
+          {/* Image overlay (double-click desktop / tap mobile) */}
+          {overlayImage && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+              onClick={closeOverlay}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Enlarged image"
+            >
+              <img
+                src={overlayImage}
+                alt="Enlarged"
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+
+          {/* Extracted Data Display */}
+          <div className="space-y-6 mb-12">
             {/* Certifications & Claims */}
             <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
               <h2 className="text-xl font-serif text-gray-900 mb-4 flex items-center gap-2">
@@ -183,9 +288,9 @@ export default function ReportPage() {
                     </span>
                   )}
                 </div>
-                {extractedData.otherCertifications.length > 0 && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 block mb-2">Other Certifications:</span>
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block mb-2">Other Certifications:</span>
+                  {extractedData.otherCertifications.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {extractedData.otherCertifications.map((cert, idx) => (
                         <span key={idx} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
@@ -193,11 +298,13 @@ export default function ReportPage() {
                         </span>
                       ))}
                     </div>
-                  </div>
-                )}
-                {extractedData.claims.length > 0 && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 block mb-2">Claims:</span>
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block mb-2">Claims:</span>
+                  {extractedData.claims.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {extractedData.claims.map((claim, idx) => (
                         <span key={idx} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
@@ -205,11 +312,11 @@ export default function ReportPage() {
                         </span>
                       ))}
                     </div>
-                  </div>
-                )}
-                {extractedData.intendedUse && (
-                  <DataField label="Intended Use" value={extractedData.intendedUse} />
-                )}
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
+                  )}
+                </div>
+                <DataField label="Intended Use" value={extractedData.intendedUse} />
               </div>
             </section>
 
@@ -222,22 +329,28 @@ export default function ReportPage() {
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-700 block mb-2">Ingredients:</span>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
-                    {extractedData.ingredients.map((ingredient, idx) => (
-                      <li key={idx}>{ingredient}</li>
-                    ))}
-                  </ol>
+                  {extractedData.ingredients.length > 0 ? (
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                      {extractedData.ingredients.map((ingredient, idx) => (
+                        <li key={idx}>{ingredient}</li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
+                  )}
                 </div>
-                {extractedData.additives && extractedData.additives.length > 0 && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 block mb-2">Additives:</span>
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block mb-2">Additives:</span>
+                  {extractedData.additives && extractedData.additives.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
                       {extractedData.additives.map((additive, idx) => (
                         <li key={idx}>{additive}</li>
                       ))}
                     </ul>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 pt-2">
                   <span className="text-sm font-medium text-gray-700">Taurine Added:</span>
                   {extractedData.taurineAdded === null ? (
@@ -259,47 +372,30 @@ export default function ReportPage() {
             <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
               <h2 className="text-xl font-serif text-gray-900 mb-4">Guaranteed Analysis</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {extractedData.guaranteedAnalysis.protein !== null && (
-                  <NutrientCard label="Protein" value={extractedData.guaranteedAnalysis.protein} />
-                )}
-                {extractedData.guaranteedAnalysis.fat !== null && (
-                  <NutrientCard label="Fat" value={extractedData.guaranteedAnalysis.fat} />
-                )}
-                {extractedData.guaranteedAnalysis.fibre !== null && (
-                  <NutrientCard label="Fibre" value={extractedData.guaranteedAnalysis.fibre} />
-                )}
-                {extractedData.guaranteedAnalysis.ash !== null && (
-                  <NutrientCard label="Ash" value={extractedData.guaranteedAnalysis.ash} />
-                )}
-                {extractedData.guaranteedAnalysis.moisture !== null && (
-                  <NutrientCard label="Moisture" value={extractedData.guaranteedAnalysis.moisture} />
-                )}
-                {extractedData.guaranteedAnalysis.others.map((other, idx) => {
-                  const [key, value] = Object.entries(other)[0];
-                  return <NutrientCard key={idx} label={key} value={value} />;
-                })}
+                <NutrientCard label="Protein" value={extractedData.guaranteedAnalysis.protein} />
+                <NutrientCard label="Fat" value={extractedData.guaranteedAnalysis.fat} />
+                <NutrientCard label="Fibre" value={extractedData.guaranteedAnalysis.fibre} />
+                <NutrientCard label="Ash" value={extractedData.guaranteedAnalysis.ash} />
+                <NutrientCard label="Moisture" value={extractedData.guaranteedAnalysis.moisture} />
+                {extractedData.guaranteedAnalysis.others.map((other, idx) => (
+                  <NutrientCardOther key={idx} label={other.label} value={other.value} />
+                ))}
               </div>
-              {extractedData.metEnergy100g && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <DataField label="Metabolisable Energy (per 100g)" value={extractedData.metEnergy100g} />
-                </div>
-              )}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <DataField label="Metabolised energy" value={extractedData.metEnergy100g} />
+              </div>
             </section>
 
             {/* Pricing & Packaging */}
             <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
               <h2 className="text-xl font-serif text-gray-900 mb-4">Pricing & Packaging</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {extractedData.price && (
-                  <DataField 
-                    label="Price" 
-                    value={`${extractedData.priceCurrency} ${extractedData.price}`} 
-                  />
-                )}
-                <DataField label="Weight" value={`${extractedData.weight}g`} />
-                {extractedData.countryOrigin && (
-                  <DataField label="Country of Origin" value={extractedData.countryOrigin} icon={<MapPin className="w-4 h-4" />} />
-                )}
+                <DataField 
+                  label="Price" 
+                  value={extractedData.price != null ? `${extractedData.priceCurrency} ${extractedData.price}` : null} 
+                />
+                <DataField label="Weight" value={extractedData.weight != null ? `${extractedData.weight}g` : null} />
+                <DataField label="Country of Origin" value={extractedData.countryOrigin} icon={<MapPin className="w-4 h-4" />} />
               </div>
             </section>
 
@@ -310,38 +406,22 @@ export default function ReportPage() {
                 Manufacturer Information
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {extractedData.manufaturerName && (
-                  <DataField label="Manufacturer" value={extractedData.manufaturerName} />
-                )}
-                {extractedData.manufacturerContact && (
-                  <DataField 
-                    label="Contact" 
-                    value={extractedData.manufacturerContact} 
-                    icon={<Phone className="w-4 h-4" />} 
-                  />
-                )}
-                {extractedData.dateManufacture && (
-                  <DataField 
-                    label="Date of Manufacture" 
-                    value={new Date(extractedData.dateManufacture).toLocaleDateString('en-IN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })} 
-                    icon={<Calendar className="w-4 h-4" />} 
-                  />
-                )}
-                {extractedData.dateExpiry && (
-                  <DataField 
-                    label="Expiry Date" 
-                    value={new Date(extractedData.dateExpiry).toLocaleDateString('en-IN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })} 
-                    icon={<Calendar className="w-4 h-4" />} 
-                  />
-                )}
+                <DataField label="Manufacturer" value={extractedData.manufacturerName} />
+                <DataField 
+                  label="Contact" 
+                  value={extractedData.manufacturerContact} 
+                  icon={<Phone className="w-4 h-4" />} 
+                />
+                <DataField 
+                  label="Date of Manufacture" 
+                  value={extractedData.dateManufacture ? new Date(extractedData.dateManufacture).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null} 
+                  icon={<Calendar className="w-4 h-4" />} 
+                />
+                <DataField 
+                  label="Expiry Date" 
+                  value={extractedData.dateExpiry ? new Date(extractedData.dateExpiry).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null} 
+                  icon={<Calendar className="w-4 h-4" />} 
+                />
               </div>
               {extractedData.translatedFlag && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
@@ -384,7 +464,7 @@ export default function ReportPage() {
   );
 }
 
-// Helper Components
+// Helper Components — always show field; use "—" when value is null/empty
 function DataField({ 
   label, 
   value, 
@@ -396,8 +476,7 @@ function DataField({
   badge?: boolean; 
   icon?: React.ReactNode;
 }) {
-  if (!value) return null;
-  
+  const display = value != null && value !== '' ? value : '—';
   return (
     <div>
       <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
@@ -405,27 +484,40 @@ function DataField({
       </span>
       {badge ? (
         <span className="inline-block px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium capitalize">
-          {value}
+          {display}
         </span>
       ) : (
         <div className="flex items-center gap-2">
           {icon && <span className="text-gray-400">{icon}</span>}
-          <span className="text-sm text-gray-900 font-medium">{value}</span>
+          <span className={`text-sm font-medium ${display === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{display}</span>
         </div>
       )}
     </div>
   );
 }
 
-function NutrientCard({ label, value }: { label: string; value: number }) {
+function NutrientCard({ label, value }: { label: string; value: number | null }) {
+  const display = value != null ? (value % 1 === 0 ? `${value}%` : `${value.toFixed(1)}%`) : '—';
   return (
     <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
       <span className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-1 capitalize">
         {label}
       </span>
-      <span className="text-lg font-bold text-primary-700">
-        {(value * 100).toFixed(1)}%
+      <span className={`text-lg font-bold ${value != null ? 'text-primary-700' : 'text-gray-400'}`}>
+        {display}
       </span>
+    </div>
+  );
+}
+
+function NutrientCardOther({ label, value }: { label: string; value: string }) {
+  const display = value != null && value !== '' ? value : '—';
+  return (
+    <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+      <span className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-1 capitalize">
+        {label}
+      </span>
+      <span className={`text-lg font-bold ${display === '—' ? 'text-gray-400' : 'text-primary-700'}`}>{display}</span>
     </div>
   );
 }
