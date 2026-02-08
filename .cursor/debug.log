@@ -13,3 +13,7 @@
 {"location":"loading-page n8nArray","message":"computed","data":{"n8nArrayIsNull":false,"n8nArrayLen":1,"hasErrors":false},"timestamp":1770550997054,"hypothesisId":"H1"}
 {"location":"loading-page old error block","message":"check","data":{"enteredOldErrorBlock":false,"hasImages":false},"timestamp":1770550997055,"hypothesisId":"H1"}
 {"location":"loading-page after success check","message":"branch","data":{"n8nExtractNotNull":true},"timestamp":1770550997059,"hypothesisId":"H4"}
+{"location":"loading-page poll","message":"result received","data":{"isArray":true,"hasExtract":false,"hasErrors":false,"resultOk":true},"timestamp":1770552876668,"hypothesisId":"H1"}
+{"location":"loading-page after success check","message":"branch","data":{"n8nExtractNotNull":true},"timestamp":1770552876670,"hypothesisId":"H4"}
+{"location":"loading-page n8nArray","message":"computed","data":{"n8nArrayIsNull":false,"n8nArrayLen":1,"hasErrors":false},"timestamp":1770552876669,"hypothesisId":"H1"}
+{"location":"loading-page old error block","message":"check","data":{"enteredOldErrorBlock":false,"hasImages":false},"timestamp":1770552876669,"hypothesisId":"H1"}

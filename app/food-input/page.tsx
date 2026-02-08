@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Image from 'next/image';
-import { Upload, Check, AlertCircle, Loader2, X, Plus, Cat, ChevronDown, Lightbulb, Edit2 } from 'lucide-react';
+import { Upload, Check, AlertCircle, Loader2, X, Plus, Cat, ChevronDown, Lightbulb, Edit2, Sparkles } from 'lucide-react';
 import { CAT_AVATARS, BODY_CONDITIONS, HEALTH_CONDITIONS } from '@/constants/cat-data';
 import type { CatProfile, QCState } from '@/types';
 import { validateImageClient } from '@/lib/imageValidation';
@@ -1030,29 +1030,45 @@ function FoodInputPageContent() {
                   </div>
                 </div>
               )}
-              {/* Row 3: CTA always on its own line below checkbox / note */}
-              <div className="w-full">
+              {/* Row 3: CTA on its own line – default "Personalise insights…" with cat icon; when cats selected "Personalising insights" with Sparkles + names below */}
+              <div className="w-full flex flex-col gap-1">
                 <button
                   type="button"
                   onClick={() => setShowCatPanel(true)}
-                  className="text-sm text-primary-600 hover:text-primary-700 underline hover:no-underline font-medium transition-all duration-200 text-left w-full sm:w-auto"
+                  className="text-sm text-primary-600 hover:text-primary-700 underline hover:no-underline font-medium transition-all duration-200 text-left w-full sm:w-auto inline-flex items-center gap-2"
                 >
-                  {cats.length > 0 ? 'Personalising' : 'Personalise for my cat'}
-                </button>
-              </div>
-              {(() => {
-                const selectedForDisplay = cats.filter(c => c.selected);
-                return selectedForDisplay.length > 0 && (
-                  <p className="text-sm text-gray-600 pl-0">
-                    For {selectedForDisplay.length === 1
-                      ? selectedForDisplay[0].name
-                      : selectedForDisplay.length === 2
-                        ? `${selectedForDisplay[0].name} and ${selectedForDisplay[1].name}`
-                        : `${selectedForDisplay.slice(0, -1).map(c => c.name).join(', ')}, and ${selectedForDisplay[selectedForDisplay.length - 1].name}`
+                  {(() => {
+                    const selectedForDisplay = cats.filter(c => c.selected);
+                    if (selectedForDisplay.length >= 1) {
+                      return (
+                        <>
+                          <Sparkles className="w-4 h-4 text-primary-600" aria-hidden />
+                          Personalising insights
+                        </>
+                      );
                     }
-                  </p>
-                );
-              })()}
+                    return (
+                      <>
+                        <Cat className="w-4 h-4 text-primary-600" aria-hidden />
+                        Personalise insights for your cat
+                      </>
+                    );
+                  })()}
+                </button>
+                {(() => {
+                  const selectedForDisplay = cats.filter(c => c.selected);
+                  return selectedForDisplay.length >= 1 && (
+                    <p className="text-sm text-gray-600 pl-0">
+                      For {selectedForDisplay.length === 1
+                        ? selectedForDisplay[0].name
+                        : selectedForDisplay.length === 2
+                          ? `${selectedForDisplay[0].name} and ${selectedForDisplay[1].name}`
+                          : `${selectedForDisplay.slice(0, -1).map(c => c.name).join(', ')}, and ${selectedForDisplay[selectedForDisplay.length - 1].name}`
+                      }
+                    </p>
+                  );
+                })()}
+              </div>
             </div>
             )}
 
