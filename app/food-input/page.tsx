@@ -53,7 +53,7 @@ function UploadZone({ label, hint, zoneKey, state, imageSrc, onFileSelect, onRem
       
       <div 
         className={`
-          relative rounded-2xl border-2 border-dashed p-8 transition-all duration-300 cursor-pointer flex-1 flex items-center justify-center min-h-[200px]
+          relative rounded-xl sm:rounded-2xl border-2 border-dashed p-4 sm:p-8 transition-all duration-300 cursor-pointer flex-1 flex items-center justify-center min-h-[160px] sm:min-h-[200px]
           ${state === 'empty' ? 'border-emerald-200 bg-white hover:border-primary-500 hover:bg-emerald-50' : ''}
           ${state === 'uploading' || state === 'checking' ? 'border-emerald-300 bg-emerald-50' : ''}
           ${state === 'pass' ? 'border-primary-500 bg-primary-50 shadow-[0_0_0_4px_rgba(108,178,87,0.1)]' : ''}
@@ -554,16 +554,16 @@ function FoodInputPageContent() {
   return (
     <>
       <Header />
-      <main className="pt-8 pb-16 relative">
-        <div className="max-w-[600px] mx-auto px-4 sm:px-6">
-          <h1 className="text-3xl sm:text-4xl font-serif mb-4 text-gray-900 text-center">
+      <main className="pt-6 sm:pt-8 pb-16 sm:pb-20 relative min-h-screen">
+        <div className="max-w-[600px] mx-auto px-3 sm:px-6">
+          <h1 className="text-2xl min-[480px]:text-3xl sm:text-4xl font-serif mb-3 sm:mb-4 text-gray-900 text-center leading-tight">
             Which food do you want to analyse for your cat?
           </h1>
-          <p className="text-gray-600 mb-8 text-center">
+          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 text-center">
             Share the pictures and we will break it down for you.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-8 w-full">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 w-full">
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -599,13 +599,13 @@ function FoodInputPageContent() {
                     ? 'Select cats for personalising insights'
                     : 'Tell us about your cat';
               return (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-serif text-gray-900">{mainTitle}</h3>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base sm:text-lg font-serif text-gray-900 break-words pr-2">{mainTitle}</h3>
                   <button
                     type="button"
                     onClick={() => router.push('/food-input')}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+                    className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors shrink-0 min-h-[44px] flex items-center"
                   >
                     Skip personalisation
                   </button>
@@ -617,9 +617,9 @@ function FoodInputPageContent() {
                     {cats.map((cat) => (
                       <div
                         key={cat.id}
-                        className="bg-emerald-50 rounded-lg p-3 border-2 border-emerald-200"
+                        className="bg-emerald-50 rounded-lg p-2.5 sm:p-3 border-2 border-emerald-200"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={cat.selected}
@@ -630,14 +630,14 @@ function FoodInputPageContent() {
                               setCats(updatedCats);
                               setPersonalizationError('');
                             }}
-                            className="w-5 h-5 rounded border-2 border-emerald-300 text-primary-600 focus:ring-4 focus:ring-primary-500/20 transition-all cursor-pointer"
+                            className="w-5 h-5 rounded border-2 border-emerald-300 text-primary-600 focus:ring-4 focus:ring-primary-500/20 transition-all cursor-pointer shrink-0"
                           />
                           <button
                             type="button"
                             onClick={() => handleEditCat(cat.id)}
-                            className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                            className="flex-1 flex items-center gap-2 sm:gap-3 text-left hover:opacity-80 transition-opacity min-w-0"
                           >
-                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                               <Image 
                                 src={CAT_AVATARS.find(a => a.id === cat.avatar)?.image || '/cats-orange1.png'} 
                                 alt={cat.name}
@@ -647,16 +647,23 @@ function FoodInputPageContent() {
                                 unoptimized
                               />
                             </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{cat.name}</p>
-                              <p className="text-xs text-gray-600">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{cat.name}</p>
+                              <p className="text-xs text-gray-600 truncate">
                                 {cat.ageYears}y {cat.ageMonths}m • {BODY_CONDITIONS.find(b => b.id === cat.bodyCondition)?.label}
                               </p>
                             </div>
                           </button>
-                          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                            expandedCatId === cat.id ? 'rotate-180' : ''
-                          }`} />
+                          <button
+                            type="button"
+                            onClick={() => handleEditCat(cat.id)}
+                            className="p-2 rounded hover:bg-emerald-100 transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center sm:min-w-0 sm:min-h-0 sm:p-1"
+                            aria-label={expandedCatId === cat.id ? 'Collapse' : 'Expand'}
+                          >
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                              expandedCatId === cat.id ? 'rotate-180' : ''
+                            }`} />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -683,7 +690,7 @@ function FoodInputPageContent() {
                         ? `Update details for ${cats.find((c) => c.id === editingCatId)?.name ?? 'cat'}`
                         : 'Tell us about your cat'}
                     </h3>
-                    <div className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft space-y-6">
+                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft space-y-4 sm:space-y-6">
                     {/* Cat Name & Avatar */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -731,12 +738,13 @@ function FoodInputPageContent() {
                         />
                       </div>
                       
-                      {/* Avatar Picker Horizontal Scroll */}
+                      {/* Avatar Picker Horizontal Scroll - height 1.2× avatar, responsive */}
                       {showAvatarPicker && (
-                        <div className="mt-3 bg-emerald-50 rounded-xl border-2 border-emerald-200 p-3">
+                        <div className="mt-3 mx-1 sm:mx-0 bg-emerald-50 rounded-xl border-2 border-emerald-200 p-2 sm:p-3">
                           <div className="relative">
-                            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-emerald-100" style={{ height: '85px' }}>
-                              <div className="flex gap-3 pb-2" style={{ width: 'max-content' }}>
+                            {/* 1.2 × avatar height: 3rem→3.6rem, 4rem→4.8rem */}
+                            <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-emerald-100 h-[3.6rem] min-[480px]:h-[4.8rem] sm:h-[4.8rem]">
+                              <div className="flex gap-2 sm:gap-3 items-center py-0.5" style={{ width: 'max-content' }}>
                                 {CAT_AVATARS.map((avatar) => (
                                   <button
                                     key={avatar.id}
@@ -746,7 +754,7 @@ function FoodInputPageContent() {
                                       setShowAvatarPicker(false);
                                     }}
                                     className={`
-                                      w-16 h-16 flex-shrink-0 rounded-full overflow-hidden transition-all duration-200
+                                      w-12 h-12 min-[480px]:w-14 min-[480px]:h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-full overflow-hidden transition-all duration-200
                                       ${currentCat.avatar === avatar.id 
                                         ? 'ring-4 ring-primary-500 scale-105' 
                                         : 'hover:scale-105 ring-2 ring-gray-300 hover:ring-primary-400'
@@ -1073,13 +1081,13 @@ function FoodInputPageContent() {
             )}
 
             {/* Upload Section with Guidelines */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft space-y-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft space-y-4 sm:space-y-6">
               {/* Guidelines */}
               <div>
-                <h3 className="font-serif text-base mb-3 text-gray-900">
+                <h3 className="font-serif text-sm sm:text-base mb-2 sm:mb-3 text-gray-900">
                   Help us read the label clearly
                 </h3>
-                <ul className="space-y-2 text-sm text-gray-600">
+                <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-600">
                   <li>• Find good lighting, avoid glares or shadows</li>
                   <li>• Hold steady & tap to focus on the pack</li>
                   <li>• Capture the complete text on the label</li>
@@ -1087,7 +1095,7 @@ function FoodInputPageContent() {
               </div>
 
               {/* Upload zones */}
-              <div className="grid sm:grid-cols-2 gap-6 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
                 <UploadZone
                   label="Front panel *"
                   hint="Capture the complete front of the pack with the brand name & variant"
@@ -1120,7 +1128,7 @@ function FoodInputPageContent() {
                 />
               </div>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-gray-500 text-center px-1">
                 Accepted: JPG, PNG, HEIC, WEBP (max 15MB per file)
               </p>
             </div>
@@ -1137,7 +1145,7 @@ function FoodInputPageContent() {
                 <button
                   type="submit"
                   disabled={!allRequiredFieldsFilled || isAnalyzing}
-                  className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-primary-600 disabled:hover:text-white min-h-[48px]"
+                  className="w-full bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold px-6 sm:px-8 py-4 rounded-full shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-1 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-primary-600 disabled:hover:text-white min-h-[48px] text-base"
                 >
                   {isAnalyzing ? 'Analysing…' : 'Analyse Food'}
                 </button>
@@ -1171,37 +1179,38 @@ function FoodInputPageContent() {
               className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
               onClick={() => setShowCatPanel(false)}
             />
-            <div className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-white shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right duration-300">
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-2xl font-serif text-gray-900">Let's get to know your cat</h2>
-                    <p className="text-sm text-gray-600 mt-1">This will help us highlight what matters most for their nutrition</p>
+            <div className="fixed top-0 right-0 bottom-0 w-full max-w-[100vw] sm:w-[480px] bg-white shadow-2xl z-50 overflow-hidden animate-in slide-in-from-right duration-300 flex flex-col">
+              <div className="bg-white border-b border-gray-200 p-4 sm:p-6 z-10 shrink-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-xl sm:text-2xl font-serif text-gray-900 leading-tight">Let's get to know your cat</h2>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">This will help us highlight what matters most for their nutrition</p>
                   </div>
                   <button
                     onClick={() => setShowCatPanel(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     type="button"
+                    aria-label="Close panel"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Saved Cats Summary */}
                 {cats.length > 0 && (
                   <div className="space-y-2">
                     {cats.map((cat) => (
                       <div
                         key={cat.id}
-                        className={`bg-emerald-50 rounded-lg p-3 border-2 transition-all duration-200 ${
+                        className={`bg-emerald-50 rounded-lg p-2.5 sm:p-3 border-2 transition-all duration-200 ${
                           expandedCatId === cat.id 
                             ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' 
                             : 'border-emerald-200'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={cat.selected}
@@ -1211,14 +1220,14 @@ function FoodInputPageContent() {
                               );
                               setCats(updatedCats);
                             }}
-                            className="w-5 h-5 rounded border-2 border-emerald-300 text-primary-600 focus:ring-4 focus:ring-primary-500/20 transition-all cursor-pointer"
+                            className="w-5 h-5 rounded border-2 border-emerald-300 text-primary-600 focus:ring-4 focus:ring-primary-500/20 transition-all cursor-pointer shrink-0"
                           />
                           <button
                             type="button"
                             onClick={() => handleEditCat(cat.id)}
-                            className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                            className="flex-1 flex items-center gap-2 sm:gap-3 text-left hover:opacity-80 transition-opacity min-w-0"
                           >
-                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                               <Image 
                                 src={CAT_AVATARS.find(a => a.id === cat.avatar)?.image || '/cats-orange1.png'} 
                                 alt={cat.name}
@@ -1228,16 +1237,23 @@ function FoodInputPageContent() {
                                 unoptimized
                               />
                             </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{cat.name}</p>
-                              <p className="text-xs text-gray-600">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{cat.name}</p>
+                              <p className="text-xs text-gray-600 truncate">
                                 {cat.ageYears}y {cat.ageMonths}m • {BODY_CONDITIONS.find(b => b.id === cat.bodyCondition)?.label}
                               </p>
                             </div>
                           </button>
-                          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                            expandedCatId === cat.id ? 'rotate-180' : ''
-                          }`} />
+                          <button
+                            type="button"
+                            onClick={() => handleEditCat(cat.id)}
+                            className="p-2 rounded hover:bg-emerald-100 transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center sm:min-w-0 sm:min-h-0 sm:p-1"
+                            aria-label={expandedCatId === cat.id ? 'Collapse' : 'Expand'}
+                          >
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                              expandedCatId === cat.id ? 'rotate-180' : ''
+                            }`} />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -1299,12 +1315,13 @@ function FoodInputPageContent() {
                     />
                   </div>
                   
-                  {/* Avatar Picker Horizontal Scroll */}
+                  {/* Avatar Picker Horizontal Scroll - height 1.2× avatar, responsive */}
                   {showAvatarPicker && (
-                    <div className="mt-3 bg-emerald-50 rounded-xl border-2 border-emerald-200 p-3">
+                    <div className="mt-3 mx-1 sm:mx-0 bg-emerald-50 rounded-xl border-2 border-emerald-200 p-2 sm:p-3">
                       <div className="relative">
-                        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-emerald-100" style={{ height: '85px' }}>
-                          <div className="flex gap-3 pb-2" style={{ width: 'max-content' }}>
+                        {/* 1.2 × avatar height: 3rem→3.6rem, 4rem→4.8rem */}
+                        <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-emerald-100 h-[3.6rem] min-[480px]:h-[4.8rem] sm:h-[4.8rem]">
+                          <div className="flex gap-2 sm:gap-3 items-center py-0.5" style={{ width: 'max-content' }}>
                             {CAT_AVATARS.map((avatar) => (
                               <button
                                 key={avatar.id}
@@ -1314,7 +1331,7 @@ function FoodInputPageContent() {
                                   setShowAvatarPicker(false);
                                 }}
                                 className={`
-                                  w-16 h-16 flex-shrink-0 rounded-full overflow-hidden transition-all duration-200
+                                  w-12 h-12 min-[480px]:w-14 min-[480px]:h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-full overflow-hidden transition-all duration-200
                                   ${currentCat.avatar === avatar.id 
                                     ? 'ring-4 ring-primary-500 scale-105' 
                                     : 'hover:scale-105 ring-2 ring-gray-300 hover:ring-primary-400'
@@ -1537,7 +1554,21 @@ function FoodInputPageContent() {
                 )}
               </div>
 
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex items-center justify-end gap-3">
+              <div 
+                className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6 shrink-0 space-y-3"
+                style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+              >
+                {!editingCatId && cats.length > 0 && !!currentCat.name?.trim() && !(
+                  !!currentCat.bodyCondition &&
+                  (currentCat.healthConditions || []).length > 0 &&
+                  ((currentCat.ageYears || 0) > 0 || (currentCat.ageMonths || 0) > 0) &&
+                  !(currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim())
+                ) && (
+                  <p className="text-xs sm:text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 sm:px-4 break-words">
+                    Please enter all required fields for {currentCat.name?.trim() || 'your cat'}.
+                  </p>
+                )}
+                <div className="flex items-center justify-end gap-3">
                 {editingCatId && (
                   <button
                     type="button"
@@ -1555,7 +1586,7 @@ function FoodInputPageContent() {
                         selected: true,
                       });
                     }}
-                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-50 active:translate-y-0.5 transition-all duration-200"
+                    className="px-6 py-3 min-h-[48px] border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-50 active:translate-y-0.5 transition-all duration-200"
                   >
                     Cancel
                   </button>
@@ -1570,11 +1601,12 @@ function FoodInputPageContent() {
                       ((currentCat.ageYears || 0) > 0 || (currentCat.ageMonths || 0) > 0) &&
                       !(currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim());
                     const atLeastOneSelected = cats.some((c) => c.selected);
+                    const formHasPartialNewCat = !editingCatId && !!currentCat.name?.trim();
                     if (editingCatId) {
                       handleUpdateCat();
                     } else if (formFilled) {
                       handleSaveCat();
-                    } else if (cats.length > 0 && atLeastOneSelected) {
+                    } else if (cats.length > 0 && atLeastOneSelected && !formHasPartialNewCat) {
                       localStorage.setItem('ww_cats', JSON.stringify(cats));
                       setShowCatPanel(false);
                     }
@@ -1587,18 +1619,23 @@ function FoodInputPageContent() {
                       ((currentCat.ageYears || 0) > 0 || (currentCat.ageMonths || 0) > 0) &&
                       !(currentCat.healthConditions?.includes('Other (please describe)') && !currentCat.otherHealthDesc?.trim());
                     const atLeastOneSelected = cats.some((c) => c.selected);
+                    const formHasPartialNewCat = !editingCatId && !!currentCat.name?.trim();
                     if (editingCatId) {
                       return !formFilled;
                     }
                     if (cats.length === 0) {
                       return !formFilled;
                     }
+                    if (formHasPartialNewCat) {
+                      return !formFilled;
+                    }
                     return !formFilled && !atLeastOneSelected;
                   })()}
-                  className="px-6 py-3 bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold rounded-full shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 min-h-[48px] bg-primary-600 hover:bg-primary-dark text-white hover:text-[#f0fdf4] font-semibold rounded-full shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingCatId ? 'Update Cat' : 'Save & Continue'}
                 </button>
+                </div>
               </div>
             </div>
           </>
