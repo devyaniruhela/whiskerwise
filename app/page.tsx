@@ -39,7 +39,11 @@ const WHY_WISER_CARDS = [
 ];
 
 export default function Home() {
-  const [flipped, setFlipped] = useState<boolean[]>(() => WHY_WISER_CARDS.map(() => false));
+  // Only one card turned at a time: hover (mouse only, temporary) or tap (toggle).
+  const [flippedIndex, setFlippedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const isTurned = (i: number) => hoveredIndex === i || (hoveredIndex === null && flippedIndex === i);
+
   return (
     <>
       <Header />
@@ -113,24 +117,22 @@ export default function Home() {
                   role="button"
                   tabIndex={0}
                   className="group relative h-72 [perspective:1000px] cursor-pointer"
-                  onClick={() => setFlipped(prev => {
-                    const next = [...prev];
-                    next[i] = !next[i];
-                    return next;
-                  })}
+                  onClick={() => setFlippedIndex((prev) => (prev === i ? null : i))}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === 'mouse') setHoveredIndex(i);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === 'mouse') setHoveredIndex(null);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      setFlipped(prev => {
-                        const next = [...prev];
-                        next[i] = !next[i];
-                        return next;
-                      });
+                      setFlippedIndex((prev) => (prev === i ? null : i));
                     }
                   }}
-                  aria-label={flipped[i] ? `Show front: ${card.title}` : `Show back: ${card.title}`}
+                  aria-label={isTurned(i) ? `Show front: ${card.title}` : `Show back: ${card.title}`}
                 >
-                  <div className={`relative h-full transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped[i] ? '[transform:rotateY(180deg)]' : ''}`}>
+                  <div className={`relative h-full transition-all duration-500 [transform-style:preserve-3d] ${isTurned(i) ? '[transform:rotateY(180deg)]' : ''}`}>
                     {/* Front */}
                     <div className="absolute inset-0 bg-white rounded-3xl p-6 border-2 border-emerald-100 shadow-soft [backface-visibility:hidden] flex flex-col items-center justify-center text-center">
                       <div className="text-6xl mb-4">{card.icon}</div>
