@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ScanLine,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import {
   CAT_AVATARS,
@@ -149,6 +150,7 @@ export default function ProfilePage() {
   const [weightError, setWeightError] = useState('');
   const [weightWarning, setWeightWarning] = useState('');
   const [catNameError, setCatNameError] = useState('');
+  const [catToDelete, setCatToDelete] = useState<CatProfile | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -937,6 +939,14 @@ export default function ProfilePage() {
                           >
                             <ScanLine className="w-4 h-4" />
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => setCatToDelete(cat)}
+                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-red-600 hover:bg-red-50 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-1.5 flex items-center justify-center"
+                            aria-label="Delete cat profile"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                       <div className="flex gap-3 sm:gap-4 mb-2 sm:mb-3">
@@ -1263,6 +1273,58 @@ export default function ProfilePage() {
           </section>
         </div>
       </main>
+
+      {/* Delete cat confirmation modal */}
+      {catToDelete && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setCatToDelete(null)}
+            aria-hidden
+          />
+          <div
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4 bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-6"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-cat-modal-title"
+          >
+            <h3 id="delete-cat-modal-title" className="text-xl font-serif text-gray-900 mb-2">
+              Delete {catDisplayName(catToDelete.name)} from your fam?
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              This action will remove {catDisplayName(catToDelete.name)}&apos;s profile from Whisker Wise.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  handleEditCat(catToDelete);
+                  setCatToDelete(null);
+                }}
+                className="flex-1 order-2 sm:order-1 px-6 py-3 bg-primary-600 hover:bg-primary-dark text-white font-semibold rounded-full shadow-soft hover:shadow-soft-lg transition-all duration-200"
+              >
+                Edit profile
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  saveCats(cats.filter((c) => c.id !== catToDelete.id));
+                  if (editingCatId === catToDelete.id) {
+                    setEditingCatId(null);
+                    setCurrentCat(emptyCatForm);
+                    setShowAddCatForm(false);
+                  }
+                  setCatToDelete(null);
+                }}
+                className="flex-1 order-1 sm:order-2 text-sm text-red-600 hover:text-red-700 font-medium underline transition-colors"
+              >
+                Confirm delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
