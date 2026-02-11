@@ -81,9 +81,9 @@ export default function ReportByIdPage() {
     return (
       <>
         <Header />
-        <main className="pt-8 pb-16">
+        <main className="pt-6 sm:pt-8 pb-12 sm:pb-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[60vh]">
-            <p className="text-gray-500">Loading report...</p>
+            <p className="text-gray-500 text-sm sm:text-base">Loading report...</p>
           </div>
         </main>
       </>
@@ -93,32 +93,32 @@ export default function ReportByIdPage() {
   return (
     <>
       <Header />
-      <main className="pt-8 pb-16">
+      <main className="pt-6 sm:pt-8 pb-12 sm:pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/profile"
-            className="inline-flex items-center gap-2 text-primary-600 font-medium hover:underline mb-6 font-mono text-sm"
+            className="inline-flex items-center gap-2 text-primary-600 font-medium hover:underline mb-4 sm:mb-6 font-mono text-xs sm:text-sm min-h-[44px] items-center"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to profile
           </Link>
 
-          <header className="mb-8 text-center">
-            <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 mb-2">
+          <header className="mb-6 sm:mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-gray-900 mb-2">
               Report
             </h1>
-            <p className="text-gray-600">Review the details for this scan</p>
+            <p className="text-sm sm:text-base text-gray-600">Review the details for this scan</p>
           </header>
 
           {/* Verification Section - at top */}
-          <div className="bg-gradient-to-br from-primary-50 to-emerald-50 rounded-3xl p-8 border-2 border-primary-200 shadow-soft-lg mb-8">
-            <h2 className="text-2xl font-serif text-gray-900 mb-2 text-center">
+          <div className="bg-gradient-to-br from-primary-50 to-emerald-50 rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-primary-200 shadow-soft-lg mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-serif text-gray-900 mb-2 text-center">
               Does this information look right to you?
             </h2>
-            <p className="text-gray-600 mb-6 text-center">
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 text-center">
               Match it with the information on the images uploaded by you.
             </p>
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
@@ -127,16 +127,16 @@ export default function ReportByIdPage() {
                 className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 outline-none transition-all resize-none text-sm"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-stretch sm:items-center">
               <button
                 onClick={() => handleVerification('match')}
-                className="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg"
+                className="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg min-h-[48px]"
               >
                 Yes! Correct & complete
               </button>
               <button
                 onClick={() => handleVerification('incorrect')}
-                className="flex-1 sm:flex-none bg-white border-2 border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-full hover:bg-gray-50"
+                className="flex-1 sm:flex-none bg-white border-2 border-gray-300 text-gray-700 font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full hover:bg-gray-50 min-h-[48px]"
               >
                 No, one/more fields wrong or missing
               </button>
@@ -149,9 +149,9 @@ export default function ReportByIdPage() {
             </div>
           </div>
 
-          <div className="space-y-6 mb-12">
-            <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
-              <h2 className="text-xl font-serif text-gray-900 mb-4 flex items-center gap-2">
+          <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12">
+            <section className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft">
+              <h2 className="text-lg sm:text-xl font-serif text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
                 <Package className="w-5 h-5 text-primary-600" />
                 Basic Information
               </h2>
@@ -166,8 +166,8 @@ export default function ReportByIdPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
-              <h2 className="text-xl font-serif text-gray-900 mb-4 flex items-center gap-2">
+            <section className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft">
+              <h2 className="text-lg sm:text-xl font-serif text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
                 <Droplets className="w-5 h-5 text-primary-600" />
                 Guaranteed Analysis
               </h2>
@@ -183,8 +183,8 @@ export default function ReportByIdPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft">
-              <h2 className="text-xl font-serif text-gray-900 mb-4 flex items-center gap-2">
+            <section className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft">
+              <h2 className="text-lg sm:text-xl font-serif text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-primary-600" />
                 Manufacturer Information
               </h2>

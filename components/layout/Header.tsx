@@ -22,7 +22,7 @@ export default function Header() {
             alt="Whisker Wise" 
             width={269} 
             height={67}
-            className="h-[50px] lg:h-[67px] w-auto"
+            className="h-10 sm:h-12 lg:h-[67px] w-auto max-h-[56px] sm:max-h-[72px] lg:max-h-none"
             priority
             unoptimized
           />

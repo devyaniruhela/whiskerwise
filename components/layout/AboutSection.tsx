@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 export default function AboutSection() {
   return (
-    <section className="py-16 lg:py-24 bg-gradient-to-b from-transparent via-emerald-50/20 to-transparent relative overflow-hidden">
+    <section className="py-10 sm:py-16 lg:py-24 bg-gradient-to-b from-transparent via-emerald-50/20 to-transparent relative overflow-hidden">
       {/* Subtle background decoration */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 right-1/3 w-96 h-96 bg-primary-100 rounded-full blur-3xl"></div>
@@ -12,10 +12,10 @@ export default function AboutSection() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Upper Half: About Whisker Wise */}
-        <div className="mb-16 bg-white/60 backdrop-blur-sm rounded-3xl p-8 sm:p-10 border border-emerald-100/50 shadow-soft">
-          <h2 className="text-3xl font-serif text-gray-900 mb-8">About Whisker Wise</h2>
+        <div className="mb-8 sm:mb-16 bg-white/60 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 border border-emerald-100/50 shadow-soft">
+          <h2 className="text-2xl sm:text-3xl font-serif text-gray-900 mb-4 sm:mb-8">About Whisker Wise</h2>
 
-          <div className="space-y-4 text-lg text-gray-700">
+          <div className="space-y-3 sm:space-y-4 text-base sm:text-lg text-gray-700">
             <p>
               Whisker Wise started with a simple mission: help cats be more understood, and empower you to care for your cats the way you want to—making good decisions, without the confusion and worry.
             </p>
@@ -41,13 +41,13 @@ export default function AboutSection() {
         </div>
 
         {/* Lower Half: About the Founder */}
-        <div className="bg-gradient-to-br from-primary-50/40 via-white/60 to-emerald-50/40 backdrop-blur-sm rounded-3xl p-8 sm:p-10 border border-primary-100/50 shadow-soft">
-          <h2 className="text-3xl font-serif text-gray-900 mb-8">About the founder</h2>
+        <div className="bg-gradient-to-br from-primary-50/40 via-white/60 to-emerald-50/40 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 border border-primary-100/50 shadow-soft">
+          <h2 className="text-2xl sm:text-3xl font-serif text-gray-900 mb-4 sm:mb-8">About the founder</h2>
           
-          <div className="flex flex-col md:flex-row gap-8 items-start">
+          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
             {/* Founder Photo */}
-            <div className="flex-shrink-0">
-              <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-primary-300 shadow-soft-lg ring-4 ring-primary-50">
+            <div className="flex-shrink-0 mx-auto md:mx-0">
+              <div className="relative w-36 h-36 sm:w-48 sm:h-48 rounded-full overflow-hidden border-4 border-primary-300 shadow-soft-lg ring-4 ring-primary-50">
                 <Image 
                   src="/founder.jpeg"
                   alt="Devyani - Founder of Whisker Wise"
@@ -60,7 +60,7 @@ export default function AboutSection() {
             </div>
 
             {/* Founder Story */}
-            <div className="flex-1 space-y-6 text-lg text-gray-700">
+            <div className="flex-1 space-y-4 sm:space-y-6 text-base sm:text-lg text-gray-700">
               <p>
                 Started by Devyani, who after being rescued by her cat Chérie in 2017, wanted her cat to "eat healthy" and "stay fit" just like she wanted to. After struggling to find the "right food" for her cat, she decided studying feline nutrition herself was the fastest way to get reliable answers. And that's what she did.
               </p>
@@ -80,8 +80,8 @@ export default function AboutSection() {
           </div>
 
           {/* Tagline */}
-          <div className="text-left mt-8 ml-0 md:ml-56">
-            <p className="text-2xl font-serif text-gray-900">
+          <div className="text-center md:text-left mt-6 sm:mt-8 ml-0 md:ml-56">
+            <p className="text-xl sm:text-2xl font-serif text-gray-900">
               Curated with care. Trusted by whiskers.
             </p>
           </div>

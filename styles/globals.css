@@ -73,20 +73,30 @@
   }
 }
 
-/* Header Styles */
+/* Header Styles - responsive height & alignment */
 .whisker-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  height: 80px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
   background: #41624F;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+@media (min-width: 640px) {
+  .whisker-header {
+    height: 72px;
+  }
+}
+@media (min-width: 1024px) {
+  .whisker-header {
+    height: 80px;
+  }
 }
 
 /* SVG Grain Texture Overlay - Multi-layer grain effect using SVG data URI with increased intensity */
@@ -114,14 +124,24 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+@media (min-width: 480px) {
+  .header-content-wrapper {
+    padding: 0 16px;
+  }
+}
 @media (min-width: 640px) {
   .header-content-wrapper {
     padding: 0 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .header-content-wrapper {
+    padding: 0 32px;
   }
 }
 

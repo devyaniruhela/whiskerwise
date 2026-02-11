@@ -742,8 +742,8 @@ export default function ProfilePage() {
     return (
       <>
         <Header />
-        <main className="pt-8 pb-16 min-h-screen flex items-center justify-center">
-          <div className="font-mono text-gray-500 text-sm">Loading...</div>
+        <main className="pt-6 sm:pt-8 pb-12 sm:pb-16 min-h-screen flex items-center justify-center">
+          <div className="font-mono text-gray-500 text-xs sm:text-sm">Loading...</div>
         </main>
       </>
     );
@@ -752,20 +752,20 @@ export default function ProfilePage() {
   return (
     <>
       <Header />
-      <main className="pt-8 pb-16 min-h-screen">
+      <main className="pt-6 sm:pt-8 pb-12 sm:pb-16 min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <h1 className="text-2xl font-serif text-gray-900 mb-2">Your Profile</h1>
+          <h1 className="text-xl sm:text-2xl font-serif text-gray-900 mb-2">Your Profile</h1>
           {!hasUserInfo && (
-            <p className="text-gray-700 mb-6 font-mono text-sm">
+            <p className="text-gray-700 mb-4 sm:mb-6 font-mono text-xs sm:text-sm">
               Hi {displayName}. Add your details to access scan history and food reports, and save your cat&apos;s profiles for future scans.
             </p>
           )}
 
           {/* User section */}
-          <section className="mb-10">
+          <section className="mb-6 sm:mb-10">
             {hasUserInfo && !showUserEdit ? (
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-4 font-mono text-sm">
+              <div className="bg-white rounded-xl border-2 border-gray-200 p-3 sm:p-4 font-mono text-xs sm:text-sm">
                 <div className="flex justify-between items-start mb-3">
                   <span className="font-semibold text-gray-900">Your details</span>
                   <button
@@ -892,22 +892,22 @@ export default function ProfilePage() {
           </section>
 
           {/* Cat profiles */}
-          <section className="mb-10">
-            <h2 className="text-xl font-serif text-gray-900 mb-2">Cat profiles</h2>
-            <p className="text-gray-600 font-mono text-sm mb-4">
+          <section className="mb-6 sm:mb-10">
+            <h2 className="text-lg sm:text-xl font-serif text-gray-900 mb-2">Cat profiles</h2>
+            <p className="text-gray-600 font-mono text-xs sm:text-sm mb-3 sm:mb-4">
               Specific details help us give you better, more personalised insights for your cat.
             </p>
 
             {cats.length > 0 && (
-              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 {cats.map((cat) => (
                   <Fragment key={cat.id}>
                     <div
-                      className="bg-white rounded-xl border-2 border-gray-200 p-4 font-mono text-sm shadow-sm relative"
+                      className="bg-white rounded-xl border-2 border-gray-200 p-3 sm:p-4 font-mono text-xs sm:text-sm shadow-sm relative"
                     >
-                      <div className="absolute top-3 right-3 flex items-start gap-1.5">
+                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-start gap-1 sm:gap-1.5">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${
+                          className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium border ${
                             isCatComplete(cat)
                               ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                               : 'bg-red-100/90 border-red-300 text-red-900'
@@ -924,7 +924,7 @@ export default function ProfilePage() {
                           <button
                             type="button"
                             onClick={() => handleEditCat(cat)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-1.5 flex items-center justify-center"
                             aria-label="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -932,15 +932,15 @@ export default function ProfilePage() {
                           <Link
                             href={`/food-input?from=profile&personalize=true&preselectCat=${encodeURIComponent(cat.id)}`}
                             onClick={() => trackCTAClick('profile')}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-1.5 flex items-center justify-center"
                             aria-label="Scan food for this cat"
                           >
                             <ScanLine className="w-4 h-4" />
                           </Link>
                         </div>
                       </div>
-                      <div className="flex gap-4 mb-3">
-                        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200">
+                      <div className="flex gap-3 sm:gap-4 mb-2 sm:mb-3">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200">
                           <Image
                             src={CAT_AVATARS.find((a) => a.id === cat.avatar)?.image ?? '/cats-orange1.png'}
                             alt={cat.name}

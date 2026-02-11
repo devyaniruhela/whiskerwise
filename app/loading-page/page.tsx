@@ -366,10 +366,10 @@ function LoadingPageContent() {
   return (
     <>
       <Header />
-      <main className="pt-8 pb-16">
+      <main className="pt-6 sm:pt-8 pb-12 sm:pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Personalized Header */}
-          <p className="text-xl text-gray-700 mb-8 text-center font-medium">
+          <p className="text-base sm:text-xl text-gray-700 mb-6 sm:mb-8 text-center font-medium px-2">
             Hi <span className="text-primary-700">{userName}</span>, we're analyzing the food{' '}
             {isPersonalizing && catNames.length > 0 ? (
               <>
@@ -388,14 +388,14 @@ function LoadingPageContent() {
           </p>
 
           {/* Food Preview */}
-          <div className="bg-white rounded-2xl p-6 border-2 border-emerald-100 shadow-soft mb-8">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-emerald-100 shadow-soft mb-6 sm:mb-8">
             <div className="flex flex-col items-center">
               {/* Desktop: Side by side */}
               <div className="hidden sm:flex gap-4 mb-4">
                 {frontImage && (
                   <div 
                     onClick={() => openImageModal(frontImage)}
-                    className="w-60 h-60 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-primary-500 cursor-pointer transition-all hover:scale-105 shadow-soft"
+                    className="w-48 h-48 sm:w-60 sm:h-60 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-primary-500 cursor-pointer transition-all hover:scale-105 shadow-soft"
                   >
                     <img src={frontImage} alt="Front of package" className="w-full h-full object-cover" />
                   </div>
@@ -403,7 +403,7 @@ function LoadingPageContent() {
                 {backImage && (
                   <div 
                     onClick={() => openImageModal(backImage)}
-                    className="w-60 h-60 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-primary-500 cursor-pointer transition-all hover:scale-105 shadow-soft"
+                    className="w-48 h-48 sm:w-60 sm:h-60 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-primary-500 cursor-pointer transition-all hover:scale-105 shadow-soft"
                   >
                     <img src={backImage} alt="Back label" className="w-full h-full object-cover" />
                   </div>
@@ -451,15 +451,15 @@ function LoadingPageContent() {
           </div>
 
           {/* Progress Timeline */}
-          <div className="bg-white rounded-3xl p-8 lg:p-12 border-2 border-emerald-100 shadow-soft-lg relative overflow-hidden">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-12 border-2 border-emerald-100 shadow-soft-lg relative overflow-hidden">
             {/* Graph paper texture background */}
             <div className="absolute inset-0 opacity-20" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23d4e8c7' stroke-width='0.5'%3E%3Cpath d='M0 0v40M10 0v40M20 0v40M30 0v40M40 0v40'/%3E%3Cpath d='M0 0h40M0 10h40M0 20h40M0 30h40M0 40h40'/%3E%3C/g%3E%3C/svg%3E")`
             }}></div>
             
-            <div className="relative space-y-8">
+            <div className="relative space-y-5 sm:space-y-8">
               {stepData.map((step, i) => (
-                <div key={i} className="flex gap-6">
+                <div key={i} className="flex gap-4 sm:gap-6">
                   <div className="flex-shrink-0 relative">
                     {/* Confetti particles */}
                     {i === 4 && showConfetti && (
