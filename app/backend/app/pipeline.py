@@ -68,8 +68,15 @@ def run_until_confirmation(analysis_id: str) -> None:
 
 
 def run_after_confirmation(analysis_id: str) -> None:
+    from .config import get_config
+    from .engine import assess
+    from .kb import load_kb
+
+    job = store.get(analysis_id)
     store.update(analysis_id, status=AnalysisStatus.processing, stage=Stage.assessing)
-    # Phase 2: rules engine over kb/ replaces this
+    # Layer 2 (real): cats resolved from cat_ids once persistence lands (Phase 5);
+    # until then an empty list -> assessed as adult with the assumption stated.
+    report = assess(job.extract, [], load_kb(), get_config())
     store.update(analysis_id, stage=Stage.explaining)
-    # Phase 4: LLM template rendering replaces this
-    store.update(analysis_id, report=_MOCK_REPORT, status=AnalysisStatus.done, stage=Stage.done)
+    # Phase 4: LLM template rendering (Layer 3) polishes the copy; engine output is already consumer-shaped
+    store.update(analysis_id, report=report, status=AnalysisStatus.done, stage=Stage.done)

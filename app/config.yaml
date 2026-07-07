@@ -25,6 +25,9 @@ pipeline:
 
 # Mirrors kb/06_verdict_logic.md §9 — the rules engine reads these, never code constants.
 verdict_tunables:
+  assumed_moisture_pct:                    # used for dry-matter conversion when moisture undeclared
+    dry: 10                                # IS-11968 dry definition boundary
+    wet: 78                                # typical wet-food moisture
   core_nutrients: [protein, fat, taurine]
   micros_count_toward_hard_fail: true      # declared micros below min → §4.1 skip
   filler_dominance:
