@@ -107,47 +107,48 @@ These are the only judgments the MVP makes. Each is generic and non-specialized.
 
 ## 6. Data model
 
-**[Decision]** Define the schema up front and make it the contract between stages. The **Gemini** extraction call must return exactly this shape. **Note:** the objects below are the simplified MVP contract; the production tables (`Extracts raw`, `Extracts (processed)`, `Cats`, `Images`) in the existing data model are the source of truth and are richer — reconcile field names against them during build (e.g. `format`→`type`, `completeness_claim`→`adequacy`, `declared_life_stage`→`lifestage`).
+**[Decision]** `wiser-extract-data-model.csv` is the **single source of truth** for field names, types, and enums — not this section. The objects below use the CSV's actual field names; where this PRD's original language differed, that's kept as an inline comment for context/explanation only, not as an alternate spec. Genuine mismatches (not just naming — cases where the CSV enum itself differs from what's described below) are called out explicitly so they don't get silently papered over by the rename.
 
-### 6.1 Extracted label object (`LabelData`)
+### 6.1 Extracted label object (maps to `Extracts (processed)`)
 ```json
 {
   "brand": "string | null",
-  "product_name": "string | null",
-  "variant": "string | null",
-  "format": "wet | dry | unknown",
-  "completeness_claim": "complete | complementary | unstated | unknown",
-  "declared_life_stage": ["kitten","adult","senior","all_life_stages","unstated"],
-  "ingredients_raw": "string | null",
-  "ingredients_list": ["string"],
-  "primary_protein_named": "boolean | null",
+  "variant": "string | null",                                    // was product_name+variant — CSV has no separate product_name field
+  "type": "dry | wet | creamy_treat | other_treat | unknown",     // was `format`
+  "adequacy": "complete | complementary | treat | unknown",       // was `completeness_claim`; CSV has no `unstated`, adds `treat`
+  "lifestage": "kitten | adult | senior | medical | breed | unknown",  // was `declared_life_stage`. MISMATCH, not just naming: CSV's enum has no `all_life_stages`/`unstated` and adds `medical`/`breed` — decide which list Layer 2's life-stage check actually uses before building it
+  "ingredients": ["string"],                                      // was `ingredients_list`; the pre-normalize raw text lives separately on `Extracts raw.ingredients_raw`
   "guaranteed_analysis": {
-    "basis": "as_fed | dry_matter | unknown",
-    "crude_protein_pct": "number | null",
-    "crude_fat_pct": "number | null",
-    "crude_fibre_pct": "number | null",
-    "moisture_pct": "number | null",
-    "ash_pct": "number | null"
+    "protein": "number | null",                                   // was `crude_protein_pct`
+    "fat": "number | null",                                        // was `crude_fat_pct`
+    "fibre": "number | null",                                      // was `crude_fibre_pct`
+    "ash": "number | null",
+    "moisture": "number | null",
+    "others": [{ "label": "string", "value": "number" }]          // CSV allows arbitrary extra nutrients; the original fixed-field list here didn't
   },
-  "net_weight": "string | null",
-  "artificial_additives_flagged": ["string"],
-  "extraction_confidence": "high | medium | low",
-  "unreadable_fields": ["string"]
+  "weight": "number | null",                                      // was `net_weight` (string) — CSV stores grams as an int
+  "additives": ["string"],                                        // was `artificial_additives_flagged` — CSV's field is broader than "artificial-only"
+  "confidence": "number (0-1) | null",                            // was `extraction_confidence` (high/medium/low enum). MISMATCH: CSV uses a 0-1 float instead — decide which representation Layer 2/3 actually consume
+  "extract_note": "string | null"                                 // was `unreadable_fields` (a list) — CSV only has a free-text note, no structured list. Decide if a structured list is still needed for the §8.4 low-confidence flow
 }
 ```
+Note: `primary_protein_named` isn't a CSV field at all — it's a Layer-2-derived flag computed from `ingredients`, not part of the extraction contract. Compute it in Layer 2, don't expect Gemini to extract it.
 
-### 6.2 Cat profile object (`CatProfile`) — optional
+### 6.2 Cat profile object (maps to `Cats` table) — optional
 ```json
 {
-  "name": "string | null",
-  "age_years": "number | null",
-  "age_months": "number | null",
-  "body_condition": "skinny | just_right | chonky | overweight | null",
-  "health_conditions": ["none","arthritis","dental","diabetes","allergies"]
+  "cat_name": "string | null",                                    // was `name`
+  "cat_age_year": "number | null",                                // was `age_years`
+  "cat_age_month": "number | null",                               // was `age_months`
+  "body_condition": "underweight | ideal | overweight | obese | null",  // 4-tag, mapped to a 1-4 rating (D, 07 Jul 2026) — supersedes the earlier skinny/just_right/chonky/overweight wording here and the earlier 9-point-canonical/4-bucket-display-only approach in context.md; context.md needs reconciling to match
+  "health_condition": "string, comma-separated | null"            // was `health_conditions` (array). CSV stores free-text comma-separated — the 11-option multi-select plus a user-typed "Other" both land in this one field
 }
 ```
 
 ### 6.3 Report object (`Report`) — the judging output
+
+**Data-model gap (open, 07 Jul 2026):** unlike §6.1/§6.2, this object has no home yet in `wiser-extract-data-model.csv` — there's no `Reports`/`Assessments` table. §9.3 already calls for persisting "the assessment + final Report" for every scan, but the table itself hasn't been designed. Proposed shape discussed in `task-manager.md`; field names below stay illustrative until that table is added to the CSV.
+
 ```json
 {
   "verdict": "buy | buy_with_conditions | skip",
@@ -223,6 +224,8 @@ The input and profile UX already exist in the web flow (screens shared). Require
 **8.3 Report.** Lead with the **verdict headline** and Buy/Skip. Then the short **conditions/reasons** (2–4 bullets, plain language). Then a collapsed **"Why this verdict"** detailed rationale (the §6.3 `detailed_rationale`). Then any **health nudges**. Cite standards by name where a claim rests on one. If personalization was skipped, show a one-line "General adult-cat analysis — add {cat}'s details for a tailored result."
 
 **8.4 Failure / low-confidence.** If `extraction_confidence` = low or `unreadable_fields` includes ingredients or guaranteed analysis, do **not** fake a verdict. Show a "We couldn't read the label clearly — retake the back panel" state with guidance (the existing "Help us read the label clearly" tips).
+
+**8.5 Verification & feedback loop [Decision, 07 Jul 2026].** *What:* two lightweight checkpoints, both persisted (not console.log-only like the old FE's version): (1) after extraction, before the user sees the full report, a quick "does this match your pack?" confirm/error step — only on confirm does the flow continue to the report; (2) after the report itself, a similarly lightweight feedback prompt on the verdict. *Why:* (1) catches bad extractions before a user sees a wrong verdict built on them, and (2) both generate labeled, storable signal for tuning Layer 1 accuracy and the §7.2 verdict roll-up over time — this is part of what feeds the golden dataset (§10, Data/Test). How this gets built (UI shape, exact storage schema) is intentionally left open for build time.
 
 ---
 
@@ -301,8 +304,8 @@ Validating a therapeutic/prescription diet's *medical claim* (a therapeutic food
 3. **Region** — is MVP targeting UK/EU packs (FEDIAF, "complementary" wording), US packs (AAFCO), or both? This affects label vocabulary the extractor must recognize.
 4. **Verdict thresholds** — final roll-up rules in `06_verdict_logic.md` (the §7.2 table is a starting point).
 5. **Filler / additive lists** — the specific ingredient names Wiser should flag.
-6. **"Detailed rationale"** — always generated and shown collapsed, or generated on demand when the user taps "why" (a small cost/latency trade).
-7. **Data retention** — are we storing user photos and reports for evaluation, and for how long?
+6. ~~**"Detailed rationale"**~~ **[Resolved, 07 Jul 2026]** — always generated, shown collapsed by default. Additionally, straightforward category-level flags (e.g. "protein below the minimum required by Indian pet food standards") also surface as contextual tooltips in the report UI, not just buried in the collapsed rationale.
+7. **Data retention** — partially resolved: yes, we're storing (photos via Cloudinary/`Images`, extraction via `Extracts`), and reports will be too once the `Reports` table (§6.3 gap) is designed — see `task-manager.md`. Retention *duration* is still undecided.
 
 ---
 
