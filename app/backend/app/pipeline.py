@@ -45,20 +45,42 @@ def mock_qc(image_id: str, cloudinary_url: str, category: str) -> QCResult:
     return QCResult(image_id=image_id, qc_passed=True, category=category, qc_confidence=0.99)
 
 
+def _fetch(url: str) -> tuple[bytes, str]:
+    import httpx
+
+    resp = httpx.get(url, timeout=30, follow_redirects=True)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("content-type", "image/jpeg").split(";")[0]
+
+
 def run_until_confirmation(analysis_id: str) -> None:
+    from . import gemini
+
     job = store.get(analysis_id)
     store.update(analysis_id, stage=Stage.qc)
-    for img in job.payload.images:
-        result = mock_qc(img.imageId, img.cloudinaryUrl, img.category.value)
-        if not result.qc_passed:
-            store.update(
-                analysis_id,
-                status=AnalysisStatus.qc_failed,
-                guidance=f"Retake the {img.category.value} photo — {', '.join(result.qc_fail_reason)}",
-            )
-            return
-    store.update(analysis_id, stage=Stage.extracting)
-    extract = _MOCK_EXTRACT
+    live = gemini.enabled()
+    try:
+        fetched: dict[str, tuple[bytes, str]] = {}
+        for img in job.payload.images:
+            if live:
+                fetched[img.category.value] = _fetch(img.cloudinaryUrl)
+                result = gemini.qc_image(*fetched[img.category.value],
+                                         expected_panel=img.category.value, image_id=img.imageId)
+            else:
+                result = mock_qc(img.imageId, img.cloudinaryUrl, img.category.value)
+            if not result.qc_passed:
+                store.update(
+                    analysis_id,
+                    status=AnalysisStatus.qc_failed,
+                    guidance=f"Retake the {img.category.value} photo — {', '.join(result.qc_fail_reason)}",
+                )
+                return
+        store.update(analysis_id, stage=Stage.extracting)
+        extract = gemini.extract_pair(fetched["front"], fetched["back"]) if live else _MOCK_EXTRACT
+    except Exception:
+        store.update(analysis_id, status=AnalysisStatus.error, stage=Stage.extracting,
+                     guidance="Something went wrong while reading the label — please try again.")
+        return
     store.update(
         analysis_id,
         extract=extract,

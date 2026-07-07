@@ -46,22 +46,22 @@ def cat_stage(cat: CatProfile, kb: KB) -> str:
     return "adult"
 
 
-def _tier(stage: str) -> str:
-    return "growth" if stage == "kitten" else "adult"
-
-
 def _fit(pack: Lifestage, stage: str) -> str:
-    """match | over (food's stage above cat's need, mild) | under (growth unmet) | unknown."""
-    if pack in (Lifestage.all_life_stages,):
-        return "match"
-    if pack in (Lifestage.unknown, Lifestage.breed):
-        return "unknown" if pack == Lifestage.unknown else "match"
-    pack_s, cat_s = pack.value, stage
-    if pack_s == cat_s or (pack_s == "adult" and cat_s == "senior"):
-        return "match"
-    if cat_s == "kitten":          # adult/senior-only food for a kitten (§4.2)
+    """Cat-suitability signal (callouts only, never verdict — kb/06 §7 v4):
+    match | over (growth food for an adult) | under (adult food for a kitten) | unknown."""
+    if pack in (Lifestage.all_life_stages, Lifestage.breed):
+        return "match"             # kb/01: all-life-stages matches any cat
+    if pack == Lifestage.unknown:
+        return "unknown"
+    if stage == "kitten" and pack.value != "kitten":
         return "under"
-    return "over"                  # e.g. kitten food for an adult
+    if pack == Lifestage.kitten and stage != "kitten":
+        return "over"
+    return "match"                 # adult/senior packs for adult/senior cats
+
+
+def _underweight(cat: CatProfile) -> bool:
+    return cat.body_condition == 1 or (cat.body_condition_score or 5) <= 3
 
 
 def _dm(as_fed_pct: float, moisture_pct: float) -> float:
@@ -183,19 +183,12 @@ def assess(extract: ExtractProcessed, cats: list[CatProfile], kb: KB, cfg: dict)
             standards_cited=["WSAVA"],
         )
 
-    # Life stages: per-cat fit + strictest tier among covered cats
+    # Pack-dependent tier (D, 08 Jul 2026): the food is scored as what it claims to be.
+    # kitten / all-life-stages -> growth tier; adult / senior / breed / unknown -> adult tier.
+    tier = "growth" if extract.lifestage in (Lifestage.kitten, Lifestage.all_life_stages) else "adult"
     stages = {cat.id or cat.cat_name: cat_stage(cat, kb) for cat in cats}
     fits = {k: _fit(extract.lifestage, s) for k, s in stages.items()}
     assumed_adult = not cats
-    covered = [k for k, f in fits.items() if f in ("match", "over", "unknown")]
-    if assumed_adult:
-        tier = "adult"
-    elif extract.lifestage == Lifestage.all_life_stages:
-        tier = "growth"  # kb/01: all-life-stages assessed against the stricter growth tier
-    elif covered:
-        tier = "growth" if any(stages[k] == "kitten" for k in covered) else "adult"
-    else:
-        tier = _tier(next(iter(stages.values()))) if stages else "adult"
 
     # Ingredients: normalize + KB lookup (pack order preserved)
     matched: list[tuple[str, Optional[IngredientRow]]] = []
@@ -246,10 +239,7 @@ def assess(extract: ExtractProcessed, cats: list[CatProfile], kb: KB, cfg: dict)
         major.append("couldn't confirm the key nutrients from the label (insufficient data)")
     if any(r and "artificial_preservative" in r.flags for _, r in matched):
         minor.append("artificial preservative present")
-    if assumed_adult:
-        minor.append("no cat profile — assessed against adult maintenance")
-    if any(f == "over" for f in fits.values()):
-        minor.append("food's declared life stage is above some cats' needs")
+    # cat-dependent signals (assumed_adult, over-fit) are callouts, never flags (kb/06 v4)
     if extract.lifestage == Lifestage.unknown:
         minor.append("pack life stage unstated — assessed as adult maintenance (check the pack)")
     other_cautions = sorted({r.canonical_name for _, r in matched
@@ -275,8 +265,6 @@ def assess(extract: ExtractProcessed, cats: list[CatProfile], kb: KB, cfg: dict)
     if claims_complete and (below or (above and tun["micros_count_toward_hard_fail"])):
         skip_reasons.append("Labelled a complete food, but " + "; ".join(below + above)
                             + f" for {tier} ({IS}).")
-    if cats and all(f == "under" for f in fits.values()):
-        skip_reasons.append("An adult/senior food can't meet a kitten's growth needs.")
     if filler_dominated:
         skip_reasons.append("This dry food is built mainly on grains/fillers rather than animal "
                             "protein — a poor fit for an obligate carnivore.")
@@ -290,15 +278,19 @@ def assess(extract: ExtractProcessed, cats: list[CatProfile], kb: KB, cfg: dict)
     if len(major) >= tun["stacked_major_flags_skip"]:
         skip_reasons.append("Multiple red flags stack up: " + "; ".join(major) + ".")
 
-    # Per-cat callouts (§7)
+    # Per-cat suitability callouts (§7 v4) — never verdict inputs
     callouts = []
     for cat in cats:
         k = cat.id or cat.cat_name
         f, s = fits[k], stages[k]
         if f == "under":
             note = f"⚠️ Skip for {cat.cat_name} (kitten) — this formula won't meet growth needs."
+        elif f == "over" and not _underweight(cat):
+            note = (f"⚠️ This growth formula is calorie-dense for {cat.cat_name} ({s}) — "
+                    "a maintenance food suits them better.")
         elif f == "over":
-            note = f"⚠️ {cat.cat_name} ({s}): this food targets a younger life stage — fine occasionally, not ideal daily."
+            note = (f"✅ {cat.cat_name} ({s}, on the lighter side): this calorie-dense growth "
+                    "formula can be acceptable for gaining weight — confirm with your vet.")
         elif f == "unknown":
             note = f"⚠️ Couldn't confirm this food's life stage — check the pack before feeding {cat.cat_name} ({s})."
         elif s == "senior":
@@ -374,6 +366,9 @@ def assess(extract: ExtractProcessed, cats: list[CatProfile], kb: KB, cfg: dict)
            + (f"; below: {'; '.join(below)}" if below else "")
            + (f"; above max: {'; '.join(above)}" if above else "") + "."]
     )
+
+    if assumed_adult:
+        conditions.append("General adult-cat analysis — add your cat's details for a tailored result.")
 
     warning = None
     if extract.confidence is not None and extract.confidence < 0.8:

@@ -152,8 +152,22 @@ def test_multicat_adult_food_flags_kitten_without_global_skip():
     assert "✅" in notes["Luna"] and "Skip for Toto" in notes["Toto"]
 
 
-def test_all_kittens_on_adult_food_is_skip():
-    assert run(food(), [KITTEN]).verdict == Verdict.skip
+def test_verdict_is_pack_dependent_regardless_of_cats():
+    # D 08 Jul: same pack -> same verdict for any cat selection; suitability = callouts
+    assert (run(food(), [KITTEN]).verdict == run(food(), [ADULT]).verdict
+            == run(food(), []).verdict == Verdict.buy)
+    assert "Skip for Toto" in run(food(), [KITTEN]).per_cat_callouts[0].note
+
+
+def test_kitten_food_for_adult_gets_calorie_density_callout():
+    kf = food(lifestage=Lifestage.kitten,
+              guaranteed_analysis=GuaranteedAnalysis(protein=0.35, fat=0.15, moisture=0.08))
+    r = run(kf, [ADULT])
+    assert r.verdict == Verdict.buy  # pack scored as kitten food on the growth tier
+    assert "calorie-dense" in r.per_cat_callouts[0].note and "⚠️" in r.per_cat_callouts[0].note
+    skinny = CatProfile(id="c7", cat_name="Slim", cat_age_year=4, body_condition=1)
+    note = run(kf, [skinny]).per_cat_callouts[0].note
+    assert "⚠️" not in note and "vet" in note  # underweight exception
 
 
 def test_all_life_stages_uses_growth_tier():
@@ -161,10 +175,11 @@ def test_all_life_stages_uses_growth_tier():
     ok = food(lifestage=Lifestage.all_life_stages,
               guaranteed_analysis=GuaranteedAnalysis(protein=0.28, fat=0.14, moisture=0.08))
     assert run(ok, [KITTEN, ADULT]).verdict == Verdict.buy
-    # 25% as-fed -> 27.2% DM: passes adult but fails growth -> skip on the strict tier
+    # 25% as-fed -> 27.2% DM: passes adult but fails growth -> skip on the pack's own tier
     low = food(lifestage=Lifestage.all_life_stages,
                guaranteed_analysis=GuaranteedAnalysis(protein=0.25, fat=0.14, moisture=0.08))
     assert run(low, [KITTEN, ADULT]).verdict == Verdict.skip
+    assert run(low, []).verdict == Verdict.skip  # cats don't change it
 
 
 def test_senior_gets_adult_tier_and_management_callout():
@@ -185,7 +200,7 @@ def test_health_and_weight_nudges_fire_with_cat_name():
 def test_no_profile_assumes_adult_with_note():
     r = run(food(), [])
     assert r.verdict == Verdict.buy
-    assert any("adult" in c for c in r.conditions)
+    assert any("adult-cat analysis" in c for c in r.conditions)
 
 
 def test_deterministic():

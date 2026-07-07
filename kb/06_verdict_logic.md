@@ -1,6 +1,6 @@
 # Verdict Roll-up Logic (KB 06)
 
-_Last updated: 07 Jul 2026_ · **Status: draft v3** (v2 + D's 07 Jul rulings: `vet_diet` also triggered by `lifestage=medical`; breed-pack handling; strict skip for undeclared core nutrients on complete foods; `life_stage_fit=unknown` = minor flag). Sign-off parked by D — build proceeds on this version. Deterministic decision spec the Layer-2 rules engine implements. Thresholds are **tunable** (§9). Same inputs → same verdict.
+_Last updated: 08 Jul 2026_ · **Status: draft v4** (v3 + D's 08 Jul ruling: **the verdict is pack-dependent** — the food is scored as what the pack claims to be, on its declared life-stage tier; **cat suitability is always a callout and never changes the verdict**. Same pack → same verdict, regardless of cat selection. Report design mirrors this.) Sign-off parked by D — build proceeds on this version. Deterministic decision spec the Layer-2 rules engine implements. Thresholds are **tunable** (§9). Same inputs → same verdict.
 
 Output verdict ∈ `buy` · `buy_with_conditions` · `skip` · `vet_diet` (therapeutic track, §3) · `no_verdict` (re-scan). **Design intent (D):** a verdict that approves everything is worthless — Wiser must discriminate. `buy` is reserved for clean food that meets everything; anything with a real flag lands lower. Never diagnoses; never validates a therapeutic claim.
 
@@ -57,7 +57,7 @@ If `extraction_confidence = low`, or ingredients / protein / fat are unreadable 
 Any one triggers `skip` (short-circuits §5–§6):
 
 1. **Doesn't meet minimums vs its claim.** Food claims `complete` **and any declared nutrient (macro or micro) is below its IS-11968 minimum** for the life stage → skip. *"Labelled a complete food, but [nutrient] is below the minimum for [life stage]."*
-2. **Life-stage can't be met.** An adult/senior-only food fed to a **kitten** → skip *for that cat* (growth needs unmet).
+2. **Life-stage can't be met** *(REVISED per D, 08 Jul 2026)*. An adult/senior-only food selected for a **kitten** → **per-cat callout** *"skip for this cat — growth needs unmet"*. This does **not** change the pack verdict (the pack is scored as what it claims to be, §7); suitability is always a callout.
 3. **Filler-dominated dry food.** `type = dry` **and** (no named animal protein in the **top 2** ingredients **or** grains/carbs/fillers make up **≥ half of the top 4**) → skip. Bake in marketing hacks like ingredient splitting and fresh ingredient ahead due to water weight etc. into the decision. *"This dry food is built mainly on grains/fillers rather than animal protein — a poor fit for an obligate carnivore."* *(Framed on animal-protein dominance, not mere presence of grain — see note in §12.)*
 4. **Artificial colour present** → skip. *"Contains added colour — purely cosmetic, of no benefit to your cat, and a signal the product prioritises appearance."* (The one ingredient that alone warrants a skip.)
 5. **Stacked red flags.** **≥ 3 major flags** (see §5) on one product → skip, even if none individually would.
@@ -77,8 +77,8 @@ Any one triggers `skip` (short-circuits §5–§6):
 
 **Minor** (adds a note; 2+ → `buy_with_conditions`):
 - Artificial **preservative** (`artificial_preservative`).
-- `life_stage_fit = over` (mild) or `assumed_adult` (no cat profile).
-- `life_stage_fit = unknown` (pack life stage unstated/undecipherable) — assess as adult maintenance, add the condition and per-cat suitability callouts (D, 07 Jul 2026).
+- `life_stage_fit = unknown` (pack life stage unstated/undecipherable — a **pack** property) — assess as adult maintenance, add the condition and per-cat suitability callouts (D, 07 Jul 2026).
+- *(REMOVED per D, 08 Jul 2026: `over` and `assumed_adult` are cat-dependent signals — they are **callouts/notes**, never verdict flags. The verdict stays pack-dependent.)*
 - Other single `caution` ingredients.
 
 *(Artificial colour and the filler-dominance / any-nutrient-below-claim cases are skip-level in §4, not here.)*
@@ -93,16 +93,23 @@ Any one triggers `skip` (short-circuits §5–§6):
 | `intended_use` = therapeutic marker (§3) | **vet_diet** (own track; skip §4–§6) |
 | Any hard fail (§4) | **skip** |
 | `complementary` / `treat` (no hard fail) | **skip** (as meal) + `use_as` allowance |
-| `complete` + life-stage match + all declared nutrients meet + **no** major/minor flags | **buy** |
+| `complete` + all declared nutrients meet on the **pack's declared life-stage tier** + **no** major/minor flags | **buy** |
 | `complete`, no hard fail, but ≥1 major or ≥2 minor flags (or `unknown` adequacy) | **buy_with_conditions** |
 
 `headline` = verdict + the single most important reason (e.g. *"Skip as a main meal — good as an occasional topper,"* or *"Buy — meets the standard with a clean label."*). Therapeutic foods carry the §3 disclaimer regardless of verdict.
 
 ---
 
-## 7. Multi-cat  *(confirmed per D)*
+## 7. Pack-dependent verdict + per-cat suitability  *(REVISED per D, 08 Jul 2026)*
 
-Assess the food exactly as the label states it, then **match suitability to each selected cat's characteristics**. Compute the shared verdict against the strictest applicable life stage; add **per-cat callouts** where a cat diverges (e.g. *"✅ Good for Luna (adult). ⚠️ Skip for Toto (kitten) — adult formula won't meet growth needs."*).
+**Assess the food exactly as the label states it** — the nutrient tier comes from the **pack's declared life stage** (kitten / all-life-stages → growth tier; adult / senior / breed / unknown → adult tier), never from the selected cats. Then **match suitability to each selected cat as callouts**:
+
+- Adult/senior formula selected for a **kitten** → *"⚠️ Skip for {cat} (kitten) — this formula won't meet growth needs."*
+- **Kitten** formula selected for an **adult/senior** → *"⚠️ This growth formula is calorie-dense for {cat} — a maintenance food suits them better,"* **unless the cat's body condition is underweight** (then the density can be acceptable — route to vet, no warning). All-life-stages packs count as matching any cat (kb/01), so no calorie callout there.
+- Pack life stage unknown → *"check the pack before feeding {cat}."*
+- Senior cats → management callout (adult tier, no separate senior standard).
+
+The shared verdict **never changes with cat selection** (e.g. *"✅ Good for Luna (adult). ⚠️ Skip for Toto (kitten) — adult formula won't meet growth needs."* on a pack whose own verdict is buy). No cat profile → general adult-cat analysis, stated as a note.
 
 ## 8. Health nudges (never change the verdict)
 
@@ -121,6 +128,7 @@ Per-condition non-prescriptive nudge appended when a selected cat's profile list
 - Missing-core-nutrient stance on complete foods (default: strict §4.6 skip; alternative: major flag).
 - `vet_diet` trigger set (default: `intended_use` therapeutic marker **or** `lifestage = medical`).
 - Treat calorie allowance (default ≤10%).
+- Calorie-density callout for growth food selected for a non-underweight adult (default on; suppressed when the cat is underweight).
 
 ---
 

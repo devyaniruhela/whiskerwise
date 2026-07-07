@@ -5,6 +5,9 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")  # app/backend/.env (D maintains it)
 
 DEFAULT_CONFIG = Path(__file__).resolve().parents[2] / "config.yaml"  # 01-wiser/app/config.yaml
 
