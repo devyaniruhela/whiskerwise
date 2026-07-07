@@ -1,0 +1,18 @@
+nutrient,unit,basis,is11968_growth_min,is11968_adult_min,is11968_max,fediaf_growth_min,fediaf_adult_min,aafco_growth_min,aafco_adult_min,mvp_use,source_ref,notes_flag,source_status
+crude_protein,%,DM,30,26,-,28-30,25,30,26,yes-core,IS-11968 Tbl2 p8; FEDIAF III-4 p18; AAFCO p13,APPLIED: IS-11968. Headline adequacy check.,OK
+total_fat,%,DM,9,9,-,9,9,9,9,yes-core,IS-11968 Tbl2 p8; FEDIAF III-4 p18; AAFCO p13/14,APPLIED: IS-11968.,OK
+crude_fibre,%,DM,-,-,10,ND,ND,ND,ND,yes-DMcalc,IS-11968 Tbl2 p8,IS MAX 10%. FEDIAF/AAFCO set none.,OK
+acid_insoluble_ash,%,DM,-,-,10,ND,ND,ND,ND,context,IS-11968 Tbl2 p8,IS MAX 10%.,OK
+moisture,%,as-fed,60 (wet),60 (wet),10 (dry),-,-,-,-,yes-DMcalc,IS-11968 Tbl2 p8 & defn 3.7,Product-type definition; drives dry-matter conversion.,OK
+taurine,%,DM,0.1,0.1,-,0.10 dry / 0.20 wet,0.10 dry / 0.20 wet,0.10 dry / 0.20 wet,0.10 dry / 0.20 wet,yes-core,IS-11968 Tbl2 p9 (xlv); FEDIAF III-4 p18; AAFCO p14,"APPLIED: IS-11968 0.10% DM (both stages, dry & wet). FEDIAF/AAFCO require 0.20% for WET/canned - recorded as a DIFFERENTIATOR TARGET (formulate to 0.20% to stand out), NOT the pass/fail line.",OK
+arginine,%,DM,1.25,1.04,-,1.07-1.11,1,1.24,1.04,later,IS-11968 Tbl2 p8; FEDIAF III-4 p18; AAFCO p13,Essential AA.,OK
+calcium,%,DM,1,0.6,2.5,1,0.4,1,0.6,yes,IS-11968 Tbl2 p8; FEDIAF III-4 p18; AAFCO p14,APPLIED: IS-11968.,OK
+phosphorus,%,DM,0.8,0.5,1.6,0.84,0.26,0.8,0.5,yes,IS-11968 Tbl2 p8; FEDIAF III-4 p18; AAFCO p14,APPLIED: IS-11968.,OK
+ca_p_ratio,ratio,-,-,-,-,1:1,1:1,-,-,"context-ckd, senior (low P, high Ca)","AAFCO p14 footnote;
+FEDIAF p18 t III-4a","(FEDIAF)
+Max Growth:    1.5/1
+Adult:		 2/1",OK
+magnesium,%,DM,0.08,0.04,-,0.05,0.04,0.08,0.04,context-urinary,IS-11968 Tbl2 p9; FEDIAF III-4 p18; AAFCO p14,Urinary/struvite relevance.,OK
+vitamin_a,IU/kg,DM,9000,5000,750000,9000,4440,6668,3332,later,IS-11968 Tbl2 p9; FEDIAF III-4 p18; AAFCO p14,APPLIED: IS-11968. FEDIAF converted from per-100g-DM (x10).,OK
+vitamin_d,IU/kg,DM,750,500,10000,280,333,280,280,later,IS-11968 Tbl2 p9; FEDIAF III-4 p18; AAFCO p14,APPLIED: IS-11968. FEDIAF converted (x10).,OK
+vitamin_e,IU/kg,DM,30,30,-,38,51,40,40,later,IS-11968 Tbl2 p9; FEDIAF III-4 p18; AAFCO p14,APPLIED: IS-11968. FEDIAF converted (x10).,OK

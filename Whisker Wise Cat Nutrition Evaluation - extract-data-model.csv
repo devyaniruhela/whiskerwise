@@ -1,0 +1,321 @@
+,,,,,,,
+,field name,BE variable name,field type,default value,description (or logic),comments,
+,,,,,,,
+Table name:,User,"User level table, row created when new phone number attempts to log in",,,,,
+,id,id,UUID,Primary key,userId; created for each unique phone number at the time of row creation,,
+,phone_number,phoneNumber,varchar,Required,"unique, country code (+XX) and 10 digit phone number",,
+,first_name,firstName,varchar,NULL,mandatory field on FE,,
+,last_name,lastName,varchar,NULL,"optional, null if not entered",,
+,otp_verified,otpVerified,boolean,FALSE,TRUE when successfully verified using otp at least once,,
+,cat_profile_added,catProfileAdded,boolean,FALSE,TRUE when user enters mandatory cat profile details,,
+,num_scan_attempts,numScanAttempts,int,0,Number of times user has attempetd to scan items: Unique successful uploads,,
+,num_scans_success,numScansSuccess,int,0,Number of times user has successfully scanned : Unique successful output/report cards,,
+,created_at,createdAt,timestamp,System generated,record timestamp at row creation,,
+,updated_at,updatedAt,timestamp,System generated,record timestamp at row updation,,
+,,,,,,,
+,,,,,,,
+Table name:,OTP,Keeps record of every login & OTP verification,,,,,
+,id,id,UUID,Primary key,created at each login attempt ,,
+,phone_number,phoneNumber,varchar,Required,link to Users table,,
+,otp_value,otpValue,Text ,actual otp for verification,Hashed: HMAC-SHA256,,
+,otp_verified,otpVerified,boolean,FALSE,TRUE once OTP is verified at least once for user/phone number,,
+,num_attempts,numAttempts,int,0,Counter to trtack number of attempts,,
+,created_at,createdAt,timestamp,System generated,timestamp for each login attempt & otp generation,,
+,expires_at,expiresAt,timestamp,System generated,Based on limit: 3-5 minutes,,
+,,,,,,,
+,,,,,,,
+Table name:,Cats,"Keeps records of all cats entered by a user, tied to phone number/user ID",,,,,
+,id,id,UUID,primary key,"catId, created for each unique phone number at the time of row creation",,
+,user_id,userId,UUID,System generated,foreign key to Users,,
+,cat_name,catName,varchar,Required,,,
+,cat_gender,catGender,varchar,Required,"male, female",,
+,cat_dob,catDOB,date,Optional,,Later,
+,cat_age_year,catAgeYear,int,Required,in years,"Recorded at creation. Use ""current age"" as the cat grows up. ",
+,cat_age_month,catAgeMonth,int,Required,in months,"Recorded at creation. Use ""current age"" as the cat grows up. ",
+,body_condition,bodyCondition,varchar/enum,Required,"Visual guide with illustrations showing:
+- overweight: Round belly, no waist definition, ribs not easily felt
+- ideal weight: Visible waist when viewed from above, ribs easily felt without pressing
+- underweight: Prominent ribs/hip bones, severe waist tuck",,
+,body_condition_score,bodyConditionScore,numeric,"NULL, Optional","1-9, WSAVA 9 point scale for body condition score",Later,
+,weight_kg,weightKg,float,"NULL, Optional",in kg,Later,
+,activity_level,activityLevel,varchar/enum,"NULL, Optional","- very active: high energy, plays frequently with 3+ active periods in a day
+- moderately active: regular play sessions, active morning & night
+- not very active: mostly rests, minimal play
+Assume ""moderately active"" for anlaysis unless specified/changes by user",Assumed: moderate,
+,neuter_status,neuterStatus,varchar/enum,NULL,"- neutered
+- non-neutered
+- unknown",Assumed: neutered,
+,environment,environment,varchar/enum,"NULL, Optional","- indoor only
+- outdoor only
+- indoor-outdoor",Assumed: fully indoors,
+,health_condition,healthCondition,text/array,"NULL, Optional",free user input/options for common issues separated by a common separator,,
+,breed,breed,varchar,"NULL, Optional","free user input: indie, persian, etc.",Later,
+,created_at,createdAt,timestamp,System generated,,,
+,updated_at,updatedAt,timestamp,System generated,,,
+,,,,,,,
+,,,,,,,
+Table name:,Images,Create at every successfully uploaded image,,,,"When storing an image, what ar some things which should be stored?",
+,id,id,UUID,primary key,"imageId, corresponds to every successful image upload, not necessarily unique images",,
+,user_id,userId,UUID,foreign key to Users,userId of user who uploaded the image,,
+,cat_id,catID,UUID,foreign key to cats,catId corresponding to the user who uploaded the image,,
+,url,imageURL,varchar,Required,"URL to the uploaded image, mandatory as row is created only after image upload is successful",,
+,size_mb,imageSize,float,NULL,size in MB,,
+,format,imageFormat,enum,NULL,"JPG, PNG, HEIC, ",Could help debug things?,
+,category,imageCategory,enum,NULL,"updated post extraction & identification
+- front
+- back
+- invalid: irrelevant or ""not a pet food pack"" image
+- unknown: when unable to identify/extract",,
+,product_context,productContext,varchar,NULL,"Best deduction for what is it an image of?
+Cat Wet food, Cat Dry food, Cat Treats, Human food name, Some other product or a person?","Could help see what people are testing this with?
+Other cat non-food items? Non-cat items? Human food?",
+,packaging_type,packagingType,enum,NULL,"If a pet food image, what type
+- pack
+- can
+- bag
+- unknown",,
+,status,status,enum,pending,"- uploaded: uploaded, waiting for QC
+- pending: qc passed, extraction yet to begin
+- processing: once extraction begins
+- completed: once extraction is complete
+- qc_failed: if the image fails any of the checks",What are the checks?,
+,qc_passed,qcPassed,boolean,NULL,"TRUE: if no errors detected, ready for extraction
+FALSE: Error detected",,
+,qc_fail_reason,qcFailReason,array/enum,NULL,"when status=""qc_failed"", error reasons get updated","What can AI identify correctly as reasons for what is wrong with the image?
+- Lighting, Blur, Cut off, Not relevant
+Should this be a json of reasons?",
+,qc_confidence,qcConfidence,float,NULL,"Between 0-1, for percentage of confidence in the QC process",,
+,detected_language,detectedLanguage,text/array,NULL,Array of languages detected on pack and used for extraction.,,
+,translated_flag,translatedFlag,boolean,FALSE,Mark TRUE if detected in another language & translated to English,,
+,extracted_text_raw,extractedTextRaw,json or array?,NULL,"once extracted, dump the raw text in the most suitable format",What is the most suitable format? Anything better than just a long string?,
+,extracted_text,extractedText,json,NULL,Relevant text processed & stored with coresponding key,Create complete json with all required fields,
+,confidence,confidence,float,NULL,"Between 0-1, for percentage of confidence in the extraction",,
+,original_fields_json,originalFields,json,NULL,"All important fields from url response post upload {
+    asset_id: 976357b0595b8e5d25f572e338a0428d;
+    public_id: 8956b1be-ef27-483c-9916-f162b634b172;
+    dim: Array<[width: 804; height: 1000;]>;
+    format: png;
+    size_byytes: 999566;
+    secure_url: https://res.cloudinary.com/dksnlowb1/image/upload/v1768700227/8956b1be-ef27-483c-9916-f162b634b172.png;
+    asset_folder: Assets/wiser/test;
+    display_name: Screenshot 2025-12-15 at 3.25.52 PM;
+    original_filename: Screenshot 2025-12-15 at 3.25.52 PM;
+    created_at: 2026-01-18T01:37:07Z
+}",Create using URL response from Cloudinary/upload service,
+,created_at,createdAt,timestamp,System generated,,,
+,updated_at,updatedAt,timestamp,System generated,,,
+,,,,,,,
+,,"Extracts raw,id,image_id,user_id,cat_id,packaging_type,brand,variant_raw,lifestage_raw,type_raw,adequacy_raw,aafco_statement,other_certifications_raw,claims_raw,intended_use_raw,texture_raw,ingredients_raw,additives_raw,guaranteed_analysis_raw,weight_raw,price_raw,met_energy_raw,feeding_guidelines_raw,manufacturer_name_raw,country_of_origin_raw,date_manufacture_raw,date_expiry_raw,translated_flag,detected_language,confidence,extract_note,,,Extracts (processed),id,extract_id,source,user_id,cat_id,brand,variant,lifestage,type,type_method,adequacy,texture,aafco_certified,other_certifications,claims,intended_use,ingredients,additives,guaranteed_analysis,taurine_added,weight,price,priceCurrency,met_energy_100g,manufacturer_name,manufacturer_contact,country_of_origin,date_manufacture,date_expiry,translated_flag",,,,,
+,,,,,,,
+Table name:,Extracts raw,Extracted features at image level - tied to an extraction pair,,,,## Post extraction checks,
+,id,id,UUID,Primary key,Foreign key to extract_id for Extracts (processed) table,"- To be done at ""pack level"". A pack is defined as a pair of front+back images linked to the same ""extract_id"".",
+,image_id,imageId,UUID,Foreign key to Images,,"- Fields marked as ""required"" have to be found on the pack for the extraction to be successful",
+,user_id,userId,UUID,Foreign key to Users,user who uploaded the images,,
+,cat_id,catId,array of UUID,Foreign key to Cats,"cat against whom the user uploaded the images
+- array since it could be multiple cats",- ,
+,packaging_type,packagingType,enum,,"- pack
+- can
+- box
+- others: specify",,
+,brand,brand,varchar,Required,name of brand from pack,,
+,variant_raw,variant,varchar,Required,complete name of the variant as on pack,,
+,lifestage_raw,lifestageRaw,varchar,Required,Statement signifying lifestage as on pack: Eg. Complete food for adult cats,"Derive from statement
+- Define categories",
+,type_raw,typeRaw,varchar,Required,Statement mentioned on pack for signifying the type: Eg. Dry food for cats,"Set values when applicable: ""Dry food"", ""Wet food"", ""Creamy treat"", ""Other treat"" (when its treat but not a creamy treat), ""Meal topper"", ""Broth"", Other: Specify",
+,adequacy_raw,adequacyRaw,varchar,Required,Statement mentioned on pack for signifying the whether complete or complementary food: Eg. Complete and balanced dry food for cats,"Derive from statement
+Complete, Complementary, Does not say",
+,aafco_statement,aafcoStatement,varchar,NULL,raw aafco statement mentioned on the pack,Chekc statement present or not,
+,other_certifications_raw,otherCertificationsRaw,array,NULL,Comma separated statements of any regulated terms/certifications mentioned on the pack,Later,
+,claims_raw,claimsRaw,array,NULL,claims made by the brand on the pack listed in a comma separated string,,
+,intended_use_raw,intendedUseRaw,varchar,NULL,"Statement as on pack eg. urinary diet, hairball control, GI diet, etc.
+does not include all claims like ""soft fur"" etc. NULL if nothing specified",,
+,texture_raw,texture,varchar,NULL,"Exact texture as identified from name/details on pack
+""kibble"" for Dry food, ""jelly"", ""gravy"", ""mousse"", ""pate""",exact texture instead of statement as hard to extract later,
+,ingredients_raw,ingredients,array of string,Required,"complete detected text with names of ingredients & quantities present, in the same order as on pack in an array. Use null when ""unextracted"" text is known and skipped",array index shows sequence,
+,additives_raw,additives,varchar,NULL,"complete detected text with names of additives & quantities present, in the same order as on pack",,
+,guaranteed_analysis_raw,guaranteedAnalysisRaw,json,Required,"create json for all the nutrients, additives etc. mentioned on the pack along with corresponding values & units","exhaustive list of keys for guantanteed analysis, needed?",
+,weight_raw,weight,int,Required,weight statment mentioned on pack with number and unit,,
+,price_raw,priceRaw,int,NULL,cost statement mentioned on thepack with currency,Can be bull when it is on top or bottom of can or not printed,
+,met_energy_raw,metEnergyRaw,varchar,NULL,"as on pack, with units. NULL if not present",,
+,feeding_guidelines_raw,feedingGuidelinesRaw,varchar,,Text as mentioned on pack,,
+,manufacturer_name_raw,manufaturerNameRaw,varchar,NULL,"Name of manufacturer, name and address as mentioned on pack",,
+,country_of_origin_raw,countryOriginRaw,varchar,NULL,Country of origin for each pack as mentioned on pack,,
+,date_manufacture_raw,dateManufactureRaw,varchar,NULL,Straight from the pack. NULL if not present,,
+,date_expiry_raw,dateExpiryRaw,varchar,NULL,"Straight from the pack or  ""best before"" statement. NULL if not present",,
+,translated_flag,translatedFlag,boolean,FALSE,Mark as TRUE if text is translated from another language on either of the images,,
+,detected_language,SouceLanguage,varchar,NULL,"Language used on the pack detected for translation, if pack has info in any non-english language",,
+,confidence,confidence,float,NULL,"Between 0-1, for percentage of confidence in the extraction",,
+,extract_note,extractNote,text,NULL,"Any challenges, limitations, findings at the time of extraction of images
+Include reason for low confidence, or in case of translation",,
+,,,,,,,
+,,,,,,,
+Table name:,Extracts (processed),"Fields product features clean and processed from raw values in raw extracts table, at extract id level",,,,,
+,id,id,UUID,Primary key,unique row id,,
+,extract_id,extractId,UUID,Foreign key to extracts,extractId,,
+,source,source,json,Foreign key to Images,"Contains the imageId and URL path to the source images
+{
+ front: {id: imagId, link: imageURL},
+ back: {id: imagId, link: imageURL}
+}",,
+,user_id,userId,UUID,Foreign key to Users,user who uploaded the images,,
+,cat_id,catId,UUID,Foreign key to Cats,cat against whom the user uploaded the images,,
+,brand,brand,varchar,Required,name of brand,,
+,variant,variant,varchar,Required,clean & complete name of the variant processed from variant_raw,,
+,lifestage,lifestage,varchar/enum,Dervied metric,"Standardise after processing lifestage_raw
+- kitten: or 2-12 months or growth
+- adult: or maintainance
+- senior: or 7 years +
+- medical: eg. urinary/kidney health etc.
+- breed: for one specific breed
+- unknown: none of the above or non-decipherable",,
+,type,type,varchar/enum,Dervied metric,"Derive directly from text on pack (type_raw) or use moisture %: < 20% = Dry food. > 60% use wet food. Mark as treat when mentioned explicitely on pack
+- dry
+- wet
+- creamy treat
+- other treat
+- unknown",,
+,type_method,typeMethod,varchar/enum,Dervied metric,"Method of deriving type:
+- pack
+- moisture
+- other",,
+,adequacy,adequacy,varchar/enum,Required,"- complete: in case of complete or both complete and balanced
+- complementary
+- treat
+- unknown",,
+,texture,texture,enum,NULL,"Derive from name or what's mentioned on the pack
+- Jelly, Broth, Flakes, Dry kibble, Mousse, Paste, Chunks, Gravy etc.",,
+,aafco_certified,aafcoCertified,boolean,FALSE,TRUE if it specified that it meets AAFCO standards,,
+,other_certifications,otherCertifications,array,NULL,Comma separated statements of any regulated terms/certifications mentioned on the pack,,
+,claims,claims,array,NULL,Claims made by the brand on the pack listed in a comma separated string,,
+,intended_use,intendedUse,varchar,NULL,"urinary diet, hairball control, GI diet, etc.
+does not include all claims like ""soft fur"" etc. NULL if nothing specified",,
+,ingredients,ingredients,array,Required,"comma separated names of ingredients present, in the same order as on pack: ingredient_name or ingredient_name (x) where x is the quantity mentioned eg,. 40%, 600IU",,
+,additives,additives,array,NULL,"comma separated names of additives present, in the same order as on pack: ingredient_name or ingredient_name (x) where x is the quantity mentioned eg,. 40%, 600IU",,
+,guaranteed_analysis,guaranteedAnalysis,json,Required,"json with % for each key in value betweel 0-1, NULL if not present or low confidence
+assume crude protein is protein & similar for other nutrients.
+{protein: , 
+ fat: , 
+ fibre: , 
+ ash: , 
+ moisture:
+ others: [{ }]
+}",Are there any other such fields?,
+,taurine_added,taurineAdded,boolean,NULL,"TRUE if it specified that it has additional taurine added, if not specified, makr as false. Leave as null if unsure",,
+,weight,weight,int,Required,"in grams, for single unit",,
+,price,price,int,NULL,Cost mentioned for single unit,,
+,priceCurrency,priceCurrency,varchar/enum,INR,"currency of cost, change if not in INR",,
+,met_energy_100g,metEnergy100g,varchar,NULL,"Metabolisable Energy
+calculated in kCals per 100g, from value mentioned on pack. NULL if not present",,
+,manufacturer_name,manufaturerName,varchar,NULL,"Name of manufacturer, only name not address",,
+,manufacturer_contact,manufacturerContact,varchar,NULL,"Contact phone number, null if not present",,
+,country_of_origin,countryOrigin,varchar,NULL,Country of origin for each pack,,
+,date_manufacture,dateManufacture,datetime,NULL,Straight from the pack. NULL if not present,,
+,date_expiry,dateExpiry,datetime,NULL,"Straight from the pack or Calculated based on ""best before"" and manufacturing date. NULL if not present",,
+,translated_flag,translatedFlag,boolean,FALSE,Mark as TRUE if text is translated from another language on either of the images,,
+,confidence,confidence,float,NULL,"Between 0-1, for percentage of confidence in the extraction",,
+,,,,,,,
+,,,,,,,
+Table name:,product (dim),Info bank of all cat food products - Dim table: Maintained by Admins,,,,,Ingredients
+,id,id,UUID,primary key,productId,,
+,brand,brand,varchar,Required,name of brand,,
+,variant_raw,variantRaw,varchar,Required,complete name of the variant as mentioned on pack,,
+,variant,variant,varchar,Required,clean & complete name of the variant,,
+,lifestage_raw,lifestageRaw,varchar,Required,Lifestage statement as mentioned on the pack,,
+,lifestage,lifestage,varchar,Required,"Standardise after processing 
+- kitten: or 2-12 months or growth
+- adult: or maintainance
+- senior: or 7 years +
+- medical: eg. urinary/kidney health etc.
+- breed: for one specific breed
+- unknown: none of the above or non-decipherable",,
+,type,type,varchar,Required,"Derive directly from pack or use moisture %: < 20% = Dry food. > 60% use wet food. Mark as treat when mentioned explicitely on pack
+- dry
+- wet
+- creamy treat
+- other treat
+- unknown",,
+,adequacy_raw,adequacyRaw,varchar,Required,"Statement of ""complete/complementary"" nutrition mentioned on the pack",,
+,adequacy,adequacy,varchar,Required,"- complete: in case of complete or both complete and balanced
+- complementary
+- treat
+- unknown",,
+,texture,texture,varchar,NULL,"Derive from name or what's mentioned on the pack
+- Jelly, Broth, Flakes, Dry kibble, Mousse, Paste, Chunks, Gravy etc.",,
+,aafco_statement,aafcoStatement,varchar,NULL,raw aafco statement mentioned on the pack,,
+,aafco_certified,aafcoCertified,boolean,FALSE,TRUE if it specified that it meets AAFCO standards,,
+,other_certifications,otherCertifications,text/array,NULL,Comma separated statements of any regulated terms/certifications mentioned on the pack,,
+,claims,claims,text/array,NULL,claims made by the brand on the pack listed in a comma separated string,Add examples for claims here,
+,intended_use,intendedUse,text/array,NULL,"Any statements specifying the food serves or is for a special functional, theraputic or medical purpose",,
+,ingredients,ingredients,text/array,Required,"comma separated names of ingredients present, in the same order as on pack: ingredient_name or ingredient_name (x) where x is the quantity mentioned eg,. 40%, 600IU",,
+,additives,additives,text/array,NULL,"comma separated names of additives present, in the same order as on pack: ingredient_name or ingredient_name (x) where x is the quantity mentioned eg,. 40%, 600IU",,
+,guaranteed_analysis,guaranteedAnalysis,json,Required,"json with % for each key in value betweel 0-1, NULL if not present or low confidence
+assume crude protein is protein & similar for other nutrients.
+{protein: , 
+ fat: , 
+ fibre: , 
+ ash: , 
+ moisture: 
+}",Are there any more such fields?,
+,guaranteed_analysis_raw,guaranteedAnalysisRaw,json,Required,"create json for all the nutrients, additives etc. mentioned on the pack along with corresponding values & units",,
+,weight,weight,int,Required,in grams,,
+,price,price,int,Required,for 1 unit (pack/can),,
+,price_currency,priceCurrency,varchar,INR,currency mentioned on pack,,
+,met_energy_raw,metEnergyRaw,varchar,NULL,"Metabolisable Energy
+as mentioned on the pack with units, NULL if not present",,
+,met_energy,metEnergy,float,NULL,"Metabolisable Energy
+converted raw value, in kCals per 100g",,
+,feeding_guidelines,feedingGuidelines,varchar,NULL,Text as mentioned on pack,,
+,product_web_link,productWebLink,varchar (URL),NULL,Link to the product on official brand/product website,,
+,detected_language,detectedLanguage,text/array,NULL,Array of languages detected on pack and used for extraction.,,
+,translated_flag,translatedFlag,boolean,FALSE,TRUE if the text from pack has been traslated by AI,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+Table name:,Ingredients (dim),Info bank of ingredients that are present in cat food products - Dim table: Maintained by Admins,,,,,
+,ingredient_name,ingredientName,varchar,Required,Name of ingredient,,
+,origin,origin,varchar/enum,Required,"Where is the ingredient derived from?
+- animal
+- plant
+- synthetic",,
+,category,category,varchar/enum,NULL,"Where type of ingredient is it?
+- named animal protein
+- unnnamed animal proteins (includes processed animal proteins, meals, by products)
+- plant protein
+- natural (i.e derived from plants)
+- synthetic
+- unknown",,
+,transparency,transparency,varchar/enum,NULL,"Based on how clear the origin, source species, & purpose are
+- Clear
+- Confusing
+- Unclear",,
+,purpose,purpose,varchar/enum,Required,"In which category does it fall based on its purpose?
+- protein
+- fat
+- carbohydrate
+- fibre
+- preservative/stabilizer
+- colourant
+- sugar
+- synthetic flavour enhancer
+- thickner/gelling agent
+- binder/emulsifier
+- vitamin
+- mineral
+- amino acid
+- funtctional additive (used in therapeutic diets)
+- unknown nutritonal value","""functional additives"" - Used in specialty diets (GI, urinary, hairball, skin).
+DL-methionine (urinary acidifier)
+Cranberry extract
+Yucca schidigera
+Probiotics (Enterococcus, Lactobacillus)
+Prebiotics (FOS, MOS)
+Glucosamine
+Chondroitin
+L-carnitine",
+,essential,essential,boolean,NULL,"TRUE: If it is essential for cats, FALSE: if it is known to be non-essential for cats
+Else NULL",,
+,risk,risk,boolean,NULL,"TRUE: If there is known risk for cats for this ingredient, FALSE: if it is known that there is no risk for cats due to this
+Else NULL",Later,
+,min_qty,minQty,float,NULL,"If min specified for adult cats in latest pet food standards, in order of priority: IS11968 > AAFCO > WSAVA > FEDIAF",,
+,max_qty,maxQty,float,NULL,"If max specified for adult cats in latest pet food standards, in order of priority: IS11968 > AAFCO > WSAVA > FEDIAF",,

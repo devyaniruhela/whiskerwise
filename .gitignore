@@ -1,0 +1,66 @@
+# === Wiser repo .gitignore ===
+# Goal: keep local-only / secret / generated files out of git.
+# Build code lives under app/ (not yet created) — this file is future-proofed for it.
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+
+# --- Claude / agent local state (not part of the shipped project) ---
+.claude/
+
+# --- Reference-only folder (see CLAUDE.md: read-only, never build on it) ---
+# Contains its own node_modules, .env.local and a nested .git — must not be tracked here.
+past work/
+
+# --- Secrets / env files (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# --- Node / Next.js (app/frontend) ---
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+.pnp.js
+.pnp.cjs
+.yarn/install-state.gz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# --- Python / FastAPI (app/backend) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Databases (local dev) ---
+*.sqlite3
+*.db
+
+# --- Logs ---
+*.log
+
+# --- Uploaded/generated images (local test artifacts, not Cloudinary-hosted) ---
+/app/backend/tmp/
+/app/**/uploads/
