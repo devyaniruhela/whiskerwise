@@ -55,6 +55,7 @@ def get_analysis(analysis_id: str) -> AnalysisState:
         analysis_id=analysis_id,
         status=job.status,
         stage=job.stage,
+        stage_label=get_config()["stage_labels"].get(job.stage.value),
         extract=job.extract if job.status == AnalysisStatus.awaiting_confirmation else None,
         report=job.report,
         guidance=job.guidance,

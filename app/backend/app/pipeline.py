@@ -45,26 +45,34 @@ def mock_qc(image_id: str, cloudinary_url: str, category: str) -> QCResult:
     return QCResult(image_id=image_id, qc_passed=True, category=category, qc_confidence=0.99)
 
 
-def _fetch(url: str) -> tuple[bytes, str]:
+def _resized(url: str, max_width: int) -> str:
+    """Cloudinary dynamic resize via URL — non-Cloudinary URLs pass through untouched."""
+    marker = "/upload/"
+    if "res.cloudinary.com" in url and marker in url:
+        return url.replace(marker, f"{marker}w_{max_width},c_limit,q_auto/", 1)
+    return url
+
+
+def _fetch(url: str, max_width: int) -> tuple[bytes, str]:
     import httpx
 
-    resp = httpx.get(url, timeout=30, follow_redirects=True)
+    resp = httpx.get(_resized(url, max_width), timeout=30, follow_redirects=True)
     resp.raise_for_status()
     return resp.content, resp.headers.get("content-type", "image/jpeg").split(";")[0]
 
 
 def run_until_confirmation(analysis_id: str) -> None:
     from . import gemini
+    from .config import get_config
 
     job = store.get(analysis_id)
     store.update(analysis_id, stage=Stage.qc)
     live = gemini.enabled()
+    widths = get_config()["images"]
     try:
-        fetched: dict[str, tuple[bytes, str]] = {}
         for img in job.payload.images:
             if live:
-                fetched[img.category.value] = _fetch(img.cloudinaryUrl)
-                result = gemini.qc_image(*fetched[img.category.value],
+                result = gemini.qc_image(*_fetch(img.cloudinaryUrl, widths["qc_max_width"]),
                                          expected_panel=img.category.value, image_id=img.imageId)
             else:
                 result = mock_qc(img.imageId, img.cloudinaryUrl, img.category.value)
@@ -76,7 +84,14 @@ def run_until_confirmation(analysis_id: str) -> None:
                 )
                 return
         store.update(analysis_id, stage=Stage.extracting)
-        extract = gemini.extract_pair(fetched["front"], fetched["back"]) if live else _MOCK_EXTRACT
+        if live:
+            by_cat = {i.category.value: i.cloudinaryUrl for i in job.payload.images}
+            extract = gemini.extract_pair(
+                _fetch(by_cat["front"], widths["extract_max_width"]),
+                _fetch(by_cat["back"], widths["extract_max_width"]),
+            )
+        else:
+            extract = _MOCK_EXTRACT
     except Exception:
         store.update(analysis_id, status=AnalysisStatus.error, stage=Stage.extracting,
                      guidance="Something went wrong while reading the label — please try again.")

@@ -216,6 +216,7 @@ class AnalysisState(BaseModel):
     analysis_id: str
     status: AnalysisStatus
     stage: Stage
+    stage_label: Optional[str] = None            # plain-English progress copy (config stage_labels)
     extract: Optional[ExtractProcessed] = None   # populated at the confirm checkpoint
     report: Optional[Report] = None              # populated when done
     guidance: Optional[str] = None               # re-upload guidance on qc_failed / no_verdict
