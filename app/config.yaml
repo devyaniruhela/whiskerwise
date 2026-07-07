@@ -1,0 +1,38 @@
+# ── Wiser runtime config ─────────────────────────────────────────────
+# Edited by D. Read once at backend startup. Nothing in here is duplicated
+# in code; paths are relative to this file's directory (01-wiser/app/).
+# Secrets never live here — they stay in app/backend/.env (see .env.example).
+
+paths:
+  kb_dir: ../kb                    # Layer-2 knowledge base, read in place
+  prompts_dir: backend/prompts     # Gemini prompt files (Phase 3)
+  report_template: backend/templates/report_template.md   # Layer-3 placeholder template (Phase 4)
+
+models:
+  qc: gemini-2.5-flash             # Tier-1 QC classify
+  extract: gemini-2.5-flash        # Layer-1 extraction
+  explain: gemini-2.5-flash        # Layer-3 report writing (Claude-swappable interface)
+
+features:
+  anonymous_auth: true             # v1: Supabase signInAnonymously(), no login UI
+  email_login: false               # v2 — scaffolded, switched off
+  phone_login: false               # v2 — scaffolded, switched off
+
+pipeline:
+  poll_interval_ms: 1500           # FE polling cadence hint
+  extraction_retries: 1            # retry once on malformed extraction JSON
+  confidence_floor: 0.6            # Extracts.confidence below this → no_verdict (kb/06 §2)
+
+# Mirrors kb/06_verdict_logic.md §9 — the rules engine reads these, never code constants.
+verdict_tunables:
+  core_nutrients: [protein, fat, taurine]
+  micros_count_toward_hard_fail: true      # declared micros below min → §4.1 skip
+  filler_dominance:
+    animal_protein_top_n: 2                # no named animal protein in top-2 → fail arm 1
+    filler_window_top_n: 4                 # …or fillers ≥ half of top-4 → fail arm 2
+    filler_min_count: 2
+  artificial_colour_skip: true             # §4.4
+  stacked_major_flags_skip: 3              # §4.5
+  minor_flags_to_conditions: 2             # §5 minor threshold
+  unknown_adequacy_verdict: buy_with_conditions   # §3
+  treat_calorie_pct_max: 10                # treat allowance copy
