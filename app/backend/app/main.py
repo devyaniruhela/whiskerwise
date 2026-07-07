@@ -4,7 +4,11 @@ POST /analyze/{id}/confirm → extraction checkpoint (PRD §8.5);
 POST /analyze/{id}/feedback → persisted report feedback; POST /qc → per-image QC.
 """
 
+import logging
+
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
 from . import pipeline
 from .config import get_config

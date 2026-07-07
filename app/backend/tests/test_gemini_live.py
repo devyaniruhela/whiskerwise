@@ -42,4 +42,10 @@ def test_live_qc_and_extraction_then_assess():
 
     report = assess(extract, [], load_kb(), get_config())
     print(f"live verdict: {report.verdict.value} — {report.headline}")
-    assert report.verdict is not None
+
+    from app.llm import polish
+    polished = polish(report)
+    assert polished.verdict == report.verdict and polished.conditions == report.conditions
+    assert polished.headline and polished.detailed_rationale
+    print(f"live layer3 headline: {polished.headline}")
+    print(f"live layer3 rationale: {polished.detailed_rationale[:300]}")

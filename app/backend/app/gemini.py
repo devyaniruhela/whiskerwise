@@ -4,13 +4,17 @@ the Pydantic contracts, so Gemini's JSON is parsed, never prose. Malformed outpu
 retries once (PRD §9.3). Model names come from app/config.yaml.
 """
 
+import logging
 import os
+import time
 from typing import Optional
 
 from pydantic import BaseModel
 
 from .config import get_config
 from .models import ExtractProcessed, QCResult
+
+log = logging.getLogger("wiser.gemini")
 
 
 def enabled() -> bool:
@@ -37,6 +41,7 @@ def _generate(model: str, system: str, parts: list, schema):
 
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     last_err = None
+    t0 = time.perf_counter()
     for attempt in range(2):                     # retry once on malformed output
         resp = client.models.generate_content(
             model=model,
@@ -49,11 +54,14 @@ def _generate(model: str, system: str, parts: list, schema):
             ),
         )
         try:
-            if resp.parsed is not None:
-                return resp.parsed
-            return schema.model_validate_json(resp.text or "")
+            parsed = resp.parsed if resp.parsed is not None else schema.model_validate_json(resp.text or "")
+            u = resp.usage_metadata
+            log.info("%s/%s ok in %.1fs tokens=%s", model, schema.__name__,
+                     time.perf_counter() - t0, u.total_token_count if u else "?")
+            return parsed
         except Exception as e:                   # noqa: BLE001 — surfaced after retry
             last_err = e
+    log.warning("%s/%s unparseable twice in %.1fs", model, schema.__name__, time.perf_counter() - t0)
     raise RuntimeError(f"Gemini returned unparseable {schema.__name__} twice: {last_err}")
 
 

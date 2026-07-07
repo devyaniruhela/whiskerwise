@@ -6,6 +6,9 @@ Split at the confirmation checkpoint (PRD §8.5): run_until_confirmation stops a
 extraction; run_after_confirmation resumes on the user's confirm.
 """
 
+import logging
+import time
+
 from .models import (
     AnalysisStatus,
     Adequacy,
@@ -19,6 +22,8 @@ from .models import (
     Verdict,
 )
 from .store import store
+
+log = logging.getLogger("wiser.pipeline")
 
 _MOCK_EXTRACT = ExtractProcessed(
     brand="MockBrand",
@@ -69,6 +74,7 @@ def run_until_confirmation(analysis_id: str) -> None:
     store.update(analysis_id, stage=Stage.qc)
     live = gemini.enabled()
     widths = get_config()["images"]
+    t0 = time.perf_counter()
     try:
         for img in job.payload.images:
             if live:
@@ -82,6 +88,8 @@ def run_until_confirmation(analysis_id: str) -> None:
                     status=AnalysisStatus.qc_failed,
                     guidance=f"Retake the {img.category.value} photo — {', '.join(result.qc_fail_reason)}",
                 )
+                log.info("analysis=%s qc_failed (%s) in %.1fs", analysis_id,
+                         img.category.value, time.perf_counter() - t0)
                 return
         store.update(analysis_id, stage=Stage.extracting)
         if live:
@@ -92,9 +100,10 @@ def run_until_confirmation(analysis_id: str) -> None:
             )
         else:
             extract = _MOCK_EXTRACT
-    except Exception:
+    except Exception as e:  # noqa: BLE001 — surfaced to the user as a safe retry message
         store.update(analysis_id, status=AnalysisStatus.error, stage=Stage.extracting,
                      guidance="Something went wrong while reading the label — please try again.")
+        log.error("analysis=%s failed in %.1fs: %s", analysis_id, time.perf_counter() - t0, e)
         return
     store.update(
         analysis_id,
@@ -102,6 +111,8 @@ def run_until_confirmation(analysis_id: str) -> None:
         status=AnalysisStatus.awaiting_confirmation,
         stage=Stage.awaiting_confirmation,
     )
+    log.info("analysis=%s qc+extract ok in %.1fs (live=%s)", analysis_id,
+             time.perf_counter() - t0, live)
 
 
 def run_after_confirmation(analysis_id: str) -> None:
@@ -109,11 +120,18 @@ def run_after_confirmation(analysis_id: str) -> None:
     from .engine import assess
     from .kb import load_kb
 
+    from . import gemini
+    from .llm import polish
+
     job = store.get(analysis_id)
+    t0 = time.perf_counter()
     store.update(analysis_id, status=AnalysisStatus.processing, stage=Stage.assessing)
     # Layer 2 (real): cats resolved from cat_ids once persistence lands (Phase 5);
     # until then an empty list -> assessed as adult with the assumption stated.
     report = assess(job.extract, [], load_kb(), get_config())
     store.update(analysis_id, stage=Stage.explaining)
-    # Phase 4: LLM template rendering (Layer 3) polishes the copy; engine output is already consumer-shaped
+    if gemini.enabled():
+        report = polish(report)  # Layer 3 copy polish; engine copy stands on any failure
     store.update(analysis_id, report=report, status=AnalysisStatus.done, stage=Stage.done)
+    log.info("analysis=%s assess+explain ok in %.1fs verdict=%s", analysis_id,
+             time.perf_counter() - t0, report.verdict.value)
