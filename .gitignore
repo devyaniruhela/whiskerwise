@@ -1,22 +1,27 @@
 # === Wiser repo .gitignore ===
-# Goal: keep local-only / secret / generated files out of git.
-# Build code lives under app/ (not yet created) — this file is future-proofed for it.
+# Track-list model (D's call, 07 Jul 2026): only kb/ (runtime KB data, single
+# source of truth for the backend) and app/ (the actual buildable Next.js +
+# FastAPI app) are committed. Everything else in this folder — planning docs,
+# PRD, task log, design refs, past work/ — is local-only and stays out of git.
 
-# --- OS / editor cruft ---
+# 1) Ignore everything at the top level by default...
+/*
+
+# 2) ...except the paths we actually want to track.
+!/kb/
+!/app/
+!/.gitignore
+
+# --- Below: still enforced *inside* kb/ and app/ once app/ exists ---
+
+# OS / editor cruft
 .DS_Store
 Thumbs.db
 .idea/
 *.swp
 *.swo
 
-# --- Claude / agent local state (not part of the shipped project) ---
-.claude/
-
-# --- Reference-only folder (see CLAUDE.md: read-only, never build on it) ---
-# Contains its own node_modules, .env.local and a nested .git — must not be tracked here.
-past work/
-
-# --- Secrets / env files (never commit) ---
+# Secrets / env files
 .env
 .env.*
 !.env.example
@@ -25,7 +30,7 @@ past work/
 credentials.json
 service-account*.json
 
-# --- Node / Next.js (app/frontend) ---
+# Node / Next.js (app/frontend)
 node_modules/
 .next/
 out/
@@ -43,7 +48,7 @@ pnpm-debug.log*
 next-env.d.ts
 .vercel
 
-# --- Python / FastAPI (app/backend) ---
+# Python / FastAPI (app/backend)
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -54,13 +59,13 @@ env/
 .mypy_cache/
 .ruff_cache/
 
-# --- Databases (local dev) ---
+# Databases (local dev)
 *.sqlite3
 *.db
 
-# --- Logs ---
+# Logs
 *.log
 
-# --- Uploaded/generated images (local test artifacts, not Cloudinary-hosted) ---
+# Local upload/tmp dirs
 /app/backend/tmp/
 /app/**/uploads/
