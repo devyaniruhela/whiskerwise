@@ -124,9 +124,11 @@ def _nudges_for(cats: list[CatProfile], kb: KB) -> list[str]:
             c = cond.strip().lower()
             key = kb.nudge_labels.get(c) or next(
                 (k for k in kb.nudges if k != "other" and (k.split("_")[0] in c or c in k)), None)
+            if c.startswith("no known") or c in ("none", ""):
+                continue
             if key:
                 out.append(kb.nudges[key].replace("{cat_name}", cat.cat_name))
-            elif c and c not in ("none",):
+            elif c:
                 out.append(kb.nudges["other"].replace("{cat_name}", cat.cat_name)
                            .replace("{description}", cond))
         bc = cat.body_condition_score or {1: 2, 2: 5, 3: 7, 4: 9}.get(cat.body_condition or 0)

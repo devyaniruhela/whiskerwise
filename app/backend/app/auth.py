@@ -30,7 +30,8 @@ def _verify(token: str) -> Optional[str]:
     if client is None:
         return None
     key = client.get_signing_key_from_jwt(token).key
-    claims = jwt.decode(token, key, algorithms=["RS256", "ES256"], audience="authenticated")
+    claims = jwt.decode(token, key, algorithms=["RS256", "ES256"], audience="authenticated",
+                        leeway=60)  # tolerate small clock skew on iat/exp
     return claims.get("sub")
 
 
