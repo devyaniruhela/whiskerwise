@@ -1,6 +1,6 @@
 # Verdict Roll-up Logic (KB 06)
 
-_Last updated: 06 Jul 2026_ · **Status: draft v2 for D's sign-off** (incorporates D's redlines). Deterministic decision spec the Layer-2 rules engine implements. Thresholds are **tunable** (§9). Same inputs → same verdict.
+_Last updated: 07 Jul 2026_ · **Status: draft v3** (v2 + D's 07 Jul rulings: `vet_diet` also triggered by `lifestage=medical`; breed-pack handling; strict skip for undeclared core nutrients on complete foods; `life_stage_fit=unknown` = minor flag). Sign-off parked by D — build proceeds on this version. Deterministic decision spec the Layer-2 rules engine implements. Thresholds are **tunable** (§9). Same inputs → same verdict.
 
 Output verdict ∈ `buy` · `buy_with_conditions` · `skip` · `vet_diet` (therapeutic track, §3) · `no_verdict` (re-scan). **Design intent (D):** a verdict that approves everything is worthless — Wiser must discriminate. `buy` is reserved for clean food that meets everything; anything with a real flag lands lower. Never diagnoses; never validates a therapeutic claim.
 
@@ -38,7 +38,7 @@ If `extraction_confidence = low`, or ingredients / protein / fat are unreadable 
 | `treat` | **`skip` as a meal**, allowance *"treat only — keep ≤10% of daily calories."* (`use_as = treat`.) |
 | `unknown` / unstated | **`buy_with_conditions`**, lead condition *"couldn't confirm this is a complete food — don't rely on it as the sole meal until the pack's completeness statement is verified."* Not an auto-skip. **Reasoning:** a genuinely complete food often just has its statement missed by OCR (e.g. Farmina N&D in our corpus) — skipping it would be a false negative. Conservative but not punishing. *(Tunable — §9.)* |
 
-**Therapeutic / prescription diets *(REVISED per D — own track, NOT a Buy/Skip)*.** If `intended_use` is a therapeutic marker, do **not** run the standard adequacy Buy/Skip. These diets deliberately deviate from general minimums (a renal diet is intentionally low-protein; scoring it against the 26% floor would wrongly Skip it). Instead output a **`vet_diet`** guidance result:
+**Therapeutic / prescription diets *(REVISED per D — own track, NOT a Buy/Skip)*.** If `intended_use` is a therapeutic marker **or `lifestage = medical`** (either alone triggers the track — D, 07 Jul 2026), do **not** run the standard adequacy Buy/Skip. These diets deliberately deviate from general minimums (a renal diet is intentionally low-protein; scoring it against the 26% floor would wrongly Skip it). Instead output a **`vet_diet`** guidance result:
 
 1. **State the purpose from the pack** — *"This is a therapeutic diet for cats with [condition, e.g. urinary/LUTD]. It's formulated with [pack features, e.g. controlled magnesium, urinary acidifiers] for their specific needs."*
 2. **Match to each selected cat's conditions** (not to the nutrient standard):
@@ -47,6 +47,8 @@ If `extraction_confidence = low`, or ingredients / protein / fat are unreadable 
 1. **Always** — *"For any therapeutic/prescription diet, check with your vet before introducing it to your cat."*
 
 `verdict = vet_diet`; carries `therapeutic_purpose`, per-cat `suitability`, and the disclaimer. Wiser never confirms the food actually treats the condition. *(This replaces the earlier "assess normally + disclaimer" stance.)*
+
+**Breed-specific packs (`lifestage = breed`) — D, 07 Jul 2026.** Score against the underlying declared life stage (adult unless stated otherwise) and add a callout naming it a breed-specific formula; no penalty for being breed-specific.
 
 ---
 
@@ -59,6 +61,7 @@ Any one triggers `skip` (short-circuits §5–§6):
 3. **Filler-dominated dry food.** `type = dry` **and** (no named animal protein in the **top 2** ingredients **or** grains/carbs/fillers make up **≥ half of the top 4**) → skip. Bake in marketing hacks like ingredient splitting and fresh ingredient ahead due to water weight etc. into the decision. *"This dry food is built mainly on grains/fillers rather than animal protein — a poor fit for an obligate carnivore."* *(Framed on animal-protein dominance, not mere presence of grain — see note in §12.)*
 4. **Artificial colour present** → skip. *"Contains added colour — purely cosmetic, of no benefit to your cat, and a signal the product prioritises appearance."* (The one ingredient that alone warrants a skip.)
 5. **Stacked red flags.** **≥ 3 major flags** (see §5) on one product → skip, even if none individually would.
+6. **Core nutrient undeclared on a complete-claiming food** *(ADDED per D, 07 Jul 2026 — strict stance)*. Food claims `complete` **and** a core nutrient (protein, fat, taurine) is absent from the label → skip. Missing = unknown = assumed **not present** — no benefit of the doubt toward Buy. Call out the missing nutrient and list any other red flags found alongside. *(Distinct from an unreadable label, which is a §2 `no_verdict` re-scan.)*
 
 ---
 
@@ -68,13 +71,14 @@ Any one triggers `skip` (short-circuits §5–§6):
 
 **Major** (each blocks a clean `buy` → `buy_with_conditions`; 3+ → skip):
 - Primary ingredient is a **generic/unnamed protein** (`generic_protein`).
-- `insufficient_data` — couldn't confirm the key nutrients from the label.
+- `insufficient_data` — couldn't confirm key nutrients (non-core gaps, or when `adequacy` ≠ complete). A missing **core** nutrient on a complete-claiming food escalates to the §4.6 skip (D, 07 Jul 2026).
 - Plant-protein **boosting** (`protein_boost`: corn/wheat gluten lifting the protein figure).
 - Added **sugar** in a non-treat food (`sugar`).
 
 **Minor** (adds a note; 2+ → `buy_with_conditions`):
 - Artificial **preservative** (`artificial_preservative`).
 - `life_stage_fit = over` (mild) or `assumed_adult` (no cat profile).
+- `life_stage_fit = unknown` (pack life stage unstated/undecipherable) — assess as adult maintenance, add the condition and per-cat suitability callouts (D, 07 Jul 2026).
 - Other single `caution` ingredients.
 
 *(Artificial colour and the filler-dominance / any-nutrient-below-claim cases are skip-level in §4, not here.)*
@@ -114,6 +118,8 @@ Per-condition non-prescriptive nudge appended when a selected cat's profile list
 - Stacked-flag skip count (default 3 majors).
 - Major/minor flag lists (§5).
 - `unknown` adequacy stance (default: `buy_with_conditions` + verify-completeness condition).
+- Missing-core-nutrient stance on complete foods (default: strict §4.6 skip; alternative: major flag).
+- `vet_diet` trigger set (default: `intended_use` therapeutic marker **or** `lifestage = medical`).
 - Treat calorie allowance (default ≤10%).
 
 ---
@@ -123,7 +129,7 @@ Per-condition non-prescriptive nudge appended when a selected cat's profile list
 | Pack (corpus) | Signals | Verdict |
 |---|---|---|
 | Complete adult dry, meat-first, meets all declared, clean label | complete · match · meets · no flags | **buy** |
-| NutriMeow Chicken-in-Gravy (Kitten), wet, complete | complete · kitten · DM protein ≈39% | **buy** (condition if wet-taurine not shown) |
+| NutriMeow Chicken-in-Gravy (Kitten), wet, complete | complete · kitten · DM protein ≈39% | **buy** if taurine declared; **skip** if taurine absent from the label (§4.6 strict) |
 | Farmina N&D Adult Chicken, dry, no adequacy statement | `unknown` · protein 44% DM | **buy_with_conditions** — "verify it's a complete food" |
 | Bellotta Tuna, wet, complementary | complementary | **skip as meal** — "good as an occasional topper; vary proteins" |
 | Dry food, first two ingredients cereals/corn, meat low | complete · dry · filler-dominated | **skip** (§4.3) |
