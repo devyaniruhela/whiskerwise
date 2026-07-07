@@ -17,6 +17,7 @@ features:
   anonymous_auth: true             # v1: Supabase signInAnonymously(), no login UI
   email_login: false               # v2 — scaffolded, switched off
   phone_login: false               # v2 — scaffolded, switched off
+  require_auth: false              # dev: missing/invalid JWT falls back to a dev user; turn on for live
 
 pipeline:
   poll_interval_ms: 1500           # FE polling cadence hint

@@ -11,9 +11,11 @@ from .models import AnalysisPayload, AnalysisStatus, ExtractProcessed, Report, R
 @dataclass
 class AnalysisJob:
     payload: AnalysisPayload
+    user_id: Optional[str] = None
     status: AnalysisStatus = AnalysisStatus.processing
     stage: Stage = Stage.queued
     extract: Optional[ExtractProcessed] = None
+    extract_db_id: Optional[str] = None
     report: Optional[Report] = None
     guidance: Optional[str] = None
     confirmation_note: Optional[str] = None

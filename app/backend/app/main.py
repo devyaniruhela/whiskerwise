@@ -6,17 +6,19 @@ POST /analyze/{id}/feedback → persisted report feedback; POST /qc → per-imag
 
 import logging
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
-from . import pipeline
+from . import db, pipeline
+from .auth import current_user_id
 from .config import get_config
 from .models import (
     AnalysisAccepted,
     AnalysisPayload,
     AnalysisState,
     AnalysisStatus,
+    CatProfile,
     ExtractConfirmation,
     ImageRef,
     QCResult,
@@ -39,13 +41,17 @@ def qc(image: ImageRef) -> QCResult:
 
 
 @app.post("/analyze", response_model=AnalysisAccepted, status_code=202)
-def analyze(payload: AnalysisPayload, background: BackgroundTasks) -> AnalysisAccepted:
+def analyze(payload: AnalysisPayload, background: BackgroundTasks,
+            user_id: str = Depends(current_user_id)) -> AnalysisAccepted:
     categories = {img.category.value for img in payload.images}
     if categories != {"front", "back"}:
         raise HTTPException(422, "Exactly one front and one back image are required.")
     if store.get(payload.analysis_id):
         raise HTTPException(409, "analysis_id already exists.")
-    store.create(payload)
+    job = store.create(payload)
+    job.user_id = user_id
+    db.upsert_user(user_id)
+    db.bump(user_id, "num_scan_attempts")
     background.add_task(pipeline.run_until_confirmation, payload.analysis_id)
     return AnalysisAccepted(analysis_id=payload.analysis_id)
 
@@ -76,6 +82,8 @@ def confirm_extraction(
     if job.status != AnalysisStatus.awaiting_confirmation:
         raise HTTPException(409, f"Not awaiting confirmation (status: {job.status.value}).")
     store.update(analysis_id, confirmation_note=confirmation.note)
+    db.save_extract_feedback(job.user_id, analysis_id, job.extract_db_id,
+                             confirmation.confirmed, confirmation.note)
     if confirmation.confirmed:
         background.add_task(pipeline.run_after_confirmation, analysis_id)
     else:
@@ -90,8 +98,48 @@ def confirm_extraction(
 
 
 @app.post("/analyze/{analysis_id}/feedback", status_code=204)
-def report_feedback(analysis_id: str, feedback: ReportFeedback) -> None:
+def report_feedback(analysis_id: str, feedback: ReportFeedback,
+                    user_id: str = Depends(current_user_id)) -> None:
     job = store.get(analysis_id)
-    if job is None:
+    if job is None and db.get_report_row(analysis_id) is None:
         raise HTTPException(404, "Unknown analysis_id.")
-    job.feedback.append(feedback)  # persisted to DB in Phase 5
+    if job:
+        job.feedback.append(feedback)
+    db.save_report_feedback(user_id, analysis_id, feedback.feedback_yn, feedback.feedback_comments)
+
+
+# ── cats + report history (auth-scoped) ──────────────────────────────
+
+@app.get("/cats", response_model=list[CatProfile])
+def get_cats(user_id: str = Depends(current_user_id)) -> list[CatProfile]:
+    return db.list_cats(user_id)
+
+
+@app.post("/cats", response_model=CatProfile)
+def upsert_cat(cat: CatProfile, user_id: str = Depends(current_user_id)) -> CatProfile:
+    db.upsert_user(user_id)
+    cat_id = db.save_cat(user_id, cat)
+    if cat_id is None:
+        raise HTTPException(503, "Persistence unavailable — cat not saved.")
+    return cat.model_copy(update={"id": cat_id})
+
+
+@app.delete("/cats/{cat_id}", status_code=204)
+def remove_cat(cat_id: str, user_id: str = Depends(current_user_id)) -> None:
+    db.delete_cat(user_id, cat_id)
+
+
+@app.get("/reports")
+def reports_history(user_id: str = Depends(current_user_id)) -> list[dict]:
+    return db.list_reports(user_id)
+
+
+@app.get("/report/{analysis_id}")
+def report_by_id(analysis_id: str) -> dict:
+    row = db.get_report_row(analysis_id)
+    if row is None:
+        job = store.get(analysis_id)
+        if job and job.report:
+            return {"analysis_id": analysis_id, **job.report.model_dump()}
+        raise HTTPException(404, "Report not found.")
+    return row
