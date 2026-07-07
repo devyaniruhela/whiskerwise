@@ -1,8 +1,8 @@
 # === Wiser repo .gitignore ===
 # Track-list model (D's call, 07 Jul 2026): only kb/ (runtime KB data, single
-# source of truth for the backend) and app/ (the actual buildable Next.js +
-# FastAPI app) are committed. Everything else in this folder — planning docs,
-# PRD, task log, design refs, past work/ — is local-only and stays out of git.
+# source of truth for the backend), app/ (the actual buildable Next.js +
+# FastAPI app), and Wiser_PRD_MVP.md are committed. Everything else — task
+# log, context.md, design refs, past work/ — is local-only and stays out of git.
 
 # 1) Ignore everything at the top level by default...
 /*
@@ -11,6 +11,7 @@
 !/kb/
 !/app/
 !/.gitignore
+!/Wiser_PRD_MVP.md
 
 # --- Below: still enforced *inside* kb/ and app/ once app/ exists ---
 
