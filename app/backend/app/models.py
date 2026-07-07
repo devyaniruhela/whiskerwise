@@ -15,6 +15,7 @@ class Lifestage(str, Enum):
     kitten = "kitten"
     adult = "adult"
     senior = "senior"
+    all_life_stages = "all_life_stages"  # matches every cat (kb/01 lookup)
     medical = "medical"   # therapeutic marker → kb/06 §3 vet_diet track
     breed = "breed"
     unknown = "unknown"
@@ -126,7 +127,7 @@ class ExtractProcessed(BaseModel):
     additives: list[str] = []
     guaranteed_analysis: GuaranteedAnalysis = GuaranteedAnalysis()
     taurine_added: Optional[bool] = None
-    weight: Optional[int] = None                 # grams, single unit
+    weight_g: Optional[int] = None               # grams (unit standardised in name), single unit
     met_energy_100g: Optional[str] = None
     translated_flag: bool = False
     detected_language: Optional[str] = None
@@ -207,8 +208,8 @@ class ExtractConfirmation(BaseModel):
 
 
 class ReportFeedback(BaseModel):
-    rating: Optional[str] = None                 # match | incorrect | unable
-    comment: Optional[str] = None
+    feedback_yn: bool                            # thumbs up (True) / down (False)
+    feedback_comments: Optional[str] = None
 
 
 class AnalysisState(BaseModel):

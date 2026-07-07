@@ -48,7 +48,7 @@ def test_full_flow_with_confirmation():
     assert state["report"]["verdict"] == Verdict.buy.value
     assert "extract" not in state  # only exposed at the checkpoint
 
-    assert client.post("/analyze/a1/feedback", json={"rating": "match"}).status_code == 204
+    assert client.post("/analyze/a1/feedback", json={"feedback_yn": True, "feedback_comments": "spot on"}).status_code == 204
 
 
 def test_rejected_extraction_routes_to_reupload():
