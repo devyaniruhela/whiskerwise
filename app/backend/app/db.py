@@ -38,12 +38,14 @@ def engine():
 
 
 def _exec(sql: str, **params) -> list:
-    """Best-effort write/read; returns [] when persistence is unavailable."""
-    eng = engine()
-    if eng is None:
-        return []
+    """Best-effort write/read; returns [] when persistence is unavailable. The engine()
+    call is INSIDE the try on purpose — connecting / applying the schema can fail (paused
+    Supabase, network), and that must degrade to a no-op, never 500 a scan."""
     from sqlalchemy import text
     try:
+        eng = engine()
+        if eng is None:
+            return []
         with eng.begin() as conn:
             rows = conn.execute(text(sql), params)
             return list(rows.mappings()) if rows.returns_rows else []

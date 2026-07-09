@@ -50,6 +50,18 @@ def mock_qc(image_id: str, cloudinary_url: str, category: str) -> QCResult:
     return QCResult(image_id=image_id, qc_passed=True, category=category, qc_confidence=0.99)
 
 
+def _friendly_reason(e: Exception) -> str:
+    """Map a pipeline exception to a user-facing message (the real error is always logged)."""
+    s = str(e).lower()
+    if "429" in s or "resource_exhausted" in s or "quota" in s:
+        return "We've hit today's analysis limit. Please try again later."
+    if "503" in s or "unavailable" in s or "overloaded" in s:
+        return "The analysis service is busy right now — please try again in a moment."
+    if "cloudinary" in s or "403" in s or "401" in s or "400" in s:
+        return "We couldn't load your photos — please re-upload and try again."
+    return "Something went wrong while reading the label — please try again."
+
+
 def _resized(url: str, max_width: int) -> str:
     """Cloudinary dynamic resize via URL — non-Cloudinary URLs pass through untouched."""
     marker = "/upload/"
@@ -59,11 +71,21 @@ def _resized(url: str, max_width: int) -> str:
 
 
 def _fetch(url: str, max_width: int) -> tuple[bytes, str]:
+    """Fetch the image, resized via Cloudinary. Falls back to the original URL if the
+    resize transform is rejected (e.g. Cloudinary 'strict transformations' enabled), so a
+    locked-down account never breaks a scan."""
     import httpx
 
-    resp = httpx.get(_resized(url, max_width), timeout=30, follow_redirects=True)
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("content-type", "image/jpeg").split(";")[0]
+    for candidate in (_resized(url, max_width), url):
+        try:
+            resp = httpx.get(candidate, timeout=30, follow_redirects=True)
+            resp.raise_for_status()
+            return resp.content, resp.headers.get("content-type", "image/jpeg").split(";")[0]
+        except httpx.HTTPStatusError as e:
+            if candidate == url:                      # original also failed → give up
+                raise
+            log.warning("resized fetch failed (%s); retrying original url", e.response.status_code)
+    raise RuntimeError("unreachable")
 
 
 def run_until_confirmation(analysis_id: str) -> None:
@@ -109,9 +131,10 @@ def run_until_confirmation(analysis_id: str) -> None:
         else:
             extract = _MOCK_EXTRACT
     except Exception as e:  # noqa: BLE001 — surfaced to the user as a safe retry message
-        store.update(analysis_id, status=AnalysisStatus.error, stage=Stage.extracting,
-                     guidance="Something went wrong while reading the label — please try again.")
-        log.error("analysis=%s failed in %.1fs: %s", analysis_id, time.perf_counter() - t0, e)
+        reason = _friendly_reason(e)
+        store.update(analysis_id, status=AnalysisStatus.error, stage=Stage.extracting, guidance=reason)
+        log.error("analysis=%s failed in %.1fs: %s: %s", analysis_id, time.perf_counter() - t0,
+                  type(e).__name__, e)
         return
     db.save_images(job.user_id, analysis_id, qc_rows)
     extract_db_id = db.save_extract(job.user_id, analysis_id, job.payload.cat_ids, extract)
