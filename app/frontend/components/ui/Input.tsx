@@ -10,7 +10,7 @@ function borderCls(error?: string) {
 }
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: React.ReactNode;
   hint?: string;
   error?: string;
 }

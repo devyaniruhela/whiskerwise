@@ -196,6 +196,8 @@ export default function ProfilePage() {
       {editing && (
         <CatForm
           initial={editing === 'new' ? undefined : editing}
+          saveLabel="Save passport"
+          showAddAnother={editing === 'new'}
           onClose={() => setEditing(null)}
           onSave={async (cat) => {
             const saved = await api.saveCat(cat);

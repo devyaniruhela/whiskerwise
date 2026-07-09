@@ -62,10 +62,15 @@ function FoodInputInner() {
     }
   }
 
+  function togglePersonalise(on: boolean) {
+    setPersonalise(on);
+    if (on && cats.length === 0) setShowCatForm(true);  // no cats yet → jump straight to adding one
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-24">
-      <h1 className="font-serif text-3xl text-ink">Scan a pack</h1>
-      <p className="mt-1 text-base text-ink-muted">Two photos and about a minute — that’s all it takes.</p>
+      <h1 className="font-serif text-3xl text-ink">Scan a pack of cat food</h1>
+      <p className="mt-1 text-base text-ink-muted">Two photos and about a minute is all it takes.</p>
 
       <Input label="Your name" className="mt-7" value={name}
         onChange={(e) => setName(e.target.value)} placeholder="So we can say hi" />
@@ -81,7 +86,7 @@ function FoodInputInner() {
             <span className="font-sans text-sm font-semibold text-ink">Personalise for my cats</span>
             <p className="mt-0.5 text-sm text-ink-muted">Life-stage fit and health callouts, cat by cat</p>
           </div>
-          <input type="checkbox" checked={personalise} onChange={(e) => setPersonalise(e.target.checked)}
+          <input type="checkbox" checked={personalise} onChange={(e) => togglePersonalise(e.target.checked)}
             className="h-5 w-5 accent-emerald" />
         </label>
         {personalise && (
@@ -116,6 +121,8 @@ function FoodInputInner() {
 
       {showCatForm && (
         <CatForm
+          saveLabel="Save & personalise"
+          showAddAnother
           onClose={() => setShowCatForm(false)}
           onSave={async (cat) => {
             const saved = await api.saveCat(cat);

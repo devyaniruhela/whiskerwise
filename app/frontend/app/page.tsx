@@ -48,7 +48,7 @@ function FootLink({ href, children }: { href: string; children: React.ReactNode 
 export default function Home() {
   return (
     <main>
-      {/* hero + steps share one continuous grid-paper surface (grid runs under the divider) */}
+      {/* grid-paper is scoped to the hero only, extending down to the squiggly divider */}
       <div className="bg-grid-paper">
         {/* ── Section 1 · hero: stamp left, intro + CTA right ─────────── */}
         <section className="relative px-5 pt-24 sm:pt-28">
@@ -83,10 +83,11 @@ export default function Home() {
         </section>
 
         <WiggleDivider />
+      </div>
 
-        {/* ── Section 2 · what you get, in three steps ────────────────── */}
-        <section className="relative px-5 pb-20 pt-14">
-          <div className="mx-auto max-w-4xl">
+      {/* ── Section 2 · what you get, in three steps (plain seashell) ─── */}
+      <section className="relative bg-seashell px-5 pb-20 pt-14">
+        <div className="mx-auto max-w-4xl">
             <h2 className="text-center font-serif text-3xl text-ink sm:text-4xl">
               The label, decoded in a minute
             </h2>
@@ -123,7 +124,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </div>
 
       {/* ── Footer · painting shows through; text lives in the right 2/3 ─ */}
       <footer className="relative text-seashell">
@@ -175,7 +175,8 @@ export default function Home() {
             Grounded in <FootLink href={STANDARDS.indian}>Indian</FootLink>,{' '}
             <FootLink href={STANDARDS.european}>European</FootLink> and{' '}
             <FootLink href={STANDARDS.american}>American</FootLink> pet-food standards. Governed by{' '}
-            <FootLink href={STANDARDS.wsava}>WSAVA</FootLink>. Not a substitute for veterinary advice.
+            <FootLink href={STANDARDS.wsava}>WSAVA</FootLink>.
+            <span className="mt-1 block">Not a substitute for veterinary advice.</span>
           </p>
         </div>
       </footer>
