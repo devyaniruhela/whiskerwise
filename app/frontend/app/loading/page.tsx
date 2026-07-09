@@ -41,7 +41,9 @@ function LoadingInner() {
     }
   }, [id, router]);
 
-  useEffect(() => { poll(); return () => { stop.current = true; }; }, [poll]);
+  // reset the stop flag on (re)mount — React StrictMode mounts twice in dev, and without
+  // this the cleanup's stop=true would kill every poll after the first one.
+  useEffect(() => { stop.current = false; poll(); return () => { stop.current = true; }; }, [poll]);
 
   async function confirm(ok: boolean) {
     if (!id) return;
