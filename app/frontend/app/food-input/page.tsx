@@ -63,6 +63,7 @@ function FoodInputInner() {
   }
 
   function togglePersonalise(on: boolean) {
+    setError(null);
     setPersonalise(on);
     if (on && cats.length === 0) setShowCatForm(true);  // no cats yet → jump straight to adding one
   }
@@ -73,11 +74,13 @@ function FoodInputInner() {
       <p className="mt-1 text-base text-ink-muted">Two photos and about a minute is all it takes.</p>
 
       <Input label="Your name" className="mt-7" value={name}
-        onChange={(e) => setName(e.target.value)} placeholder="So we can say hi" />
+        onChange={(e) => { setError(null); setName(e.target.value); }} placeholder="So we can say hi" />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <UploadZone category="front" label="Front of pack" hint="Brand & product name visible" onUploaded={setFront} />
-        <UploadZone category="back" label="Back of pack" hint="Ingredients & analysis table visible" onUploaded={setBack} />
+        <UploadZone category="front" label="Front of pack" hint="Brand & product name visible"
+          onUploaded={(r) => { setError(null); setFront(r); }} />
+        <UploadZone category="back" label="Back of pack" hint="Ingredients & analysis table visible"
+          onUploaded={(r) => { setError(null); setBack(r); }} />
       </div>
 
       <div className="mt-6 rounded-md border border-hairline bg-paper p-4">
@@ -95,7 +98,7 @@ function FoodInputInner() {
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setSelected((s) => (s.includes(c.id!) ? s.filter((x) => x !== c.id) : [...s, c.id!]))}
+                onClick={() => { setError(null); setSelected((s) => (s.includes(c.id!) ? s.filter((x) => x !== c.id) : [...s, c.id!])); }}
                 className={`flex min-h-[42px] items-center gap-2 rounded-md border py-1 pl-1 pr-3.5 font-sans text-sm transition-colors duration-150
                   ${selected.includes(c.id!) ? 'border-emerald bg-sel font-semibold text-emerald' : 'border-hairline-strong text-ink-muted hover:bg-sel/50'}`}
               >

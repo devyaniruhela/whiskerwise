@@ -8,10 +8,17 @@ paths:
   prompts_dir: backend/prompts     # Gemini prompt files (Phase 3)
   report_template: backend/templates/report_template.md   # Layer-3 placeholder template (Phase 4)
 
+# Gemini model per stage. Change any value, then restart the backend — nothing else needs
+# editing. Aliases ending in "-latest" always resolve to the newest of that family (so a
+# retired version never breaks us); pin an explicit id (e.g. gemini-3.5-flash) for fixed,
+# reproducible behaviour. On 09 Jul the full flash aliases were free-tier quota-capped (429)
+# or overloaded (503); gemini-flash-lite-latest responded reliably and extracts accurately,
+# so it's the working default. Switch to gemini-flash-latest once billing/quota allows, for
+# stronger extraction on tricky labels. Available ids are listed in reference.md.
 models:
-  qc: gemini-2.5-flash             # Tier-1 QC classify
-  extract: gemini-2.5-flash        # Layer-1 extraction
-  explain: gemini-2.5-flash        # Layer-3 report writing (Claude-swappable interface)
+  qc: gemini-flash-lite-latest          # Tier-1 QC classify
+  extract: gemini-flash-lite-latest     # Layer-1 extraction
+  explain: gemini-flash-lite-latest     # Layer-3 report writing (Claude-swappable interface)
 
 features:
   anonymous_auth: true             # v1: Supabase signInAnonymously(), no login UI

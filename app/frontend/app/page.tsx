@@ -112,7 +112,8 @@ export default function Home() {
             </div>
 
             <p className="mx-auto mt-14 max-w-xl text-center font-serif text-2xl leading-snug text-ink">
-              Facts are already on the table. Wiser helps you decide what you should be feeding your cat.
+              Facts are already on the label. Wiser helps you decide what you should be feeding{' '}
+              <em className="italic">your cat</em>.
             </p>
             <div className="mt-7 text-center">
               <Link
@@ -139,19 +140,18 @@ export default function Home() {
           style={{ textShadow: '0 1px 5px rgba(0,0,0,0.55)' }}
         >
           <div className="hidden md:block" aria-hidden />{/* left third: reserved for the painted cat */}
-          <div className="grid gap-8 md:col-span-2 md:grid-cols-[1fr_auto]">
-            <div className="max-w-md">
-              <p className="font-hand text-3xl text-petal">Whisker Wise</p>
-              <p className="mt-4 text-sm leading-relaxed text-seashell">
-                Wiser is an initiative by a cat rescuer and pet nutritionist. Ten years of living with,
-                feeding, and learning from cats, distilled into one honest answer:
-                <span className="text-petal"> is this food worth buying?</span>
-              </p>
-            </div>
-            <nav className="flex flex-col gap-3 text-sm" aria-label="Footer">
+          {/* right 2/3: everything left-aligned to one starting edge */}
+          <div className="md:col-span-2">
+            <p className="font-hand text-3xl text-petal">Whisker Wise</p>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-seashell">
+              Wiser, by Whisker Wise, is an initiative by a cat rescuer and pet nutritionist. Ten years
+              of living with, feeding, and learning from cats, distilled into one honest answer:
+              <span className="text-petal"> is this food worth buying?</span>
+            </p>
+            <nav className="mt-6 flex flex-col gap-3 text-sm" aria-label="Footer">
               <a href="https://instagram.com/whiskerwise.in/" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <InstagramLogo size={20} aria-hidden /> Follow us: @whiskerwise.in
+                <InstagramLogo size={20} aria-hidden /> Follow us @whiskerwise.in
               </a>
               <a href="https://wa.me/919682387557" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-petal">
@@ -171,7 +171,7 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-5xl px-6 pb-14 md:grid-cols-3"
           style={{ textShadow: '0 1px 5px rgba(0,0,0,0.55)' }}>
           <div className="hidden md:block" aria-hidden />
-          <p className="text-sm leading-relaxed text-seashell md:col-span-2">
+          <p className="text-sm leading-relaxed text-seashell md:col-span-2 md:text-center">
             Grounded in <FootLink href={STANDARDS.indian}>Indian</FootLink>,{' '}
             <FootLink href={STANDARDS.european}>European</FootLink> and{' '}
             <FootLink href={STANDARDS.american}>American</FootLink> pet-food standards. Governed by{' '}
