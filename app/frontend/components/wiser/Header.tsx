@@ -12,8 +12,11 @@ export function Header() {
         <Link href="/" className="header-icon-btn" aria-label="Home">
           <House size={24} weight="regular" />
         </Link>
-        <Link href="/" className="header-logo-link" aria-label="Whisker Wise home">
-          <span className="font-hand text-2xl tracking-wide text-seashell sm:text-3xl">Whisker Wise</span>
+        <Link href="/" className="header-logo-link flex items-center" aria-label="Whisker Wise home">
+          {/* script font sits optically high; leading-none + small nudge centres it on the icon row */}
+          <span className="translate-y-[0.06em] font-hand text-2xl leading-none tracking-wide text-seashell sm:text-3xl">
+            Whisker Wise
+          </span>
         </Link>
         <Link href="/profile" className="header-icon-btn" aria-label="Your cats and profile">
           <Cat size={24} weight="regular" />
