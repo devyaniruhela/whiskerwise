@@ -10,21 +10,21 @@ const STEPS = [
     icon: Camera,
     block: 'bg-petal text-emerald',
     title: 'Photograph the pack',
-    text: 'Front and back, right there in the store aisle. We check your photos are readable first.',
+    text: 'Front and back of the cat food, right there in the store aisle, or just a screenshot. The label can tell you a lot about what is inside.',
     tooltip: false,
   },
   {
     icon: ListMagnifyingGlass,
     block: 'bg-emerald text-petal',
     title: 'We read every line',
-    text: 'We take all the information directly from the pack you share, then check it against Indian, European and American pet-food standards.',
+    text: 'We take all the information straight from the pack you share, then check every line against Indian, European and American pet-food standards.',
     tooltip: true,
   },
   {
     icon: Stamp,
     block: 'bg-graphite text-petal',
     title: 'Buy, or skip',
-    text: 'A clear verdict, with every "why" rooted in science.',
+    text: 'Mixed with our secret sauce and years of pet-nutrition expertise, you get a clear verdict with every "why" rooted in science, personalised for your cat.',
     tooltip: false,
   },
 ];
@@ -112,7 +112,7 @@ export default function Home() {
             </div>
 
             <p className="mx-auto mt-14 max-w-xl text-center font-serif text-2xl leading-snug text-ink">
-              The facts are already on every label. Wiser helps you make wiser decisions, faster.
+              Facts are already on the table. Wiser helps you decide what you should be feeding your cat.
             </p>
             <div className="mt-7 text-center">
               <Link
@@ -151,7 +151,7 @@ export default function Home() {
             <nav className="flex flex-col gap-3 text-sm" aria-label="Footer">
               <a href="https://instagram.com/whiskerwise.in/" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <InstagramLogo size={20} aria-hidden /> @whiskerwise.in
+                <InstagramLogo size={20} aria-hidden /> Follow us: @whiskerwise.in
               </a>
               <a href="https://wa.me/919682387557" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-petal">
