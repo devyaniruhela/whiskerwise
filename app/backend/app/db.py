@@ -67,9 +67,22 @@ def bump(user_id: str, field: str) -> None:
     _exec(f"update users set {field} = {field} + 1, updated_at = now() where id = :id", id=user_id)
 
 
+def get_profile(user_id: str) -> dict:
+    rows = _exec("""select first_name, last_name, phone_number, email, location
+                    from users where id = :id""", id=user_id)
+    return dict(rows[0]) if rows else {}
+
+
+def save_profile(user_id: str, p) -> None:
+    _exec("""update users set first_name = :fn, last_name = :ln, phone_number = :ph,
+             email = :em, location = :loc, updated_at = now() where id = :id""",
+          id=user_id, fn=p.first_name, ln=p.last_name, ph=p.phone_number,
+          em=p.email, loc=p.location)
+
+
 # ── cats ─────────────────────────────────────────────────────────────
 
-_CAT_COLS = ("cat_name, cat_gender, cat_age_year, cat_age_month, body_condition, "
+_CAT_COLS = ("cat_name, avatar, cat_dob, cat_gender, cat_age_year, cat_age_month, body_condition, "
              "body_condition_score, weight_kg, activity_level, neuter_status, environment, "
              "health_condition, breed")
 
@@ -77,6 +90,8 @@ _CAT_COLS = ("cat_name, cat_gender, cat_age_year, cat_age_month, body_condition,
 def _row_to_cat(r) -> CatProfile:
     d = dict(r)
     d["health_condition"] = d.get("health_condition") or []
+    if d.get("cat_dob") is not None:
+        d["cat_dob"] = str(d["cat_dob"])
     return CatProfile(**{k: d[k] for k in CatProfile.model_fields if k in d and k != "id"},
                       id=str(d["id"]))
 
@@ -98,11 +113,13 @@ def save_cat(user_id: str, cat: CatProfile) -> Optional[str]:
     cat_id = cat.id or str(uuid.uuid4())
     rows = _exec(f"""
         insert into cats (id, user_id, {_CAT_COLS})
-        values (:id, :u, :cat_name, :cat_gender, :cat_age_year, :cat_age_month,
+        values (:id, :u, :cat_name, :avatar, cast(:cat_dob as date), :cat_gender,
+                :cat_age_year, :cat_age_month,
                 :body_condition, :body_condition_score, :weight_kg, :activity_level,
                 :neuter_status, :environment, cast(:health_condition as jsonb), :breed)
         on conflict (id) do update set
-          cat_name=excluded.cat_name, cat_gender=excluded.cat_gender,
+          cat_name=excluded.cat_name, avatar=excluded.avatar, cat_dob=excluded.cat_dob,
+          cat_gender=excluded.cat_gender,
           cat_age_year=excluded.cat_age_year, cat_age_month=excluded.cat_age_month,
           body_condition=excluded.body_condition, body_condition_score=excluded.body_condition_score,
           weight_kg=excluded.weight_kg, activity_level=excluded.activity_level,
@@ -110,7 +127,8 @@ def save_cat(user_id: str, cat: CatProfile) -> Optional[str]:
           health_condition=excluded.health_condition, breed=excluded.breed, updated_at=now()
         returning id""",
         id=cat_id, u=user_id, health_condition=_j(cat.health_condition),
-        **{k: getattr(cat, k) for k in ("cat_name", "cat_gender", "cat_age_year", "cat_age_month",
+        **{k: getattr(cat, k) for k in ("cat_name", "avatar", "cat_dob", "cat_gender",
+                                        "cat_age_year", "cat_age_month",
                                         "body_condition", "body_condition_score", "weight_kg",
                                         "activity_level", "neuter_status", "environment", "breed")})
     if rows:

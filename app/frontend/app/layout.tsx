@@ -1,23 +1,27 @@
 import type { Metadata } from 'next';
+import { Courier_Prime, Hanken_Grotesk, Oranienbaum } from 'next/font/google';
+import localFont from 'next/font/local';
 import '../styles/globals.css';
 import { Header } from '@/components/wiser/Header';
 
+const serif = Oranienbaum({ weight: '400', subsets: ['latin'], variable: '--font-serif', display: 'swap' });
+const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const mono = Courier_Prime({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-mono', display: 'swap' });
+const hand = localFont({ src: '../public/Coal-Hand-Luke.ttf', variable: '--font-hand', display: 'swap' });
+
 export const metadata: Metadata = {
-  title: 'Wiser — know what you feed',
-  description: 'Photograph a cat-food pack, get a standards-grounded Buy / Skip verdict.',
+  title: 'Whisker Wise — Wiser',
+  description:
+    'Photograph a cat-food pack, get a plain-language Buy / Skip verdict grounded in published nutrition standards.',
   icons: { icon: '/favicon.png' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}>
+      <body className="min-h-screen">
         <Header />
-        <main className="mx-auto w-full max-w-3xl px-4 pb-16 pt-24">{children}</main>
-        <footer className="border-t border-gray-100 bg-white py-6 text-center text-xs text-gray-400">
-          Wiser · grounded in IS-11968, FEDIAF &amp; AAFCO standards, WSAVA governing · not a
-          substitute for veterinary advice
-        </footer>
+        {children}
       </body>
     </html>
   );

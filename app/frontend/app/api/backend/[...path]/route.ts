@@ -22,4 +22,4 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   });
 }
 
-export { proxy as GET, proxy as POST, proxy as DELETE };
+export { proxy as GET, proxy as POST, proxy as PUT, proxy as DELETE };

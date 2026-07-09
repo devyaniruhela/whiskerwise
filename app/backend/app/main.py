@@ -23,6 +23,7 @@ from .models import (
     ImageRef,
     QCResult,
     ReportFeedback,
+    UserProfile,
 )
 from .store import store
 
@@ -106,6 +107,19 @@ def report_feedback(analysis_id: str, feedback: ReportFeedback,
     if job:
         job.feedback.append(feedback)
     db.save_report_feedback(user_id, analysis_id, feedback.feedback_yn, feedback.feedback_comments)
+
+
+# ── user profile (all optional; never prefilled from scan greetings) ─
+
+@app.get("/me")
+def get_me(user_id: str = Depends(current_user_id)) -> dict:
+    return db.get_profile(user_id)
+
+
+@app.put("/me", status_code=204)
+def put_me(profile: UserProfile, user_id: str = Depends(current_user_id)) -> None:
+    db.upsert_user(user_id)
+    db.save_profile(user_id, profile)
 
 
 # ── cats + report history (auth-scoped) ──────────────────────────────

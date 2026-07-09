@@ -1,6 +1,6 @@
 // BFF client — all backend calls go through /api/backend/* (Next proxy → FastAPI).
 import { getAccessToken } from './supabase';
-import type { AnalysisState, CatProfile, HistoryItem, Report } from '@/types';
+import type { AnalysisState, CatProfile, HistoryItem, Report, UserProfile } from '@/types';
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getAccessToken();
@@ -24,6 +24,8 @@ export const api = {
     call<AnalysisState>(`analyze/${id}/confirm`, { method: 'POST', body: JSON.stringify({ confirmed, note }) }),
   feedback: (id: string, feedback_yn: boolean, feedback_comments?: string) =>
     call<void>(`analyze/${id}/feedback`, { method: 'POST', body: JSON.stringify({ feedback_yn, feedback_comments }) }),
+  me: () => call<UserProfile>('me'),
+  saveMe: (profile: UserProfile) => call<void>('me', { method: 'PUT', body: JSON.stringify(profile) }),
   cats: () => call<CatProfile[]>('cats'),
   saveCat: (cat: CatProfile) => call<CatProfile>('cats', { method: 'POST', body: JSON.stringify(cat) }),
   deleteCat: (id: string) => call<void>(`cats/${id}`, { method: 'DELETE' }),

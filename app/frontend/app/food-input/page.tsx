@@ -1,17 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Plus } from '@phosphor-icons/react';
 import { Button, Input } from '@/components/ui';
 import { UploadZone } from '@/components/wiser/UploadZone';
-import { CatForm } from '@/components/wiser/CatForm';
+import { CatForm, avatarSrc } from '@/components/wiser/CatForm';
 import { api } from '@/lib/api';
 import type { CatProfile } from '@/types';
 import type { CloudinaryUploadResult } from '@/lib/cloudinaryUpload';
 
-export default function FoodInput() {
+function FoodInputInner() {
   const router = useRouter();
+  const params = useSearchParams();
   const [name, setName] = useState('');
   const [personalise, setPersonalise] = useState(false);
   const [cats, setCats] = useState<CatProfile[]>([]);
@@ -25,7 +27,12 @@ export default function FoodInput() {
   useEffect(() => {
     setName(localStorage.getItem('wiser_name') ?? '');
     api.cats().then(setCats).catch(() => setCats([]));
-  }, []);
+    const pre = params.get('preselectCat');
+    if (pre) {
+      setPersonalise(true);
+      setSelected([pre]);
+    }
+  }, [params]);
 
   async function submit() {
     if (!name.trim()) return setError('Tell us your name — it’s just for the greeting.');
@@ -56,52 +63,55 @@ export default function FoodInput() {
   }
 
   return (
-    <div>
-      <h1 className="font-serif text-2xl">Scan a pack</h1>
-      <p className="mt-1 text-sm text-gray-500">Two photos and ~a minute — that’s all it takes.</p>
+    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-24">
+      <h1 className="font-serif text-3xl text-ink">Scan a pack</h1>
+      <p className="mt-1 text-base text-ink-muted">Two photos and about a minute — that’s all it takes.</p>
 
-      <label className="mb-1 mt-6 block text-sm font-medium text-gray-700">Your name</label>
-      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="So we can say hi" />
+      <Input label="Your name" className="mt-7" value={name}
+        onChange={(e) => setName(e.target.value)} placeholder="So we can say hi" />
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <UploadZone category="front" label="Front of pack" hint="Brand & product name visible" onUploaded={setFront} />
         <UploadZone category="back" label="Back of pack" hint="Ingredients & analysis table visible" onUploaded={setBack} />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-soft">
-        <label className="flex cursor-pointer items-center justify-between">
+      <div className="mt-6 rounded-md border border-hairline bg-paper p-4">
+        <label className="flex cursor-pointer items-center justify-between gap-4">
           <div>
-            <span className="text-sm font-medium text-gray-800">Personalise for my cats</span>
-            <p className="text-xs text-gray-400">Life-stage fit and health callouts per cat</p>
+            <span className="font-sans text-sm font-semibold text-ink">Personalise for my cats</span>
+            <p className="mt-0.5 text-sm text-ink-muted">Life-stage fit and health callouts, cat by cat</p>
           </div>
-          <input type="checkbox" checked={personalise} onChange={(e) => setPersonalise(e.target.checked)} className="h-5 w-5 accent-primary-600" />
+          <input type="checkbox" checked={personalise} onChange={(e) => setPersonalise(e.target.checked)}
+            className="h-5 w-5 accent-emerald" />
         </label>
         {personalise && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {cats.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setSelected((s) => (s.includes(c.id!) ? s.filter((x) => x !== c.id) : [...s, c.id!]))}
-                className={`rounded-full border px-3 py-1.5 text-sm transition ${selected.includes(c.id!) ? 'border-primary-500 bg-primary-50 text-primary-800' : 'border-gray-200 text-gray-600'}`}
+                className={`flex min-h-[42px] items-center gap-2 rounded-md border py-1 pl-1 pr-3.5 font-sans text-sm transition-colors duration-150
+                  ${selected.includes(c.id!) ? 'border-emerald bg-sel font-semibold text-emerald' : 'border-hairline-strong text-ink-muted hover:bg-sel/50'}`}
               >
+                <Image src={avatarSrc(c.avatar)} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
                 {c.cat_name}
               </button>
             ))}
             <button
               type="button"
               onClick={() => setShowCatForm(true)}
-              className="flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:border-primary-300"
+              className="flex min-h-[42px] items-center gap-1.5 rounded-md border border-dashed border-hairline-strong px-3.5 font-sans text-sm text-ink-muted transition-colors hover:border-emerald/60 hover:text-emerald"
             >
-              <Plus className="h-4 w-4" /> Add cat
+              <Plus size={16} aria-hidden /> Add cat
             </button>
           </div>
         )}
       </div>
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <Button className="mt-5 w-full" onClick={submit} disabled={submitting}>
-        {submitting ? 'Starting…' : 'Analyse this food'}
+      {error && <p className="mt-4 text-sm text-iron">{error}</p>}
+      <Button className="mt-5 w-full" onClick={submit} loading={submitting}>
+        Analyse this food
       </Button>
 
       {showCatForm && (
@@ -114,6 +124,10 @@ export default function FoodInput() {
           }}
         />
       )}
-    </div>
+    </main>
   );
+}
+
+export default function FoodInput() {
+  return <Suspense fallback={null}><FoodInputInner /></Suspense>;
 }

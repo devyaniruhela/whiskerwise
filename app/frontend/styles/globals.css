@@ -3,11 +3,50 @@
 @tailwind utilities;
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Prata&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
-  
+  /* Whisker Wise tokens - canonical values in design/tokens.json (hex authoritative).
+     Fonts come from next/font as --font-serif/--font-sans/--font-mono/--font-hand. */
+  :root {
+    --graphite: #292C2C;
+    --seashell: #FFF8F2;
+    --emerald: #08513D;
+    --emerald-deep: #063C2D;
+    --emerald-bright: #0C7355;
+    --emerald-tint: #E6EFEA;
+    --petal: #FFD7DC;
+    --petal-deep: #F6C2C9;
+    --iron: #A02A18;
+    --iron-tint: #F4E4E1;
+    --ochre: #A34700;
+    --ochre-tint: #F3E7DC;
+    --sel-tint: #F5E7CF;
+    --paper: #FFFDFB;
+    --ink-muted: #57544E;
+    --ink-faint: #6E6A63;
+    --hairline: rgba(41, 44, 44, 0.14);
+    --hairline-strong: rgba(41, 44, 44, 0.28);
+    --shadow-raised: 0 1px 2px rgba(41,44,44,0.06), 0 6px 18px rgba(41,44,44,0.10);
+    --shadow-raised-lg: 0 2px 4px rgba(41,44,44,0.07), 0 14px 34px rgba(41,44,44,0.14);
+    --shadow-pressed: inset 0 2px 4px rgba(41,44,44,0.18);
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
   body {
-    @apply font-sans text-gray-900 antialiased;
+    @apply font-sans text-ink antialiased;
+    background-color: var(--seashell);
     position: relative;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
   
   body::before {
@@ -26,19 +65,16 @@
     pointer-events: none;
   }
   
-  h1, h2, h3, h4, h5, h6 {
+  h1, h2, h3 {
     @apply font-serif;
     font-weight: 400;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
-  
+
   ::selection {
-    background-color: rgba(90, 158, 72, 0.3);
+    background-color: var(--sel-tint);
     color: inherit;
-  }
-  
-  button::selection,
-  a::selection {
-    background-color: rgba(255, 255, 255, 0.3);
   }
 }
 
@@ -57,19 +93,14 @@
     z-index: 1;
   }
   
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, #8bc34a 0%, #6cb257 100%);
-  }
-  
-  .bg-gradient-warm {
-    background: linear-gradient(135deg, #ffb366 0%, #ff8f4f 100%);
-  }
-  
-  .text-gradient-primary {
-    background: linear-gradient(135deg, #8bc34a 0%, #6cb257 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Grid / graph paper - product-flow & report background wash. Text never sits on it
+     directly; content goes in solid cards (DESIGN.md texture golden rule). */
+  .bg-grid-paper {
+    background-color: var(--seashell);
+    background-image:
+      linear-gradient(var(--hairline) 1px, transparent 1px),
+      linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
 }
 
@@ -85,8 +116,8 @@
   align-items: center;
   justify-content: center;
   overflow: visible;
-  background: #41624F;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--emerald);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 @media (min-width: 640px) {
   .whisker-header {
@@ -154,18 +185,18 @@
   min-height: 44px;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  color: #FFFEF5;
+  border-radius: 7px;
+  transition: all 0.2s var(--ease-out);
+  color: var(--seashell);
 }
 
 .header-icon-btn:hover {
-  background: rgba(255, 254, 245, 0.15);
+  background: rgba(255, 248, 242, 0.15);
   transform: scale(1.05);
 }
 
 .header-icon-btn:active {
-  background: rgba(255, 254, 245, 0.25);
+  background: rgba(255, 248, 242, 0.25);
   transform: scale(0.98);
 }
 
@@ -252,15 +283,15 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #d1fae5;
+  background: var(--sel-tint);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #6ee7b7;
+  background: var(--hairline-strong);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #34d399;
+  background: var(--ink-faint);
 }

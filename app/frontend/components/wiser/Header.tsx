@@ -1,28 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { Cat } from 'lucide-react';
+import { Cat, House } from '@phosphor-icons/react';
 
+/** Fixed textured header with the wiggly torn bottom edge (CSS ported from the
+ *  previous FE: .whisker-header / .wiggly-border-bottom in globals.css). */
 export function Header() {
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-3xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo-dark.png" alt="Wiser" width={110} height={32} className="h-8 w-auto" priority />
+    <header className="whisker-header">
+      <div className="header-content-wrapper">
+        <Link href="/" className="header-icon-btn" aria-label="Home">
+          <House size={24} weight="regular" />
         </Link>
-        <nav className="flex items-center gap-4">
-          <Link
-            href="/food-input"
-            className="rounded-full bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700"
-          >
-            Scan a pack
-          </Link>
-          <Link href="/profile" aria-label="Profile" className="text-gray-500 transition hover:text-primary-600">
-            <Cat className="h-6 w-6" />
-          </Link>
-        </nav>
+        <Link href="/" className="header-logo-link" aria-label="Whisker Wise home">
+          <span className="font-hand text-2xl tracking-wide text-seashell sm:text-3xl">Whisker Wise</span>
+        </Link>
+        <Link href="/profile" className="header-icon-btn" aria-label="Your cats and profile">
+          <Cat size={24} weight="regular" />
+        </Link>
       </div>
+      <div className="wiggly-border-bottom" aria-hidden />
     </header>
   );
 }

@@ -2,12 +2,13 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { Camera, CheckCircle2, Loader2, RefreshCw, XCircle } from 'lucide-react';
+import { ArrowsClockwise, Camera, CheckCircle, CircleNotch, XCircle } from '@phosphor-icons/react';
 import { validateImageClient } from '@/lib/imageValidation';
 import { uploadImageToCloudinary, CloudinaryUploadResult } from '@/lib/cloudinaryUpload';
 
 type ZoneState = 'empty' | 'checking' | 'uploading' | 'pass' | 'fail';
 
+/** Write-flow surface: sober, fast, forgiving (DESIGN.md). */
 export function UploadZone({ category, label, hint, onUploaded }: {
   category: 'front' | 'back';
   label: string;
@@ -30,7 +31,6 @@ export function UploadZone({ category, label, hint, onUploaded }: {
       return;
     }
     try {
-      // Tier 0 server check (sharp): format + dimensions
       const form = new FormData();
       form.append('image', file);
       const res = await fetch('/api/validate-image', { method: 'POST', body: form });
@@ -56,33 +56,35 @@ export function UploadZone({ category, label, hint, onUploaded }: {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className={`relative flex h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed p-4 text-center transition
-          ${state === 'pass' ? 'border-primary-400 bg-primary-50' : state === 'fail' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white hover:border-primary-300'}`}
+        className={`relative flex h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border-2 border-dashed p-4 text-center transition-colors duration-150
+          ${state === 'pass' ? 'border-emerald bg-emerald-tint/60' : state === 'fail' ? 'border-iron bg-iron-tint/60' : 'border-hairline-strong bg-paper hover:border-emerald/60'}`}
       >
         {preview && state === 'pass' ? (
           <>
             <Image src={preview} alt={label} fill className="object-cover opacity-90" unoptimized />
-            <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-primary-700">
-              <CheckCircle2 className="h-3.5 w-3.5" /> {label} added
+            <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-sm bg-paper/95 px-2.5 py-1 font-sans text-xs font-semibold text-emerald">
+              <CheckCircle size={14} weight="fill" aria-hidden /> {label} added
             </span>
-            <span className="absolute right-2 top-2 rounded-full bg-white/95 p-1.5 text-gray-500">
-              <RefreshCw className="h-3.5 w-3.5" />
+            <span className="absolute right-2 top-2 rounded-sm bg-paper/95 p-1.5 text-ink-muted">
+              <ArrowsClockwise size={14} aria-hidden />
             </span>
           </>
         ) : state === 'checking' || state === 'uploading' ? (
           <>
-            <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
-            <span className="text-sm text-gray-500">{state === 'checking' ? 'Checking photo…' : 'Uploading…'}</span>
+            <CircleNotch size={24} className="animate-spin text-emerald" aria-hidden />
+            <span className="text-sm text-ink-muted">{state === 'checking' ? 'Checking photo…' : 'Uploading…'}</span>
           </>
         ) : (
           <>
-            {state === 'fail' ? <XCircle className="h-6 w-6 text-red-400" /> : <Camera className="h-6 w-6 text-primary-500" />}
-            <span className="text-sm font-medium text-gray-700">{label}</span>
-            <span className="text-xs text-gray-400">{hint}</span>
+            {state === 'fail'
+              ? <XCircle size={26} className="text-iron" aria-hidden />
+              : <Camera size={26} className="text-emerald" aria-hidden />}
+            <span className="font-sans text-sm font-semibold text-ink">{label}</span>
+            <span className="text-xs text-ink-faint">{hint}</span>
           </>
         )}
       </button>
-      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-iron">{error}</p>}
       <input
         ref={inputRef}
         type="file"

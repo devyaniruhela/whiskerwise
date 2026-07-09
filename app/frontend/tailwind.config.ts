@@ -1,75 +1,61 @@
 import type { Config } from "tailwindcss";
-import designSystem from "./config/design-system.json";
 
+// Canonical values: design/tokens.json (hex authoritative). Do not re-decide them here.
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./constants/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        primary: designSystem.colors.primary,
-        secondary: designSystem.colors.secondary,
-        emerald: designSystem.colors.emerald,
-        gray: designSystem.colors.gray,
-        red: designSystem.colors.red,
-        blue: designSystem.colors.blue,
-        amber: designSystem.colors.amber,
-        green: designSystem.colors.green,
+        graphite: "#292C2C",
+        seashell: "#FFF8F2",
+        paper: "#FFFDFB",
+        emerald: { DEFAULT: "#08513D", deep: "#063C2D", bright: "#0C7355", tint: "#E6EFEA" },
+        petal: { DEFAULT: "#FFD7DC", deep: "#F6C2C9" },
+        iron: { DEFAULT: "#A02A18", tint: "#F4E4E1" },
+        ochre: { DEFAULT: "#A34700", tint: "#F3E7DC" },
+        sel: "#F5E7CF",
+        ink: { DEFAULT: "#292C2C", muted: "#57544E", faint: "#6E6A63" },
+        hairline: { DEFAULT: "rgba(41,44,44,0.14)", strong: "rgba(41,44,44,0.28)" },
       },
       fontFamily: {
-        serif: ['Prata', 'Georgia', 'serif'],
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        hand: ["var(--font-hand)", "cursive"],
       },
-      borderRadius: designSystem.borderRadius,
-      boxShadow: designSystem.shadows,
-      spacing: designSystem.spacing,
-      transitionDuration: designSystem.transitions.duration,
-      transitionTimingFunction: designSystem.transitions.timing,
-      backgroundImage: {
-        'gradient-primary': designSystem.gradients.primary,
-        'gradient-warm': designSystem.gradients.warm,
-        'gradient-cool': designSystem.gradients.cool,
+      borderRadius: { sm: "5px", DEFAULT: "7px", md: "7px", lg: "10px" },
+      boxShadow: {
+        raised: "0 1px 2px rgba(41,44,44,0.06), 0 6px 18px rgba(41,44,44,0.10)",
+        "raised-lg": "0 2px 4px rgba(41,44,44,0.07), 0 14px 34px rgba(41,44,44,0.14)",
+        pressed: "inset 0 2px 4px rgba(41,44,44,0.18)",
       },
-      animation: {
-        'spin': 'spin 1s linear infinite',
-        'ping': 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
-        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'bounce': 'bounce 1s infinite',
-        'dash': 'dash 2s linear infinite',
+      transitionTimingFunction: { out: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+      zIndex: {
+        dropdown: "100",
+        sticky: "200",
+        backdrop: "300",
+        modal: "310",
+        toast: "400",
+        tooltip: "500",
       },
       keyframes: {
-        spin: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        "stamp-down": {
+          "0%": { transform: "scale(1.6) rotate(-14deg)", opacity: "0" },
+          "60%": { transform: "scale(0.96) rotate(-7deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(-8deg)", opacity: "1" },
         },
-        ping: {
-          '75%, 100%': { 
-            transform: 'scale(2)', 
-            opacity: '0' 
-          },
+        "fade-up": {
+          "0%": { transform: "translateY(6px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
         },
-        pulse: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '.5' },
-        },
-        bounce: {
-          '0%, 100%': {
-            transform: 'translateY(-25%)',
-            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)',
-          },
-          '50%': {
-            transform: 'translateY(0)',
-            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)',
-          },
-        },
-        dash: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
-        },
+      },
+      animation: {
+        "stamp-down": "stamp-down 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
+        "fade-up": "fade-up 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
       },
     },
   },

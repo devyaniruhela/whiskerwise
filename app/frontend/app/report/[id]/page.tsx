@@ -2,14 +2,16 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { VerdictChip } from '@/components/wiser/VerdictBits';
+import { ThumbsDown, ThumbsUp } from '@phosphor-icons/react';
+import { Button, CodeBadge, VerdictBadge } from '@/components/ui';
+import { VerdictStamp } from '@/components/wiser/VerdictStamp';
 import { api } from '@/lib/api';
 import type { Report } from '@/types';
 
 type Row = Report & { analysis_id: string; brand?: string | null; variant?: string | null };
 
+/* NOTE: placeholder report layout — final format/copy is D's (report_template.md).
+   Report = read flow: grid-paper wash, content in solid cards, voice in the rationale. */
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [report, setReport] = useState<Row | null>(null);
@@ -28,105 +30,131 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     setFeedbackSent(true);
   }
 
-  if (error) return <p className="pt-10 text-center text-sm text-gray-500">{error}</p>;
-  if (!report) return <p className="pt-10 text-center text-sm text-gray-400">Loading report…</p>;
+  if (error) return <main className="pt-32 text-center text-base text-ink-muted">{error}</main>;
+  if (!report) {
+    return (
+      <main className="mx-auto max-w-lg px-4 pt-28" aria-busy>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="mb-4 animate-pulse rounded-md bg-hairline" style={{ height: i === 0 ? 120 : 72 }} />
+        ))}
+      </main>
+    );
+  }
 
   const name = typeof window !== 'undefined' ? localStorage.getItem('wiser_name') : null;
   const isVet = report.verdict === 'vet_diet';
 
   return (
-    <div className="mx-auto max-w-lg">
-      {/* NOTE: placeholder report layout — final format/copy is D's, see report_template.md */}
-      {name && <p className="text-sm text-gray-400">Hi {name}, here’s our read:</p>}
-      <div className="mt-2 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-gray-400">{report.brand ?? ''} {report.variant ?? ''}</p>
-          <h1 className="mt-1 font-serif text-2xl leading-snug">{report.headline}</h1>
-        </div>
-        <VerdictChip verdict={report.verdict} big />
-      </div>
+    <div className="bg-grid-paper min-h-screen">
+      <main className="mx-auto w-full max-w-lg px-4 pb-16 pt-24">
+        {name && <p className="text-sm text-ink-muted">Hi {name}, here’s our read:</p>}
 
-      {report.data_quality_warning && (
-        <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{report.data_quality_warning}</p>
-      )}
-
-      {isVet && (
-        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-          <p>{report.therapeutic_purpose}</p>
-          <ul className="mt-2 space-y-1">
-            {report.per_cat_suitability.map((c, i) => <li key={i}>{c.note}</li>)}
-          </ul>
-          <p className="mt-2 text-xs font-medium">{report.vet_disclaimer}</p>
-        </div>
-      )}
-
-      {report.conditions.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {report.conditions.map((c, i) => (
-            <li key={i} className="rounded-xl border border-gray-100 bg-white p-3 text-sm text-gray-700 shadow-soft">{c}</li>
-          ))}
-        </ul>
-      )}
-
-      {report.per_cat_callouts.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-soft">
-          <h2 className="text-sm font-medium text-gray-800">For your cats</h2>
-          <ul className="mt-2 space-y-1.5 text-sm text-gray-600">
-            {report.per_cat_callouts.map((c, i) => <li key={i}>{c.note}</li>)}
-          </ul>
-        </div>
-      )}
-
-      {report.health_nudges.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
-          <h2 className="text-sm font-medium text-amber-900">Worth discussing with your vet</h2>
-          <ul className="mt-2 space-y-2 text-xs leading-relaxed text-amber-900/90">
-            {report.health_nudges.map((n, i) => <li key={i}>{n}</li>)}
-          </ul>
-        </div>
-      )}
-
-      {report.detailed_rationale && (
-        <details className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-soft">
-          <summary className="cursor-pointer text-sm font-medium text-gray-800">Why this verdict</summary>
-          <p className="mt-2 text-sm leading-relaxed text-gray-600">{report.detailed_rationale}</p>
-        </details>
-      )}
-
-      {report.standards_cited.length > 0 && (
-        <p className="mt-4 text-xs text-gray-400">Checked against: {report.standards_cited.join(' · ')}</p>
-      )}
-
-      <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-soft">
-        {feedbackSent ? (
-          <p className="text-sm text-primary-700">Thanks — that helps us get better.</p>
-        ) : (
-          <>
-            <p className="text-sm font-medium text-gray-800">Was this report helpful?</p>
-            <div className="mt-2 flex items-center gap-2">
-              <button onClick={() => setThumb(true)} aria-label="Helpful"
-                className={`rounded-full border p-2 ${thumb === true ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-400'}`}>
-                <ThumbsUp className="h-4 w-4" />
-              </button>
-              <button onClick={() => setThumb(false)} aria-label="Not helpful"
-                className={`rounded-full border p-2 ${thumb === false ? 'border-red-400 bg-red-50 text-red-600' : 'border-gray-200 text-gray-400'}`}>
-                <ThumbsDown className="h-4 w-4" />
-              </button>
-              <input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Anything to add? (optional)"
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none"
-              />
-              <Button variant="secondary" onClick={sendFeedback} disabled={thumb === null}>Send</Button>
+        {/* verdict — clean and clear, zero ornament competing with the call */}
+        <section className="mt-3 rounded-lg border border-hairline bg-paper p-5 shadow-raised">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="truncate font-sans text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                {[report.brand, report.variant].filter(Boolean).join(' · ')}
+              </p>
+              <h1 className="mt-2 font-serif text-[1.65rem] leading-snug text-ink">{report.headline}</h1>
+              <div className="mt-3"><VerdictBadge verdict={report.verdict} big /></div>
             </div>
-          </>
-        )}
-      </div>
+            <VerdictStamp verdict={report.verdict} size={120} />
+          </div>
+          {report.data_quality_warning && (
+            <p className="mt-4 rounded-md bg-ochre-tint p-3 text-sm text-ochre">{report.data_quality_warning}</p>
+          )}
+        </section>
 
-      <div className="mt-6 text-center">
-        <Link href="/food-input" className="text-sm font-medium text-primary-700 hover:underline">Scan another pack →</Link>
-      </div>
+        {isVet && (
+          <section className="mt-4 rounded-md border border-graphite/20 bg-petal p-4 text-graphite">
+            <p className="text-sm leading-relaxed">{report.therapeutic_purpose}</p>
+            <ul className="mt-2 space-y-1.5 text-sm leading-relaxed">
+              {report.per_cat_suitability.map((c, i) => <li key={i}>{c.note}</li>)}
+            </ul>
+            <p className="mt-3 text-sm font-semibold">{report.vet_disclaimer}</p>
+          </section>
+        )}
+
+        {report.conditions.length > 0 && (
+          <section className="mt-4 rounded-md border border-hairline bg-paper p-4 shadow-raised">
+            <h2 className="font-sans text-sm font-semibold text-ink">Conditions on this verdict</h2>
+            <ul className="mt-2 space-y-2">
+              {report.conditions.map((c, i) => (
+                <li key={i} className="border-b border-hairline pb-2 text-sm leading-relaxed text-ink-muted last:border-0 last:pb-0">
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {report.per_cat_callouts.length > 0 && (
+          <section className="mt-4 rounded-md border border-hairline bg-paper p-4 shadow-raised">
+            <h2 className="font-sans text-sm font-semibold text-ink">For your cats</h2>
+            <ul className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">
+              {report.per_cat_callouts.map((c, i) => <li key={i}>{c.note}</li>)}
+            </ul>
+          </section>
+        )}
+
+        {report.health_nudges.length > 0 && (
+          <section className="mt-4 rounded-md border border-hairline bg-paper p-4 shadow-raised">
+            <h2 className="font-sans text-sm font-semibold text-ink">Worth discussing with your vet</h2>
+            <ul className="mt-2 space-y-3 text-sm leading-relaxed text-ink-muted">
+              {report.health_nudges.map((n, i) => <li key={i}>{n}</li>)}
+            </ul>
+          </section>
+        )}
+
+        {report.detailed_rationale && (
+          <details className="mt-4 rounded-md border border-hairline bg-paper p-4 shadow-raised">
+            <summary className="cursor-pointer font-sans text-sm font-semibold text-ink">Why this verdict</summary>
+            <p className="mt-3 text-sm leading-relaxed text-ink-muted">{report.detailed_rationale}</p>
+          </details>
+        )}
+
+        {report.standards_cited.length > 0 && (
+          <p className="mt-5 flex flex-wrap items-center gap-1.5 text-sm text-ink-faint">
+            Checked against {report.standards_cited.map((s) => <CodeBadge key={s}>{s}</CodeBadge>)}
+          </p>
+        )}
+
+        {/* report feedback — test-flow instrumentation; removed for the main flow later */}
+        <section className="mt-6 rounded-md border border-hairline bg-paper p-4 shadow-raised">
+          {feedbackSent ? (
+            <p className="text-sm font-semibold text-emerald">Thanks — that helps us get better.</p>
+          ) : (
+            <>
+              <p className="font-sans text-sm font-semibold text-ink">Was this report helpful?</p>
+              <div className="mt-3 flex items-center gap-2">
+                <button onClick={() => setThumb(true)} aria-label="Helpful" aria-pressed={thumb === true}
+                  className={`rounded-md border p-2.5 transition-colors ${thumb === true ? 'border-emerald bg-emerald-tint text-emerald' : 'border-hairline-strong text-ink-faint hover:text-ink'}`}>
+                  <ThumbsUp size={18} weight={thumb === true ? 'fill' : 'regular'} />
+                </button>
+                <button onClick={() => setThumb(false)} aria-label="Not helpful" aria-pressed={thumb === false}
+                  className={`rounded-md border p-2.5 transition-colors ${thumb === false ? 'border-iron bg-iron-tint text-iron' : 'border-hairline-strong text-ink-faint hover:text-ink'}`}>
+                  <ThumbsDown size={18} weight={thumb === false ? 'fill' : 'regular'} />
+                </button>
+                <input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Anything to add? (optional)"
+                  aria-label="Feedback comment"
+                  className="min-h-[44px] flex-1 rounded-md border border-hairline-strong bg-paper px-3 text-sm text-ink placeholder:text-ink-faint"
+                />
+                <Button variant="secondary" onClick={sendFeedback} disabled={thumb === null}>Send</Button>
+              </div>
+            </>
+          )}
+        </section>
+
+        <div className="mt-7 text-center">
+          <Link href="/food-input" className="font-sans text-sm font-semibold text-emerald underline underline-offset-4 hover:text-emerald-bright">
+            Scan another pack →
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }

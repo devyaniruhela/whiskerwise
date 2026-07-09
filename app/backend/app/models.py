@@ -76,9 +76,21 @@ class Stage(str, Enum):
 
 # ── Cats (CSV `Cats` table; body_condition = required 4-point scale) ─
 
+class UserProfile(BaseModel):
+    """Optional identity details (Users table). Nothing mandatory; never prefilled
+    from scan greetings (D, 08 Jul)."""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    location: Optional[str] = None
+
+
 class CatProfile(BaseModel):
     id: Optional[str] = None
     cat_name: str
+    avatar: Optional[str] = None                # cats-*.png id; randomized default, user-pickable
+    cat_dob: Optional[str] = None               # ISO date, passport field
     cat_gender: Optional[str] = None            # male | female
     cat_age_year: int = 0
     cat_age_month: int = 0
