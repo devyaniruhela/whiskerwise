@@ -148,7 +148,8 @@ export default function Home() {
               of living with, feeding, and learning from cats, distilled into one honest answer:
               <span className="text-petal"> is this food worth buying?</span>
             </p>
-            <nav className="mt-6 flex flex-col gap-3 text-sm" aria-label="Footer">
+            {/* 2×2: Instagram + WhatsApp fill the left column, Write to us + Blogs the right */}
+            <nav className="mt-6 grid w-fit grid-flow-col grid-rows-2 gap-x-10 gap-y-3 text-sm" aria-label="Footer">
               <a href="https://instagram.com/whiskerwise.in/" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-petal">
                 <InstagramLogo size={20} aria-hidden /> Follow us @whiskerwise.in
