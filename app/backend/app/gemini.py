@@ -22,6 +22,15 @@ def enabled() -> bool:
     return bool(os.environ.get("GEMINI_API_KEY")) and os.environ.get("WISER_LIVE_LLM", "1") != "0"
 
 
+def list_models() -> list[str]:
+    """Model ids that support generateContent. Uses models.list() — NO generation quota."""
+    from google import genai
+
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    return [m.name.replace("models/", "") for m in client.models.list()
+            if "generateContent" in (m.supported_actions or [])]
+
+
 def _prompt(name: str) -> str:
     return (get_config()["_paths"]["prompts_dir"] / name).read_text(encoding="utf-8")
 

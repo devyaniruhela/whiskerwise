@@ -36,6 +36,30 @@ def health() -> dict:
     return {"ok": True, "kb_dir_exists": cfg["_paths"]["kb_dir"].is_dir()}
 
 
+@app.get("/health/gemini")
+def gemini_health() -> dict:
+    """Self-check for the Gemini key + configured models. Uses models.list() only —
+    consumes NO generation quota. Open http://localhost:8000/health/gemini to verify."""
+    from . import gemini
+
+    cfg = get_config()
+    configured = {stage: cfg["models"][stage] for stage in ("qc", "extract", "explain")}
+    if not gemini.enabled():
+        why = "no GEMINI_API_KEY" if not os.environ.get("GEMINI_API_KEY") else "WISER_LIVE_LLM=0 (mock mode)"
+        return {"key_present": bool(os.environ.get("GEMINI_API_KEY")), "live": False,
+                "reason": why, "configured": configured}
+    try:
+        available = set(gemini.list_models())
+    except Exception as e:  # noqa: BLE001
+        return {"key_present": True, "live": True, "key_valid": False, "error": str(e)[:200]}
+    return {
+        "key_present": True, "live": True, "key_valid": True,
+        "configured": configured,
+        "configured_available": {m: (m in available) for m in set(configured.values())},
+        "flash_models_available": sorted(m for m in available if "flash" in m),
+    }
+
+
 @app.post("/qc", response_model=QCResult)
 def qc(image: ImageRef) -> QCResult:
     return pipeline.mock_qc(image.imageId, image.cloudinaryUrl, image.category.value)
