@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app import pipeline
 from app.main import app
 from app.models import Verdict
 
@@ -32,30 +33,37 @@ def test_qc_route():
     assert body["qc_passed"] is True and body["category"] == "front"
 
 
-def test_full_flow_with_confirmation():
+def test_full_flow_non_blocking():
+    """PRD §8.6.7: the pipeline runs straight through — no confirmation gate."""
     r = client.post("/analyze", json=payload("a1"))
     assert r.status_code == 202
 
     state = client.get("/analyze/a1").json()
-    assert state["status"] == "awaiting_confirmation"
-    assert state["extract"]["brand"] == "MockBrand"
-
-    r = client.post("/analyze/a1/confirm", json={"confirmed": True})
-    assert r.status_code == 200
-
-    state = client.get("/analyze/a1").json()
     assert state["status"] == "done" and state["stage"] == "done"
+    assert state["extract"]["brand"] == "MockBrand"  # extract stays exposed for the in-flow review
     assert state["report"]["verdict"] == Verdict.buy.value
-    assert "extract" not in state  # only exposed at the checkpoint
 
     assert client.post("/analyze/a1/feedback", json={"feedback_yn": True, "feedback_comments": "spot on"}).status_code == 204
 
 
-def test_rejected_extraction_routes_to_reupload():
+def test_extract_review_feedback_never_gates():
+    """§8.5: both review verdicts persist as signal; neither changes the analysis outcome."""
     client.post("/analyze", json=payload("a2"))
-    r = client.post("/analyze/a2/confirm", json={"confirmed": False, "note": "brand is wrong"})
-    assert r.json()["status"] == "no_verdict"
-    assert "retake" in r.json()["guidance"].lower()
+    assert client.post("/analyze/a2/confirm", json={"confirmed": True}).status_code == 204
+    assert client.post("/analyze/a2/confirm", json={"confirmed": False, "note": "brand is wrong"}).status_code == 204
+    state = client.get("/analyze/a2").json()
+    assert state["status"] == "done"  # report untouched by the review
+
+
+def test_low_confidence_gate(monkeypatch):
+    """§8.4: extraction confidence < 0.70 stops the flow after extraction — no report."""
+    gated = pipeline._MOCK_EXTRACT.model_copy(update={"confidence": 0.4})
+    monkeypatch.setattr(pipeline, "_MOCK_EXTRACT", gated)
+    client.post("/analyze", json=payload("a5"))
+    state = client.get("/analyze/a5").json()
+    assert state["status"] == "no_verdict"
+    assert "retake" in state["guidance"].lower()
+    assert "report" not in state
 
 
 def test_validation_errors():
@@ -66,5 +74,4 @@ def test_validation_errors():
     client.post("/analyze", json=payload("a4"))
     assert client.post("/analyze", json=payload("a4")).status_code == 409  # duplicate id
     assert client.get("/analyze/nope").status_code == 404
-    assert client.post("/analyze/a4/confirm", json={"confirmed": True}).status_code == 200
-    assert client.post("/analyze/a4/confirm", json={"confirmed": True}).status_code == 409  # not awaiting
+    assert client.post("/analyze/nope/confirm", json={"confirmed": True}).status_code == 404

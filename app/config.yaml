@@ -29,7 +29,7 @@ features:
 pipeline:
   poll_interval_ms: 1500           # FE polling cadence hint
   extraction_retries: 1            # retry once on malformed extraction JSON
-  confidence_floor: 0.6            # Extracts.confidence below this → no_verdict (kb/06 §2)
+  confidence_floor: 0.70           # hard gate (PRD §8.4): below this the flow stops after extraction — retake photos; tune at bake-off
 
 images:                            # Cloudinary dynamic resize (w_X,c_limit,q_auto inserted in URL) per role
   qc_max_width: 1024               # QC also judges blur/glare/legibility — don't shrink so far that judgment breaks; tune at bake-off

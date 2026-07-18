@@ -8,7 +8,7 @@ export interface SelectOption {
   label: string;
 }
 
-/** Custom on-theme listbox — native OS <select> can't be themed (BUILD-GUIDE rule). */
+/** Custom on-theme listbox: native OS <select> can't be themed (BUILD-GUIDE rule). */
 export function Select({ label, value, options, placeholder = 'Choose…', onChange, className = '' }: {
   label?: string;
   value: string | null | undefined;

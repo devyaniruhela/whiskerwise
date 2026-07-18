@@ -65,7 +65,7 @@ export default function ProfilePage() {
         >
           <div>
             <h1 className="font-serif text-2xl text-ink">Your details</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">All optional — we only use it to serve you better.</p>
+            <p className="mt-0.5 text-sm text-ink-muted">All optional: we only use it to serve you better.</p>
           </div>
           <CaretDown size={18} className={`shrink-0 text-ink-faint transition-transform duration-200 ${meOpen ? 'rotate-180' : ''}`} aria-hidden />
         </button>
@@ -138,7 +138,7 @@ export default function ProfilePage() {
                 {missing.length > 0 ? (
                   <button onClick={() => setEditing(cat)}
                     className="text-left text-sm text-ink-faint underline decoration-dotted underline-offset-4 hover:text-emerald">
-                    Passport incomplete — add {missing.slice(0, 3).join(', ')}{missing.length > 3 ? '…' : ''}
+                    Passport incomplete: add {missing.slice(0, 3).join(', ')}{missing.length > 3 ? '…' : ''}
                   </button>
                 ) : (
                   <span className="text-sm font-semibold text-emerald">Passport complete</span>

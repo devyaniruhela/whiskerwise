@@ -1,20 +1,24 @@
-/** Wavy rule that tiles at a FIXED wave width (48px) so it never stretches.
- *  The tile is TRANSPARENT above the wave (the hero's grid-paper shows through, up to
- *  the line) and filled with SEASHELL below it (covering the grid), so the grid appears
- *  to stop cleanly at the squiggly line. The emerald stroke sits on the boundary. */
-const TILE =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cpath d='M0 12 Q 12 2 24 12 T 48 12 L 48 24 L 0 24 Z' fill='%23FFF8F2'/%3E%3Cpath d='M0 12 Q 12 2 24 12 T 48 12' fill='none' stroke='%2308513D' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E\")";
+/** Wavy rule that tiles at a FIXED wave width so it never stretches: the wiggle
+ *  size is identical on every page, screen size and orientation. Tile is 22px
+ *  wide to match the header's tight scallops (wiggly-border-bottom). Transparent
+ *  above the wave (the section behind shows through, up to the line), SEASHELL
+ *  below it (covers the grid), stroke on the boundary.
+ *  `stroke` = hex without '#' (default emerald; pass 292C2C for the dark-neutral
+ *  variant used under graphite bands). */
+function tile(strokeHex: string) {
+  return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12'%3E%3Cpath d='M0 6 Q 5.5 1 11 6 T 22 6 L 22 12 L 0 12 Z' fill='%23FFF8F2'/%3E%3Cpath d='M0 6 Q 5.5 1 11 6 T 22 6' fill='none' stroke='%23${strokeHex}' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`;
+}
 
-export function WiggleDivider({ className = '' }: { className?: string }) {
+export function WiggleDivider({ className = '', stroke = '08513D' }: { className?: string; stroke?: string }) {
   return (
     <div
       className={className}
       aria-hidden
       style={{
-        height: 24,
-        backgroundImage: TILE,
+        height: 12,
+        backgroundImage: tile(stroke),
         backgroundRepeat: 'repeat-x',
-        backgroundSize: '48px 24px',
+        backgroundSize: '22px 12px',
         backgroundPosition: 'left top',
       }}
     />

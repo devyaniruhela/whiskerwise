@@ -10,9 +10,9 @@ const mono = Courier_Prime({ weight: ['400', '700'], subsets: ['latin'], variabl
 const hand = localFont({ src: '../public/Coal-Hand-Luke.ttf', variable: '--font-hand', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Whisker Wise — Wiser',
+  title: 'Whisker Wise',
   description:
-    'Photograph a cat-food pack, get a plain-language Buy / Skip verdict grounded in published nutrition standards.',
+    'Better decisions for your cat, faster: curated cat-life essentials and a cat-food label analyzer grounded in published nutrition standards.',
   icons: { icon: '/favicon.png' },
 };
 

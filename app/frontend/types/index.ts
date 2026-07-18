@@ -42,9 +42,21 @@ export interface GuaranteedAnalysis {
 export interface ExtractSummary {
   brand?: string | null; variant?: string | null;
   lifestage?: string; type?: string; adequacy?: string;
+  texture?: string | null;
+  aafco_certified?: boolean;
+  other_certifications?: string[];
+  claims?: string[];
+  intended_use?: string | null;
   ingredients?: string[]; additives?: string[];
   guaranteed_analysis?: GuaranteedAnalysis;
+  taurine_added?: boolean | null;
+  weight_g?: number | null;
+  met_energy_100g?: string | null;
+  translated_flag?: boolean;
+  detected_language?: string | null;
   confidence?: number | null;
+  extract_note?: string | null;
+  unreadable_fields?: string[];
 }
 
 export interface CategoryResult { result: string; note?: string; flags?: string[] }

@@ -168,6 +168,11 @@ def save_extract(user_id: str, analysis_id: str, cat_ids: list[str],
     return str(rows[0]["id"]) if rows else None
 
 
+def get_extract_row(analysis_id: str) -> Optional[dict]:
+    rows = _exec("select id, data, confidence from extracts where analysis_id = :a", a=analysis_id)
+    return dict(rows[0]) if rows else None
+
+
 def save_extract_feedback(user_id: str, analysis_id: str, extract_id: Optional[str],
                           confirmed: bool, note: Optional[str]) -> None:
     _exec("""insert into extract_feedback (analysis_id, extract_id, user_id, confirmed, note)

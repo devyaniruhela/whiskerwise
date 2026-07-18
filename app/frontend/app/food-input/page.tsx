@@ -35,7 +35,7 @@ function FoodInputInner() {
   }, [params]);
 
   async function submit() {
-    if (!name.trim()) return setError('Tell us your name — it’s just for the greeting.');
+    if (!name.trim()) return setError('Tell us your name: it’s just for the greeting.');
     if (!front || !back) return setError('We need both the front and the back of the pack.');
     if (personalise && selected.length === 0) return setError('Select at least one cat, or turn personalisation off.');
     setSubmitting(true);
@@ -55,10 +55,13 @@ function FoodInputInner() {
         cta_source: 'food-input',
         timestamp: new Date().toISOString(),
       });
+      // Hand the selected cat names to the flow page for the "Personalising for {cat}" step (§8.6.3)
+      const names = personalise ? cats.filter((c) => selected.includes(c.id!)).map((c) => c.cat_name) : [];
+      try { sessionStorage.setItem(`wiser_scan_cats:${analysis_id}`, JSON.stringify(names)); } catch { /* label falls back to general */ }
       router.push(`/loading?analysis_id=${analysis_id}`);
     } catch (e) {
       setSubmitting(false);
-      setError(e instanceof Error ? e.message : 'Could not start the analysis — try again.');
+      setError(e instanceof Error ? e.message : 'Could not start the analysis: try again.');
     }
   }
 

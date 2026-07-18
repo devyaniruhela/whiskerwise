@@ -94,6 +94,38 @@
     z-index: 1;
   }
   
+  /* Skeleton shimmer — scan-flow "Preparing insights" report ghost (PRD §8.6.3).
+     Background-position animation only; the global reduced-motion rule freezes it. */
+  .shimmer {
+    background: linear-gradient(100deg, #ece6df 40%, #f8f4ef 50%, #ece6df 60%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Confetti burst — step-5 unlock moment (PRD §8.6.3). Each piece gets --tx/--ty/--rot
+     inline; transform+opacity only, killed by the global reduced-motion rule. */
+  .confetti-piece {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    pointer-events: none;
+    animation: confetti-burst 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes confetti-burst {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   /* Grid / graph paper - product-flow & report background wash. Text never sits on it
      directly; content goes in solid cards (DESIGN.md texture golden rule). */
   .bg-grid-paper {

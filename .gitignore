@@ -70,3 +70,6 @@ env/
 # Local upload/tmp dirs
 /app/backend/tmp/
 /app/**/uploads/
+
+# Local backup of the pre-crop card originals (large binaries, not served)
+/app/frontend/public/cards-originals/

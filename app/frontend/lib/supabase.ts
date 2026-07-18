@@ -1,4 +1,4 @@
-// Identity only (anonymous sign-in v1) — data access always goes through the BFF →
+// Identity only (anonymous sign-in v1): data access always goes through the BFF →
 // FastAPI → direct Postgres, never Supabase's Data API. Degrades gracefully: without
 // env values the app still works (backend maps missing auth to its dev user).
 import { createClient, SupabaseClient } from '@supabase/supabase-js';

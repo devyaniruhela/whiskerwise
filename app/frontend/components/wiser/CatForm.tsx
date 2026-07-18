@@ -189,7 +189,7 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, o
         </div>
         {errors.age && <p className="mt-1 text-sm text-iron">{errors.age}</p>}
 
-        {/* body condition — image left, text right */}
+        {/* body condition: image left, text right */}
         <p className="mb-2 mt-5 font-sans text-sm font-semibold text-ink">Body condition<Req /></p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {BODY_CONDITIONS.map((bc) => (

@@ -1,186 +1,128 @@
+import fs from 'fs';
+import path from 'path';
 import Image from 'next/image';
-import Link from 'next/link';
-import { Camera, ListMagnifyingGlass, Stamp, InstagramLogo, WhatsappLogo, EnvelopeSimple, ArrowRight } from '@phosphor-icons/react/dist/ssr';
 import { WiggleDivider } from '@/components/wiser/WiggleDivider';
-import { StandardsTooltip } from '@/components/wiser/StandardsTooltip';
+import { Footer } from '@/components/wiser/Footer';
+import { ValueCardStack, type CardArt } from '@/components/home/ValueCardStack';
+import { getCatalogue } from '@/lib/catalogue';
 
-// Placeholder icon blocks; real photos to be added by D. Pink (petal) is common to all three.
-const STEPS = [
-  {
-    icon: Camera,
-    block: 'bg-petal text-emerald',
-    title: 'Photograph the pack',
-    text: 'Front and back of the cat food, right there in the store aisle, or just a screenshot. The label can tell you a lot about what is inside.',
-    tooltip: false,
-  },
-  {
-    icon: ListMagnifyingGlass,
-    block: 'bg-emerald text-petal',
-    title: 'We read every line',
-    text: 'We take all the information straight from the pack you share, then check every line against Indian, European and American pet-food standards.',
-    tooltip: true,
-  },
-  {
-    icon: Stamp,
-    block: 'bg-graphite text-petal',
-    title: 'Buy, or skip',
-    text: 'Mixed with our secret sauce and years of pet-nutrition expertise, you get a clear verdict with every "why" rooted in science, personalised for your cat.',
-    tooltip: false,
-  },
-];
+/** Rendered per request, not at build: otherwise Math.random() runs once during
+ *  `next build` and every visitor sees the same pair until the next deploy. */
+export const dynamic = 'force-dynamic';
 
-const STANDARDS = {
-  indian: 'https://archive.org/details/gov.in.is.11968.2019/page/n3/mode/2up',
-  european: 'https://europeanpetfood.org/',
-  american: 'http://aafco.org/',
-  wsava: 'http://wsava.org/',
+export const metadata = {
+  title: 'Whisker Wise | Better decisions for your cat, faster',
+  description:
+    'We look at the evidence, so you can pick what is actually good for your cat. Curated with care, trusted by whiskers.',
 };
 
-function FootLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer"
-      className="underline decoration-seashell/50 underline-offset-2 transition-colors hover:text-petal hover:decoration-petal">
-      {children}
-    </a>
-  );
+/** Value-card artwork, drawn fresh per visit from public/cards/:
+ *  `cat-card1-*` feeds card 1 (Curated Essentials), `cat-card2-*` feeds card 2
+ *  (Wiser). Dropping in cat-card1-8.jpg just works, no code change.
+ *
+ *  An optional `--<x>x<y>` suffix carries the image's focal point as percentages
+ *  (cat-card1-6--51x32.jpg -> object-position: 51% 32%), so the crop stays on the
+ *  subject in both the wide mobile band and the near-square desktop column.
+ *  Bake it into the filename when cropping; omit it to accept the centred default. */
+const CARDS_DIR = path.join(process.cwd(), 'public', 'cards');
+// `-\d+` is the slot, an optional trailing letter marks an alternate cut of the
+// same painting (cat-card2-4--55x50 vs cat-card2-4b--72x48), so both can sit in
+// the roster at once while a crop is being judged.
+const ART_RE = /^(cat-card\d+)-\d+[a-z]?(?:--(\d{1,3})x(\d{1,3}))?\.jpe?g$/i;
+const DEFAULT_FOCAL = '50% 50%';
+const FALLBACK_ART: CardArt = { src: '/whisker-wise-logo-stamp-bw.png', position: DEFAULT_FOCAL };
+
+/** Read once per server instance; each request only rolls a die over the result. */
+function readRoster(prefix: string): CardArt[] {
+  let files: string[];
+  try {
+    files = fs.readdirSync(CARDS_DIR);
+  } catch {
+    return []; // folder missing: fall back rather than 500 the home page
+  }
+  return files.flatMap((f) => {
+    const m = ART_RE.exec(f);
+    if (!m || m[1].toLowerCase() !== prefix) return [];
+    return [{ src: `/cards/${f}`, position: `${m[2] ?? 50}% ${m[3] ?? 50}%` }];
+  });
 }
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
+/** Cached in production (the folder can't change under a running deploy); re-read
+ *  every request in dev, so adding, renaming or deleting a painting shows up on
+ *  the next reload without restarting the server. */
+const ROSTERS: Record<string, CardArt[]> = IS_DEV
+  ? {}
+  : { 'cat-card1': readRoster('cat-card1'), 'cat-card2': readRoster('cat-card2') };
+
+function pickCardArt(prefix: string): CardArt {
+  const roster = IS_DEV ? readRoster(prefix) : ROSTERS[prefix];
+  if (!roster?.length) return FALLBACK_ART;
+  return roster[Math.floor(Math.random() * roster.length)];
+}
+
+/** whiskerwise.in home (Whiskerwise_PRD.md §4). The hero is the one place the
+ *  stamp goes REALLY BIG, so home reads unmistakably different from every other
+ *  page; then the value-card stack (one card per product) and a short trust band. */
 export default function Home() {
+  const { starterKit, sections } = getCatalogue();
+  const picks = sections.reduce((n, s) => n + s.items.length, 0);
+
   return (
     <main>
-      {/* grid-paper is scoped to the hero only, extending down to the squiggly divider */}
+      {/* ── Hero: the oversized stamp moment, logo left / text right ── */}
       <div className="bg-grid-paper">
-        {/* ── Section 1 · hero: stamp left, intro + CTA right ─────────── */}
-        <section className="relative px-5 pt-24 sm:pt-28">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 pb-14 text-center sm:pb-16 md:flex-row md:gap-12 md:text-left">
+        <section className="px-5 pt-20 sm:pt-24">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 pb-12 text-center md:flex-row md:gap-12 md:pb-14 md:text-left">
             <Image
-              src="/whisker-wise-logo-stamp-fill.png"
+              src="/whisker-wise-logo-stamp-bw.png"
               alt="Whisker Wise. Curated with care, trusted by whiskers."
-              width={340}
-              height={340}
+              width={2000}
+              height={1731}
               priority
-              className="w-56 shrink-0 -rotate-3 sm:w-64 md:w-72 lg:w-[19rem]"
-              style={{ filter: 'drop-shadow(0 10px 22px rgba(41,44,44,0.16))' }}
+              className="h-auto w-[72vw] max-w-[24rem] shrink-0 md:w-[44%] lg:max-w-[26rem]"
+              style={{ filter: 'drop-shadow(0 18px 38px rgba(41,44,44,0.22))' }}
             />
             <div>
-              <h1 className="font-serif text-[clamp(2.75rem,6vw,4rem)] leading-[1.02] text-ink">
-                Meet <span className="text-emerald">Wiser</span>.
+              <h1 className="font-serif text-[clamp(2.25rem,4.5vw,3.25rem)] leading-[1.05] text-ink">
+                Better decisions for your cat, faster.
               </h1>
-              <p className="mt-3 font-serif text-xl text-ink sm:text-2xl">Know what&apos;s good, before you buy.</p>
-              <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink-muted md:mx-0">
-                Photograph any cat-food pack and get a verdict rooted in published nutrition standards,
-                not marketing.
+              <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-ink-muted sm:text-lg md:mx-0">
+                We look at the evidence, so you can pick what is actually good for your cat.
               </p>
-              <Link
-                href="/food-input"
-                className="mt-7 inline-flex min-h-[48px] items-center gap-2 rounded-md bg-emerald px-7 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-all duration-150 ease-out hover:bg-emerald-deep active:shadow-pressed"
-              >
-                Scan a pack
-                <ArrowRight size={18} weight="bold" aria-hidden />
-              </Link>
             </div>
           </div>
         </section>
-
         <WiggleDivider />
       </div>
 
-      {/* ── Section 2 · what you get, in three steps (plain seashell) ─── */}
-      <section className="relative bg-seashell px-5 pb-20 pt-14">
-        <div className="mx-auto max-w-4xl">
-            <h2 className="text-center font-serif text-3xl text-ink sm:text-4xl">
-              The label, decoded in a minute
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-center text-base leading-relaxed text-ink-muted">
-              Pet-food labels are written to sell. Wiser reads them the way a nutritionist would, so
-              you can decide in the aisle with confidence.
-            </p>
+      {/* ── The two doors: stacked value cards (pin + slide-over on scroll) ── */}
+      <section className="bg-seashell pb-20 pt-12 sm:pt-14" aria-label="What Whisker Wise offers">
+        <ValueCardStack
+          essentials={{ picks, needs: sections.length, hasStarterKit: starterKit.length > 0 }}
+          essentialsArt={pickCardArt('cat-card1')}
+          wiserArt={pickCardArt('cat-card2')}
+        />
+      </section>
 
-            <div className="mt-12 grid gap-6 sm:grid-cols-3">
-              {STEPS.map(({ icon: Icon, block, title, text, tooltip }) => (
-                <div key={title} className="rounded-lg border border-hairline bg-paper p-3 shadow-raised">
-                  <div className={`flex h-32 items-center justify-center rounded-md ${block}`}>
-                    <Icon size={46} weight="regular" aria-hidden />
-                  </div>
-                  <h3 className="mt-4 px-1 font-serif text-xl text-ink">{title}</h3>
-                  <p className="mb-2 mt-1.5 px-1 text-sm leading-relaxed text-ink-muted">
-                    {text}
-                    {tooltip && <StandardsTooltip />}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <p className="mx-auto mt-14 max-w-xl text-center font-serif text-2xl leading-snug text-ink">
-              Facts are already on the label. Wiser helps you decide what you should be feeding{' '}
-              <em className="italic">your cat</em>.
-            </p>
-            <div className="mt-7 text-center">
-              <Link
-                href="/food-input"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-graphite px-7 py-3 font-sans text-base font-semibold text-graphite transition-colors duration-150 hover:bg-sel/60"
-              >
-                Try it on your cat&apos;s food
-              </Link>
-            </div>
-          </div>
-        </section>
-
-      {/* ── Footer · painting shows through; text lives in the right 2/3 ─ */}
-      <footer className="relative text-seashell">
-        <div className="absolute inset-0 overflow-hidden" aria-hidden>
-          <Image src="/bottom-cat-face-paint-landscape.png" alt="" fill priority={false}
-            className="object-cover object-bottom" sizes="100vw" />
-          {/* no full mask; keep the painting visible, a soft right-side wash lifts text legibility */}
-          <div className="absolute inset-0 bg-gradient-to-l from-graphite/70 via-graphite/45 to-transparent md:from-graphite/60 md:via-graphite/30" />
-        </div>
-
-        <div
-          className="relative mx-auto grid max-w-5xl gap-8 px-6 pb-10 pt-16 md:grid-cols-3"
-          style={{ textShadow: '0 1px 5px rgba(0,0,0,0.55)' }}
-        >
-          <div className="hidden md:block" aria-hidden />{/* left third: reserved for the painted cat */}
-          {/* right 2/3: everything left-aligned to one starting edge */}
-          <div className="md:col-span-2">
-            <p className="font-hand text-3xl text-petal">Whisker Wise</p>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-seashell">
-              Wiser, by Whisker Wise, is an initiative by a cat rescuer and pet nutritionist. Ten years
-              of living with, feeding, and learning from cats, distilled into one honest answer:
-              <span className="text-petal"> is this food worth buying?</span>
-            </p>
-            {/* 2×2: Instagram + WhatsApp fill the left column, Write to us + Blogs the right */}
-            <nav className="mt-6 grid w-fit grid-flow-col grid-rows-2 gap-x-10 gap-y-3 text-sm" aria-label="Footer">
-              <a href="https://instagram.com/whiskerwise.in/" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <InstagramLogo size={20} aria-hidden /> Follow us @whiskerwise.in
-              </a>
-              <a href="https://wa.me/919682387557" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <WhatsappLogo size={20} aria-hidden /> Chat on WhatsApp
-              </a>
-              <a href="mailto:ruhela.devyani@gmail.com"
-                className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <EnvelopeSimple size={20} aria-hidden /> Write to us
-              </a>
-              <Link href="/blog" className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-                <ArrowRight size={20} aria-hidden /> Blogs
-              </Link>
-            </nav>
-          </div>
-        </div>
-
-        <div className="relative mx-auto grid max-w-5xl px-6 pb-14 md:grid-cols-3"
-          style={{ textShadow: '0 1px 5px rgba(0,0,0,0.55)' }}>
-          <div className="hidden md:block" aria-hidden />
-          <p className="text-sm leading-relaxed text-seashell md:col-span-2 md:text-center">
-            Grounded in <FootLink href={STANDARDS.indian}>Indian</FootLink>,{' '}
-            <FootLink href={STANDARDS.european}>European</FootLink> and{' '}
-            <FootLink href={STANDARDS.american}>American</FootLink> pet-food standards. Governed by{' '}
-            <FootLink href={STANDARDS.wsava}>WSAVA</FootLink>.
-            <span className="mt-1 block">Not a substitute for veterinary advice.</span>
+      {/* ── Trust band: the tagline, big, and two short lines ── */}
+      <section className="border-t border-hairline bg-seashell px-5 py-16 sm:py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-hand text-[clamp(2rem,5vw,3.25rem)] leading-tight text-emerald">
+            Curated with care.
+            <span className="block">Trusted by whiskers.</span>
+          </p>
+          <p className="mt-6 text-lg leading-relaxed text-ink">
+            We are your partner in making good decisions for your cat.
+          </p>
+          <p className="mt-1.5 text-base leading-relaxed text-ink-muted">
+            No more confusion. No more second-guessing.
           </p>
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </main>
   );
 }

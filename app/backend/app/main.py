@@ -1,9 +1,10 @@
 """Wiser analysis service (FastAPI). Contract per PRD §9.2:
 POST /analyze → 202 {analysis_id, status}; GET /analyze/{id} → poll;
-POST /analyze/{id}/confirm → extraction checkpoint (PRD §8.5);
+POST /analyze/{id}/confirm → extraction-review feedback, non-gating (PRD §8.5/§8.6.7);
 POST /analyze/{id}/feedback → persisted report feedback; POST /qc → per-image QC.
 """
 
+import json
 import logging
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
@@ -17,7 +18,6 @@ from .models import (
     AnalysisAccepted,
     AnalysisPayload,
     AnalysisState,
-    AnalysisStatus,
     CatProfile,
     ExtractConfirmation,
     ImageRef,
@@ -77,7 +77,7 @@ def analyze(payload: AnalysisPayload, background: BackgroundTasks,
     job.user_id = user_id
     db.upsert_user(user_id)
     db.bump(user_id, "num_scan_attempts")
-    background.add_task(pipeline.run_until_confirmation, payload.analysis_id)
+    background.add_task(pipeline.run_pipeline, payload.analysis_id)
     return AnalysisAccepted(analysis_id=payload.analysis_id)
 
 
@@ -91,35 +91,31 @@ def get_analysis(analysis_id: str) -> AnalysisState:
         status=job.status,
         stage=job.stage,
         stage_label=get_config()["stage_labels"].get(job.stage.value),
-        extract=job.extract if job.status == AnalysisStatus.awaiting_confirmation else None,
+        extract=job.extract,  # exposed as soon as extraction lands — the FE review is in-flow (§8.6.4)
         report=job.report,
         guidance=job.guidance,
     )
 
 
-@app.post("/analyze/{analysis_id}/confirm", response_model=AnalysisState, response_model_exclude_none=True)
-def confirm_extraction(
-    analysis_id: str, confirmation: ExtractConfirmation, background: BackgroundTasks
-) -> AnalysisState:
+@app.post("/analyze/{analysis_id}/confirm", status_code=204)
+def extract_review_feedback(
+    analysis_id: str, confirmation: ExtractConfirmation,
+    user_id: str = Depends(current_user_id),
+) -> None:
+    """Records the in-flow extraction-review verdict (Looks good / Something's off + note).
+    Non-gating per PRD §8.6.7 — the pipeline runs regardless; this only persists signal
+    to Extract_feedback. Works during the flow (store) and later from the report page (db)."""
     job = store.get(analysis_id)
-    if job is None:
+    if job is not None:
+        store.update(analysis_id, confirmation_note=confirmation.note)
+        db.save_extract_feedback(job.user_id, analysis_id, job.extract_db_id,
+                                 confirmation.confirmed, confirmation.note)
+        return
+    row = db.get_extract_row(analysis_id)
+    if row is None:
         raise HTTPException(404, "Unknown analysis_id.")
-    if job.status != AnalysisStatus.awaiting_confirmation:
-        raise HTTPException(409, f"Not awaiting confirmation (status: {job.status.value}).")
-    store.update(analysis_id, confirmation_note=confirmation.note)
-    db.save_extract_feedback(job.user_id, analysis_id, job.extract_db_id,
+    db.save_extract_feedback(user_id, analysis_id, row.get("id"),
                              confirmation.confirmed, confirmation.note)
-    if confirmation.confirmed:
-        background.add_task(pipeline.run_after_confirmation, analysis_id)
-    else:
-        # User flagged the extraction as wrong → re-upload path (PRD §8.4); note persisted for tuning.
-        store.update(
-            analysis_id,
-            status=AnalysisStatus.no_verdict,
-            guidance="Thanks for flagging — please retake the label photos so we can read them correctly.",
-        )
-    job = store.get(analysis_id)
-    return AnalysisState(analysis_id=analysis_id, status=job.status, stage=job.stage, guidance=job.guidance)
 
 
 @app.post("/analyze/{analysis_id}/feedback", status_code=204)
@@ -174,10 +170,17 @@ def reports_history(user_id: str = Depends(current_user_id)) -> list[dict]:
 
 @app.get("/report/{analysis_id}")
 def report_by_id(analysis_id: str) -> dict:
+    """Report + the extract it was built on — the report page renders the extraction
+    section from it (one surface, linkable as /report/{id}?view=extract, PRD §8.6.5)."""
     row = db.get_report_row(analysis_id)
     if row is None:
         job = store.get(analysis_id)
         if job and job.report:
-            return {"analysis_id": analysis_id, **job.report.model_dump()}
+            return {"analysis_id": analysis_id, **job.report.model_dump(),
+                    "extract": job.extract.model_dump() if job.extract else None}
         raise HTTPException(404, "Report not found.")
-    return row
+    ex = db.get_extract_row(analysis_id)
+    extract = ex.get("data") if ex else None
+    if isinstance(extract, str):  # jsonb usually arrives parsed; be tolerant of driver differences
+        extract = json.loads(extract)
+    return {**row, "extract": extract}

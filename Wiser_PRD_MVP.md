@@ -219,13 +219,80 @@ The input and profile UX already exist in the web flow (screens shared). Require
 
 **8.1 Input.** Name (required, used only for greeting). Front panel photo (required). Back panel photo (required — the ingredient list and guaranteed analysis live here). Optional "Personalise for my cat" → cat profile modal (name, age y/m, body condition, health conditions multi-select).
 
-**8.2 Progress.** The staged progress screen ("Reading the label → Evaluating ingredient quality → Analyzing nutritional profile → Preparing insights → Personalizing for {cat}") is retained as perceived-performance UI. It should reflect real stage transitions where feasible, but may be time-driven if the backend returns in one shot.
+**8.2 Progress.** The staged progress screen ("Reading the label → Evaluating ingredient quality → Analyzing nutritional profile → Preparing insights → Personalizing for {cat}") is retained as perceived-performance UI. It should reflect real stage transitions where feasible, but may be time-driven if the backend returns in one shot. **The full staged spec — stepper visual, per-step behaviour and timing, the in-flow extracted-label review, and the report hand-off — is detailed in §8.6.**
 
 **8.3 Report.** Lead with the **verdict headline** and Buy/Skip. Then the short **conditions/reasons** (2–4 bullets, plain language). Then a collapsed **"Why this verdict"** detailed rationale (the §6.3 `detailed_rationale`). Then any **health nudges**. Cite standards by name where a claim rests on one. If personalization was skipped, show a one-line "General adult-cat analysis — add {cat}'s details for a tailored result."
 
-**8.4 Failure / low-confidence.** If `extraction_confidence` = low or `unreadable_fields` includes ingredients or guaranteed analysis, do **not** fake a verdict. Show a "We couldn't read the label clearly — retake the back panel" state with guidance (the existing "Help us read the label clearly" tips).
+**8.4 Failure / low-confidence [threshold set 10 Jul 2026].** Do **not** fake a verdict when extraction is unreliable. **Hard gate:** if `Extracts (processed).confidence` **< 0.70** (the 0–1 float, §6.1), the flow **stops after "Reading the label"** and shows the error state below **instead of a report** — this is the one blocker in the otherwise non-blocking flow (§8.6.7). Also trigger it if a required field (ingredients or guaranteed analysis) is unreadable.
 
-**8.5 Verification & feedback loop [Decision, 07 Jul 2026].** *What:* two lightweight checkpoints, both persisted (not console.log-only like the old FE's version): (1) after extraction, before the user sees the full report, a quick "does this match your pack?" confirm/error step — only on confirm does the flow continue to the report; (2) after the report itself, a similarly lightweight feedback prompt on the verdict. *Why:* (1) catches bad extractions before a user sees a wrong verdict built on them, and (2) both generate labeled, storable signal for tuning Layer 1 accuracy and the §7.2 verdict roll-up over time — this is part of what feeds the golden dataset (§10, Data/Test). How this gets built (UI shape, exact storage schema) is intentionally left open for build time.
+*Testing behaviour (current):* the report is shown regardless of the extract-review CTAs; **only** a confidence issue (< 0.70) suppresses it.
+
+**Error copy:**
+> **Uh oh. Looks like we couldn't read the label too well.**
+> Try again
+
+Accompany it with the **three photo-quality callouts** (the existing "Help us read the label clearly" tips) for taking good pictures, and route the user back to retake — the **back panel** in particular, since the ingredient list and guaranteed analysis live there.
+
+*[Open] threshold is a config knob:* 0.70 is the starting cut; expose it in backend `config.yaml` and tune at bake-off against real extraction quality.
+
+**8.5 Verification & feedback loop [Decision, 07 Jul 2026; refined 10 Jul 2026].** *What:* two lightweight checkpoints, both persisted (not console.log-only like the old FE's version): (1) an extraction-review step ("does this match your pack?") surfaced inside the progress flow when the "Reading the label" step completes; (2) after the report itself, a lightweight thumbs feedback prompt on the verdict. *Why:* (1) catches bad extractions and generates labeled signal on Layer 1 accuracy; (2) generates labeled signal for tuning the §7.2 verdict roll-up — both feed the golden dataset (§10, Data/Test). Storage: `Extract_feedback` and `Report_feedback` tables, each keyed to the scan's image pair (added to the data-model CSV, 07 Jul 2026).
+
+*Refinement (10 Jul 2026) — non-blocking:* the extraction-review step **no longer gates** the report. Report generation runs in the background while the progress screen animates; the review section auto-collapses once the user engages with it or the flow reaches "Preparing insights," and a "Can't check now" option lets the user skip. This supersedes the earlier "only on confirm does the flow continue" wording above. Full behaviour, states, and the testing-only extract-feedback page are specified in §8.6.
+
+**8.6 Post-scan flow — Progress → Extract review → Report [Decision, 10 Jul 2026].**
+
+This subsection details everything between the **Scan** CTA and the final report. Entry precondition: both photos (front + back, in their correct slots) are already uploaded and past QC — no blur/lighting/completeness issues remain. The run may be **personalised** (one or more cats selected) or **general** (no cat). The flow is:
+
+```
+Scan CTA → Progress screen → Extract review (in-flow) → Report skeleton → Report view
+```
+
+**8.6.1 Layout — two fixed regions.** From the moment the Progress screen opens, the page holds two stacked regions under the app header:
+- **A. Progress stepper (fixed).** A horizontal, multi-step progress bar pinned directly under the header. It stays visible the whole time — including above the report once the report renders (§8.6.6). Visual reference: `ui-inspo/progress-bar.png` — numbered circles joined by a connector line; a completed step shows a filled circle with a check and its connector segment fills in (accent colour); the active step is marked (caret above it); pending steps are muted.
+- **B. Detail region (updating).** Everything below the stepper. Its contents swap as steps progress — loading copy, the extracted-label review, skeleton loaders, and finally the report.
+
+**8.6.2 The five steps.** The stepper shows five steps, in order:
+
+1. **Reading the label**
+2. **Evaluating ingredients**
+3. **Analysing nutritional profile**
+4. **Preparing insights**
+5. **Personalising**
+
+Each step has three visual states — **pending** (muted), **loading** (active, caret + spinner/indeterminate fill), **completed** (filled + check, connector filled). All per-step detail and copy render in **region B**, below the bar.
+
+> **Note (flag for D):** the source brief said "four steps" but listed five; this spec builds the **five** above. The reused progress copy in §8.2 also names the same five. Confirm the label wording — §8.2/backend `config.yaml stage_labels` use "Evaluating ingredient quality" / "Analyzing nutritional profile" / "Personalizing for {cat}"; align the two so the FE and the D-editable backend labels match.
+
+**8.6.3 Per-step behaviour & timing.** Steps 2–5 are partly **perceived-performance devices** that cover the real report-generation wait; final timings are tuned to actual backend latency (§9.2 is async + polled), so the numbers below are starting points, not contract.
+
+- **1 · Reading the label** — tied to the **real** extraction result. On completion, region B reveals the **extracted-label review** (§8.6.4): the items Gemini read, grouped by section, each with feedback affordances.
+- **2 · Evaluating ingredients** — animates as active for **~3s**, then completes. Time-filler that buys report-generation headroom.
+- **3 · Analysing nutritional profile** — same pattern, **~3s**, then completes. Time-filler.
+- **4 · Preparing insights** — shows a **skeleton of the report layout with a shimmer**, as if the report is being assembled, to make the wait feel productive. On reaching this step, the extract-review section (§8.6.4) auto-collapses if still open.
+- **5 · Personalising** — two modes:
+  - **General run (no cat selected):** shown **locked**. Adds ~3s of cover during report prep, alongside the skeleton loader. It stays locked (never "unlocks") — its purpose is time + a nudge toward personalising.
+  - **Personalised run (≥1 cat):** label reads **"Personalising for {cat name}"** (single cat) or **"Personalising for the cats"** (multiple, or when a single name would exceed the character limit). When the prior steps finish, this step plays an **unlock animation** — lock opening + confetti — to mark completion.
+
+**8.6.4 Extracted-label review (in-flow).** Appears in region B when step 1 completes.
+- **Content — everything read from the label**, grouped into logical sections: full **ingredient list**, **guaranteed analysis**, **claims**, **adequacy** (complete/complementary/treat), **life stage**, plus any other extracted fields (brand, variant, type, net weight, additives, taurine, language/translation flag). Ingredients lead; other fields follow as their own labelled sections.
+- **Collapse behaviour:** collapsible; **auto-collapses** once the user engages with it **or** the flow reaches "Preparing insights" (step 4) — whichever comes first.
+- **Feedback capture (per section + overall):** a free-text comment box for notes on extraction quality, plus **three CTAs**: **"Looks good"** (primary), **"Something's off"** (secondary), **"Can't check now"** (tertiary). None of them block the report — see 8.6.7.
+- **Persistence:** the choice + comment are written to **`Extract_feedback`**, keyed to the scan's **image pair**, so a reviewer can later check the feedback against the actual photos.
+
+**8.6.5 Extract-feedback view (testing-only) [Decision, 10 Jul 2026].** The full extraction review is **one surface on the report page, not a separate page.** The in-flow collapsible review (§8.6.4) and the focused test view are the same component, reached by an **addressable per-scan link**: **`/report/{id}?view=extract`** — the existing report route, which loads and auto-opens/scrolls to the extraction section. It shows **all** label-read information — complete ingredient list, guaranteed analysis, claims, adequacy, life stage, and the remaining fields in logical sections below the ingredients — and its feedback is recorded to **`Extract_feedback`** against the scan's **image pair** for later verification against the photos.
+- **Same page, still linkable:** rendering in-flow (no separate page) and having a shareable URL aren't in tension — the link just addresses a specific scan's extraction. Reusing `/report/[id]` keeps one rendering surface.
+- **Testing-only:** what won't exist in production is the **feedback-capture scaffolding** (comment box, CTAs, table writes) — not the extraction display itself. The `?view=extract` link is for test sessions: jump straight to a scan's extraction and check it against the photos.
+
+**8.6.6 Report view.** After the skeleton loader, the report renders in region B **with the stepper still pinned above it** (8.6.1).
+- Report content and ordering follow **§8.3** (verdict headline → conditions/reasons → collapsed "Why this verdict" → health nudges → citations), and the pack-declared verdict model per the 08 Jul ruling (`task-manager.md`; cat signals = callouts, never change the verdict).
+- **Report feedback (testing):** clickable **thumbs-up / thumbs-down** icons + a free-text comment box + a **"Submit feedback"** CTA. Written to **`Report_feedback`** (`feedback_yn` + `feedback_comments`) for the same scan, to record verdict quality during testing.
+
+**8.6.7 Decisions & open flags.**
+- **[Decision] Non-blocking review, with one hard exception.** The report is generated in the background during steps 2–5; the extract-review CTAs and the "Personalising" step **do not gate** it — the report shows regardless. This supersedes §8.5's earlier "only on confirm does the flow continue." *Rationale:* the staged screen exists to cover the real generation wait, so blocking on user input would defeat the perceived-performance design and strand users who tap "Can't check now." **The one thing that does block the report is a low extraction-confidence gate** — see §8.4: if confidence < 0.70, the flow stops after "Reading the label" and shows the retake-photos error instead of a report.
+- **[Decision] Extract review is one surface + per-scan link** (§8.6.5) — `/report/{id}?view=extract`.
+- **[Open] Timings** — the ~3s-per-step figures are placeholders; set them against measured backend latency at bake-off so steps don't finish long before (or after) the real report is ready.
+- **[Open] Multi-cat "Personalising" label** — confirm the character-limit threshold at which "Personalising for {name}" switches to "Personalising for the cats."
+- **[Open] Step-count / copy** — confirm five steps and reconcile label wording across §8.2, this section, and backend `stage_labels`.
 
 ---
 
