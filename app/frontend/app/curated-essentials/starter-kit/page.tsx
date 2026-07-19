@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';
 import { Footer } from '@/components/wiser/Footer';
 import { KitCarousel, type KitSlide } from '@/components/essentials/KitCarousel';
-import { buyHref, getCatalogue, productImages, retailerName, PLACEHOLDER_IMAGE } from '@/lib/catalogue';
+import { getStarterKit } from '@/lib/catalogue';
+import { toVariantDTOs } from '@/lib/essentials-dto';
 
 export const metadata = {
   title: 'New cat parent starter kit | Curated Essentials',
@@ -15,18 +16,12 @@ export const metadata = {
  *  kit reads differently from a single product. One item at a time, swipeable,
  *  with the whole hamper visible in miniature up top. */
 export default function StarterKit() {
-  const { starterKit } = getCatalogue();
-
-  const slides: KitSlide[] = starterKit.map((item) => ({
-    id: item.id,
-    title: item.title,
-    sub: [item.brand, item.variant].filter(Boolean).join(' · '),
-    itemType: item.item_type,
-    description: item.description,
-    buyUrl: buyHref(item),
-    retailer: retailerName(item),
-    image: productImages(item)[0] ?? null,
-    placeholder: PLACEHOLDER_IMAGE,
+  // one slide per unique title, variants chosen inside the slide (D, 18 Jul 2026)
+  const slides: KitSlide[] = getStarterKit().map((group) => ({
+    key: group.key,
+    title: group.title,
+    itemType: group.item_type,
+    variants: toVariantDTOs(group),
   }));
 
   return (
@@ -42,11 +37,11 @@ export default function StarterKit() {
 
         <div className="mt-3 text-center">
           <h1 className="font-serif text-3xl leading-tight text-petal sm:text-4xl">
-            New cat parent starter kit
+            New cat parent? We got you.
           </h1>
           <p className="mx-auto mt-2.5 max-w-lg text-base leading-relaxed text-seashell/90">
-            Day one, sorted: one trusted pick for each essential, gathered as one kit. Swipe
-            through the hamper; every pick buys at the source.
+            Trusted picks to get you set-up. Swipe through the selection, here&apos;s everything
+            you&apos;ll need to welcome your cat.
           </p>
         </div>
 

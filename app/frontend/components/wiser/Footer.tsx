@@ -58,7 +58,7 @@ export function Footer() {
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <EnvelopeSimple size={20} aria-hidden /> Write to us
             </a>
-            <Link href="/blog" className="inline-flex items-center gap-2 transition-colors hover:text-petal">
+            <Link href="/blog-cat-sense" className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <Sparkle size={20} aria-hidden /> Cat sense
             </Link>
           </nav>

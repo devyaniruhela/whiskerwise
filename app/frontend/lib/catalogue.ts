@@ -4,6 +4,8 @@
 import fs from 'fs';
 import path from 'path';
 
+export type LifeStage = 'adult' | 'kitten' | 'all';
+
 export type CatalogueItem = {
   /** original CSV row position: the curation order, used as the sort fallback */
   row: number;
@@ -16,6 +18,10 @@ export type CatalogueItem = {
   description: string;
   buy_url: string;
   image_url: string;
+  /** how many images exist as `<id>-1 … <id>-n` in Cloudinary; blank ⇒ 1 */
+  image_count: number;
+  /** blank ⇒ 'all': the item is life-stage independent and always shows */
+  life_stage: LifeStage;
   source_suffix: string;
   in_starter_kit: boolean;
   sort: string;
@@ -23,35 +29,75 @@ export type CatalogueItem = {
   date_added: string;
 };
 
-export type CategorySection = { category: string; items: CatalogueItem[] };
+/** One tile. Near-duplicate CSV rows collapse into a single product with variants. */
+export type VariantGroup = {
+  /** stable slug, unique across the catalogue */
+  key: string;
+  title: string;
+  /** '' when the group is brand-less (grouped on title alone) */
+  brand: string;
+  item_category: string;
+  item_type: string;
+  /** ≥1, in bySort order */
+  variants: CatalogueItem[];
+  /** variants[0]: drives the tile image, blurb and the PDP's default selection */
+  primary: CatalogueItem;
+  inStarterKit: boolean;
+};
 
-// Section display order (PRD §3). Unknown categories append after, in CSV order.
+export type Need = { name: string; slug: string; count: number };
+export type CategorySection = { category: string; groups: VariantGroup[] };
+
+// Section display order (D, 18 Jul 2026). Unknown categories append after, in CSV order.
 export const CATEGORY_ORDER = [
   'Food & feeding',
+  'Litter',
+  'Toys & enrichment',
   'Toppers & treats',
   'Carrier & outdoor',
-  'Litter',
-  'Enrichment',
 ] as const;
 
-// ── Cloudinary (PRD §4) ──────────────────────────────────────────────────────
-// D hasn't created the Cloudinary account yet. When she does: set CLOUD_NAME,
-// upload each product's images under `curated-essentials/<id>/` (public-ids
-// <id>/1, <id>/2, …) and the resolver below picks them up: no CSV edits.
-const CLOUD_NAME = ''; // e.g. 'whiskerwise': empty ⇒ placeholder for every product
-const CLOUD_FOLDER = 'curated-essentials';
-export const PLACEHOLDER_IMAGE = '/whisker-wise-logo-stamp-bw.png';
+/** Category names carry '&' and spaces, so URLs and DOM ids use slugs instead. */
+export function categorySlug(name: string): string {
+  return slug(name);
+}
 
-/** Image set for a product: explicit image_url wins → Cloudinary by convention → []. */
+export function categoryFromSlug(s: string, categories: string[]): string | undefined {
+  return categories.find((c) => categorySlug(c) === s);
+}
+
+function slug(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/&/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// ── Cloudinary ───────────────────────────────────────────────────────────────
+// Public ids are exactly `<csv-id>-<n>`, n from 1, at the root of the account
+// (no folder, no version, no extension: Cloudinary serves the original format).
+// Delivery is capped with c_limit,w_1600 and nothing else. Deliberately NO
+// f_auto/q_auto: next/image re-encodes server-side anyway, so f_auto would
+// negotiate against the Next server's Accept header rather than the browser's,
+// and q_auto would stack a second lossy pass for no size win.
+const CLOUD_NAME = 'dksnlowb1';
+/** Kill switch: set NEXT_PUBLIC_ESSENTIALS_IMAGES=off to fall back to the stamp. */
+const IMAGES_ENABLED = process.env.NEXT_PUBLIC_ESSENTIALS_IMAGES !== 'off';
+
+export const LOGO_STAMP_IMAGE = '/whisker-wise-logo-stamp-bw.png';
+/** Kept under the old name: several components already import it. */
+export const PLACEHOLDER_IMAGE = LOGO_STAMP_IMAGE;
+
+export function imageUrl(id: string, n: number): string {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_limit,w_1600/${id}-${n}`;
+}
+
+/** Image set for a product: explicit image_url override wins, else by convention. */
 export function productImages(item: CatalogueItem): string[] {
   if (item.image_url) return [item.image_url];
-  if (CLOUD_NAME) {
-    // First image of the per-product folder; gallery can extend to /2, /3 … later.
-    return [
-      `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto/${CLOUD_FOLDER}/${item.id}/1`,
-    ];
-  }
-  return []; // no real imagery yet: cards render their item-type block instead
+  if (!IMAGES_ENABLED) return [];
+  return Array.from({ length: item.image_count }, (_, i) => imageUrl(item.id, i + 1));
 }
 
 // ── Buy link (PRD §5) ────────────────────────────────────────────────────────
@@ -67,15 +113,35 @@ export function buyHref(item: CatalogueItem): string {
   return hash ? `${joined}#${hash}` : joined;
 }
 
+const RETAILERS: [RegExp, string][] = [
+  [/amazon|amzn/i, 'Amazon'],
+  [/headsupfortails/i, 'Heads Up For Tails'],
+  [/supertails/i, 'Supertails'],
+  [/shakehands/i, 'Shake Hands'],
+];
+
 export function retailerName(item: CatalogueItem): string {
   try {
     const host = new URL(item.buy_url).hostname.replace(/^www\./, '');
-    if (/amazon/i.test(host)) return 'Amazon';
-    if (/headsupfortails/i.test(host)) return 'Heads Up For Tails';
-    return host;
+    for (const [re, name] of RETAILERS) if (re.test(host)) return name;
+    // never surface a raw hostname: strip the TLD and title-case what's left
+    const stem = host.split('.')[0] ?? host;
+    return stem.charAt(0).toUpperCase() + stem.slice(1);
   } catch {
     return 'the store';
   }
+}
+
+// ── Kitten mode ──────────────────────────────────────────────────────────────
+// Only rows explicitly tagged `adult` are hidden. Blank life_stage means the item
+// is life-stage independent (litter, toys, carriers) and always shows.
+export function hiddenWhenKitten(it: CatalogueItem): boolean {
+  return it.life_stage === 'adult';
+}
+
+/** A group disappears only when every one of its variants is adult-only. */
+export function groupHiddenWhenKitten(g: VariantGroup): boolean {
+  return g.variants.every(hiddenWhenKitten);
 }
 
 // ── CSV read (tiny RFC-4180 parser: quoted fields contain commas) ──────────
@@ -115,11 +181,36 @@ function csvPath(): string {
   throw new Error(`curated-essentials.csv not found; tried: ${candidates.join(' · ')}`);
 }
 
+// Memoized: generateStaticParams + one render per product used to re-read and
+// re-parse the whole CSV on every call. Keyed on mtime in dev so `next dev` still
+// picks up CSV edits; a constant in prod. NOT React.cache(), which is per-request
+// and would not persist across the SSG renders in a build worker.
+let cachedPath: string | null = null;
+let cache: { key: number; items: CatalogueItem[]; groups: VariantGroup[] } | null = null;
+
+function cacheKey(p: string): number {
+  return process.env.NODE_ENV === 'production' ? 0 : fs.statSync(p).mtimeMs;
+}
+
+function parseLifeStage(raw: string): LifeStage {
+  const v = raw.trim().toLowerCase();
+  return v === 'adult' || v === 'kitten' ? v : 'all';
+}
+
 function loadItems(): CatalogueItem[] {
-  const [header, ...rows] = parseCsv(fs.readFileSync(csvPath(), 'utf8'));
+  return loadAll().items;
+}
+
+function loadAll(): { items: CatalogueItem[]; groups: VariantGroup[] } {
+  const p = (cachedPath ??= csvPath());
+  const key = cacheKey(p);
+  if (cache?.key === key) return cache;
+
+  const [header, ...rows] = parseCsv(fs.readFileSync(p, 'utf8'));
   const idx = Object.fromEntries(header.map((h, i) => [h.trim(), i]));
   const get = (r: string[], col: string) => (r[idx[col]] ?? '').trim();
-  return rows
+
+  const items = rows
     .map((r, row) => ({
       row,
       id: get(r, 'id'),
@@ -131,13 +222,21 @@ function loadItems(): CatalogueItem[] {
       description: get(r, 'description'),
       buy_url: get(r, 'buy_url'),
       image_url: get(r, 'image_url'),
+      image_count: Math.max(0, Number(get(r, 'image_count')) || 0),
+      life_stage: parseLifeStage(get(r, 'life_stage')),
       source_suffix: get(r, 'source_suffix'),
       in_starter_kit: get(r, 'in_starter_kit').toUpperCase() === 'TRUE',
       sort: get(r, 'sort'),
       active: get(r, 'active').toUpperCase() === 'TRUE',
       date_added: get(r, 'date_added'),
     }))
+    // inactive rows are dropped BEFORE grouping, so an inactive variant simply
+    // does not exist and a fully-inactive product vanishes from the catalogue
     .filter((it) => it.id && it.active);
+
+  const groups = buildGroups(items);
+  cache = { key, items, groups };
+  return cache;
 }
 
 function bySort(a: CatalogueItem, b: CatalogueItem): number {
@@ -146,26 +245,91 @@ function bySort(a: CatalogueItem, b: CatalogueItem): number {
   return sa !== sb ? sa - sb : a.row - b.row; // explicit sort first, else CSV (curation) order
 }
 
-/** Active items grouped for the catalogue page: starter kit + ordered category sections. */
-export function getCatalogue(): { starterKit: CatalogueItem[]; sections: CategorySection[] } {
-  const items = loadItems();
-  const known = new Map<string, CatalogueItem[]>();
+// ── Variant grouping ─────────────────────────────────────────────────────────
+// Rows collapse into one product when they share a title AND a brand. When the
+// brand is blank (litter boxes, wand toys) the title alone is the key, so those
+// still group. Two same-titled products from different brands stay separate
+// tiles, which is what keeps the variant swatches meaningful (D, 18 Jul 2026).
+function groupKeyOf(it: CatalogueItem): string {
+  const t = slug(it.title);
+  return it.brand ? `${t}--${slug(it.brand)}` : t;
+}
+
+function buildGroups(items: CatalogueItem[], keyOf = groupKeyOf): VariantGroup[] {
+  const byKey = new Map<string, CatalogueItem[]>();
   for (const it of items) {
-    const list = known.get(it.item_category) ?? [];
+    const k = keyOf(it);
+    const list = byKey.get(k) ?? [];
     list.push(it);
-    known.set(it.item_category, list);
+    byKey.set(k, list);
   }
-  const orderedNames = [
-    ...CATEGORY_ORDER.filter((c) => known.has(c)),
-    ...[...known.keys()].filter((c) => !(CATEGORY_ORDER as readonly string[]).includes(c)),
+  return [...byKey.entries()].map(([key, list]) => {
+    const variants = [...list].sort(bySort);
+    const primary = variants[0];
+    return {
+      key,
+      title: primary.title,
+      brand: primary.brand,
+      item_category: primary.item_category,
+      item_type: primary.item_type,
+      variants,
+      primary,
+      inStarterKit: variants.some((v) => v.in_starter_kit),
+    };
+  });
+}
+
+/** Category order first, then alphabetical by title within each. */
+function orderGroups(groups: VariantGroup[]): VariantGroup[] {
+  const rank = (c: string) => {
+    const i = (CATEGORY_ORDER as readonly string[]).indexOf(c);
+    return i === -1 ? CATEGORY_ORDER.length : i; // unknown categories sort last
+  };
+  return [...groups].sort(
+    (a, b) =>
+      rank(a.item_category) - rank(b.item_category) ||
+      a.item_category.localeCompare(b.item_category) ||
+      a.title.localeCompare(b.title) ||
+      a.brand.localeCompare(b.brand),
+  );
+}
+
+export function getGroups(): VariantGroup[] {
+  return orderGroups(loadAll().groups);
+}
+
+export function getNeeds(): Need[] {
+  const groups = getGroups();
+  const seen = new Map<string, number>();
+  for (const g of groups) seen.set(g.item_category, (seen.get(g.item_category) ?? 0) + 1);
+  const ordered = [
+    ...CATEGORY_ORDER.filter((c) => seen.has(c)),
+    ...[...seen.keys()].filter((c) => !(CATEGORY_ORDER as readonly string[]).includes(c)),
   ];
+  return ordered.map((name) => ({ name, slug: categorySlug(name), count: seen.get(name) ?? 0 }));
+}
+
+/** The starter kit groups on TITLE alone, so "N items" counts unique titles (D). */
+export function getStarterKit(): VariantGroup[] {
+  const kitItems = loadItems().filter((it) => it.in_starter_kit);
+  return orderGroups(buildGroups(kitItems, (it) => slug(it.title)));
+}
+
+export function getCatalogue(): { starterKit: VariantGroup[]; sections: CategorySection[] } {
+  const groups = getGroups();
+  const needs = getNeeds();
   return {
-    starterKit: items.filter((it) => it.in_starter_kit).sort(bySort),
-    sections: orderedNames.map((category) => ({
-      category,
-      items: (known.get(category) ?? []).sort(bySort),
+    starterKit: getStarterKit(),
+    sections: needs.map(({ name }) => ({
+      category: name,
+      groups: groups.filter((g) => g.item_category === name),
     })),
   };
+}
+
+/** The product a given variant id belongs to: powers the PDP. */
+export function getGroupByItemId(id: string): VariantGroup | undefined {
+  return loadAll().groups.find((g) => g.variants.some((v) => v.id === id));
 }
 
 export function getItem(id: string): CatalogueItem | undefined {

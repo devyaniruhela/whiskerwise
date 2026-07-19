@@ -1,14 +1,18 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowSquareOut } from '@phosphor-icons/react/dist/ssr';
+import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';
 import { Footer } from '@/components/wiser/Footer';
-import { Gallery } from '@/components/essentials/Gallery';
-import { buyHref, getAllIds, getItem, productImages, retailerName, PLACEHOLDER_IMAGE } from '@/lib/catalogue';
+import { ProductDetailClient } from '@/components/essentials/ProductDetailClient';
+import { getAllIds, getGroupByItemId, getItem } from '@/lib/catalogue';
+import { toVariantDTOs } from '@/lib/essentials-dto';
 
 /** Product detail (Curated_Essentials_PRD.md §7.2): statically generated per id.
- *  Need-led hierarchy: the use-case (`title`) is the headline; brand + variant sit
- *  beneath. Buy now is the only outbound step; Whisker Wise handles no payment. */
+ *  Need-led hierarchy: the use-case (`title`) is the headline; brand sits beneath
+ *  and the variant is chosen in the page. Buy now is the only outbound step.
+ *
+ *  One route per VARIANT, not per product: every existing /curated-essentials/<id>
+ *  link keeps working, each variant keeps its own metadata and canonical, and the
+ *  client shell swaps between siblings without a navigation. */
 
 export function generateStaticParams() {
   return getAllIds().map((id) => ({ id }));
@@ -22,17 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: `${item.title}${sub ? ` (${sub})` : ''} | Curated Essentials`,
     description: item.description,
+    alternates: { canonical: `/curated-essentials/${id}` },
   };
 }
 
 export default async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = getItem(id);
-  if (!item) notFound();
-
-  const images = productImages(item);
-  const sub = [item.brand, item.variant].filter(Boolean).join(' · ');
-  const retailer = retailerName(item);
+  const group = getGroupByItemId(id);
+  if (!group) notFound();
 
   return (
     <main className="pt-16 sm:pt-[72px] lg:pt-20">
@@ -46,52 +47,12 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
             Curated Essentials
           </Link>
 
-          <div className="mt-4 grid gap-8 md:grid-cols-2 md:gap-10">
-            {/* media: gallery when real images exist, tinted item-type panel until then */}
-            {images.length ? (
-              <Gallery images={images} alt={`${item.title}${sub ? `, ${sub}` : ''}`} />
-            ) : (
-              <div className="flex aspect-square items-center justify-center rounded-lg border border-hairline bg-sel/40 shadow-raised">
-                <Image src={PLACEHOLDER_IMAGE} alt="" width={160} height={160} className="opacity-35" aria-hidden />
-              </div>
-            )}
-
-            {/* info: solid card on the grid paper (text never sits on texture) */}
-            <div className="rounded-lg border border-hairline bg-paper p-6 shadow-raised sm:p-8">
-              <div className="flex flex-wrap items-center gap-2">
-                {!item.title.toLowerCase().includes(item.item_type.toLowerCase()) && (
-                  <span className="rounded-sm bg-petal px-2 py-0.5 text-xs font-medium text-graphite">
-                    {item.item_type}
-                  </span>
-                )}
-                {item.in_starter_kit && (
-                  <span className="rounded-sm bg-iron-tint px-2 py-0.5 text-xs font-medium text-iron">
-                    Starter-kit pick
-                  </span>
-                )}
-              </div>
-              <h1 className="mt-3 font-serif text-3xl leading-tight text-ink sm:text-4xl">
-                {item.title}
-              </h1>
-              {sub && <p className="mt-1.5 font-sans text-base text-ink-faint">{sub}</p>}
-              <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-muted">
-                {item.description}
-              </p>
-
-              <a
-                href={buyHref(item)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-7 inline-flex min-h-[48px] items-center gap-2 rounded-md bg-iron px-7 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-all duration-150 ease-out hover:bg-iron-deep active:shadow-pressed"
-              >
-                Buy now
-                <ArrowSquareOut size={18} weight="bold" aria-hidden />
-              </a>
-              <p className="mt-2.5 text-sm text-ink-faint">
-                Sold by {retailer}. Whisker Wise recommends and links; the purchase happens there.
-              </p>
-            </div>
-          </div>
+          <ProductDetailClient
+            title={group.title}
+            itemType={group.item_type}
+            variants={toVariantDTOs(group)}
+            initialId={id}
+          />
         </div>
       </div>
 

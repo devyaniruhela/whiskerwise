@@ -6,6 +6,8 @@
 **Status:** Draft for build
 **One-line:** A user photographs a cat food pack; Wiser reads the label, checks it against established feline nutrition standards, and returns a plain-language **Buy / Skip** verdict personalized to their cat.
 
+**Context:** Wiser is one of the two products under the `whiskerwise.in` umbrella — see [`Whiskerwise_PRD.md`](Whiskerwise_PRD.md) (parent) and its sibling [`Curated_Essentials_PRD.md`](Curated_Essentials_PRD.md). This PRD covers Wiser only. Per the umbrella, Wiser's landing moves to `/wiser-now` (tool flow stays at root).
+
 ---
 
 ## 0. How to read this doc

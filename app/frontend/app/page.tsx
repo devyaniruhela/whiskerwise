@@ -67,7 +67,7 @@ function pickCardArt(prefix: string): CardArt {
  *  page; then the value-card stack (one card per product) and a short trust band. */
 export default function Home() {
   const { starterKit, sections } = getCatalogue();
-  const picks = sections.reduce((n, s) => n + s.items.length, 0);
+  const picks = sections.reduce((n, s) => n + s.groups.length, 0);
 
   return (
     <main>
@@ -114,7 +114,7 @@ export default function Home() {
             <span className="block">Trusted by whiskers.</span>
           </p>
           <p className="mt-6 text-lg leading-relaxed text-ink">
-            We are your partner in making good decisions for your cat.
+            We are your partner in making good decisions for your cat. Every time.
           </p>
           <p className="mt-1.5 text-base leading-relaxed text-ink-muted">
             No more confusion. No more second-guessing.
