@@ -1,5 +1,5 @@
 // Curated Essentials data layer: server-only (fs read at build/render time).
-// Single source of truth: content/curated-essentials.csv at the repo root
+// Single source of truth: app/frontend/content/curated-essentials.csv
 // (sibling of kb/, per Curated_Essentials_PRD.md §4). No product data lives in components.
 import fs from 'fs';
 import path from 'path';
@@ -172,13 +172,18 @@ function parseCsv(text: string): string[][] {
 }
 
 function csvPath(): string {
-  // process.cwd() is app/frontend in dev/build; the CSV lives at the repo root.
-  const candidates = [
-    path.join(process.cwd(), '..', '..', 'content', 'curated-essentials.csv'),
-    path.join(process.cwd(), 'content', 'curated-essentials.csv'),
-  ];
-  for (const p of candidates) if (fs.existsSync(p)) return p;
-  throw new Error(`curated-essentials.csv not found; tried: ${candidates.join(' · ')}`);
+  // process.cwd() is app/frontend in dev and in the Vercel build.
+  //
+  // This file MUST live inside app/frontend. Vercel's Root Directory is set to
+  // app/frontend, so the build sandbox contains that subtree only - a CSV at the
+  // repo root is invisible to the build even when it is committed and pushed
+  // (19 Jul 2026: that exact mistake cost three failed deploys).
+  const p = path.join(process.cwd(), 'content', 'curated-essentials.csv');
+  if (fs.existsSync(p)) return p;
+  throw new Error(
+    `curated-essentials.csv not found at ${p}. It must live inside app/frontend/ ` +
+      `(Vercel Root Directory = app/frontend; anything above it is not in the build).`,
+  );
 }
 
 // Memoized: generateStaticParams + one render per product used to re-read and

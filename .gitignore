@@ -1,21 +1,20 @@
 # === Wiser repo .gitignore ===
 # Track-list model (D's call, 07 Jul 2026): only kb/ (runtime KB data, single
-# source of truth for the backend), content/ (runtime catalogue data, read at
-# build time by app/frontend/lib/catalogue.ts), app/ (the actual buildable
-# Next.js + FastAPI app), and Wiser_PRD_MVP.md are committed. Everything else
-# - task log, context.md, design refs, past work/ - is local-only and stays
-# out of git.
+# source of truth for the backend), app/ (the actual buildable Next.js +
+# FastAPI app), and Wiser_PRD_MVP.md are committed. Everything else - task
+# log, context.md, design refs, past work/ - is local-only and stays out of git.
 #
-# content/ added 19 Jul 2026: the Curated Essentials CSV is a build-time
-# dependency, so Vercel builds fail without it (same role kb/ plays for the
-# backend).
+# DEPLOY CONSTRAINT (19 Jul 2026): Vercel's Root Directory is set to
+# app/frontend, so the build sandbox contains that subtree ONLY. Any file the
+# frontend reads at build time must live inside app/frontend/ - committing it
+# at the repo root is not enough, the build cannot see it. Being tracked by git
+# and being visible to the build are two different things.
 
 # 1) Ignore everything at the top level by default...
 /*
 
 # 2) ...except the paths we actually want to track.
 !/kb/
-!/content/
 !/app/
 !/.gitignore
 !/Wiser_PRD_MVP.md
