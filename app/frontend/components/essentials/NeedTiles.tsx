@@ -1,6 +1,5 @@
 'use client';
 
-import { ArrowRight } from '@phosphor-icons/react';
 import { BROWSE_ID, useEssentialsFilter } from './EssentialsFilterProvider';
 
 /** Shop by need: the catalogue's front door. Each tile is a real link, so
@@ -26,24 +25,18 @@ export function NeedTiles() {
               setOnlyNeed(need.slug);
             }}
             aria-pressed={on}
-            className={`group flex min-h-[8.5rem] items-center justify-between gap-3 rounded-lg border px-4 py-4 shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-raised-lg active:translate-y-0 active:shadow-pressed sm:px-5 lg:min-h-[6rem] ${
+            className={`group flex min-h-[8.5rem] items-center justify-center rounded-lg border px-4 py-4 text-center shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-raised-lg active:translate-y-0 active:shadow-pressed sm:px-5 lg:min-h-[6rem] ${
               on
-                ? 'border-iron bg-iron text-seashell'
-                : 'border-transparent bg-petal text-iron hover:border-iron/40 hover:bg-petal-deep'
+                ? 'border-iron bg-iron text-petal'
+                : 'border-iron bg-petal text-iron active:bg-petal-deep'
             }`}
           >
             <span className="min-w-0">
               <span className="block font-sans text-base font-semibold">{need.name}</span>
-              <span className={`mt-0.5 block text-sm ${on ? 'text-seashell/80' : 'text-iron/70'}`}>
+              <span className={`mt-0.5 block text-sm ${on ? 'text-petal/70' : 'text-iron/70'}`}>
                 {need.count} {need.count === 1 ? 'pick' : 'picks'}
               </span>
             </span>
-            <ArrowRight
-              size={18}
-              weight="bold"
-              aria-hidden
-              className="shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
-            />
           </a>
         );
       })}
