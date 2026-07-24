@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowSquareOut } from '@phosphor-icons/react';
+import { ArrowSquareOut, Confetti } from '@phosphor-icons/react';
 import type { VariantDTO } from '@/lib/essentials-dto';
 import { Gallery } from './Gallery';
 import { VariantSelector } from './VariantSelector';
@@ -72,7 +72,7 @@ export function ProductDetailClient({
         {/* the curation reason, not a spec sheet: this is the one place the
             judgement behind the list is stated out loud (D, 19 Jul 2026). The
             pink rule sits beside the reason only, not the header (D, 24 Jul). */}
-        <div className="mt-5">
+        <div id="why" className="mt-5 scroll-mt-28">
           <p className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-faint">
             Why we chose this
           </p>
@@ -87,15 +87,24 @@ export function ProductDetailClient({
               loudest thing on the page. Outline rather than a solid plate, but
               carried in iron rather than the system's graphite secondary, so it
               still reads as the action (D). Iron on paper is 7.3:1. */}
-          <a
-            href={active.buyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
-          >
-            Where to get this
-            <ArrowSquareOut size={17} aria-hidden />
-          </a>
+          {active.hasBuyLink ? (
+            <a
+              href={active.buyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
+            >
+              Where to get this
+              <ArrowSquareOut size={17} aria-hidden />
+            </a>
+          ) : (
+            // "free / not sold anywhere": no outbound CTA, just the row's own
+            // alt copy carried with a confetti mark (D, 25 Jul 2026)
+            <p className="inline-flex min-h-[48px] items-center gap-2 font-sans text-base font-medium text-iron">
+              <Confetti size={20} weight="fill" className="shrink-0 text-petal-deep" aria-hidden />
+              {active.buyNote}
+            </p>
+          )}
           {active.inStarterKit && (
             // text-only tertiary, no plate: matched to the primary's height so
             // the two read as one row rather than two competing blocks (D).
@@ -110,9 +119,12 @@ export function ProductDetailClient({
         </div>
 
         {/* the independence claim sits with the retailer line, where the buy
-            link makes a reader wonder about it (D, 19 Jul 2026) */}
+            link makes a reader wonder about it (D, 19 Jul 2026). With no buy
+            link there is nothing to sell, so we affirm the pick instead (D, 25 Jul). */}
         <p className="mt-2.5 text-sm text-ink-faint">
-          Sold by {active.retailer}. No brand pays to be on this list.
+          {active.hasBuyLink
+            ? `Sold by ${active.retailer}. No brand pays to be on this list.`
+            : 'Loved by cats. Approved by Whisker Wise.'}
         </p>
       </div>
     </div>

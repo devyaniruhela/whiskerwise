@@ -10,8 +10,10 @@ import {
   Basket,
   CaretLeft,
   CaretRight,
+  Confetti,
   Cookie,
   ForkKnife,
+  Heartbeat,
   Pinwheel,
   Shovel,
   Shrimp,
@@ -46,6 +48,7 @@ const KIT_GROUPS = [
   { key: 'litter', label: 'Litter', icon: Shovel, types: ['Litter', 'Litter box'] },
   { key: 'toys', label: 'Toys', icon: Pinwheel, types: ['Toy', 'Scratcher', 'Enrichment'] },
   { key: 'treats', label: 'Treats', icon: Cookie, types: ['Treat', 'Topper'] },
+  { key: 'preventive', label: 'Preventive care', icon: Heartbeat, types: ['Flea treatment', 'Dewormer', 'Spot-on', 'Preventive care'] },
   { key: 'carrier', label: 'Carrier', icon: Basket, types: ['Carrier', 'Harness'] },
 ] as const;
 
@@ -216,6 +219,10 @@ export function KitCarousel({ slides: input }: { slides: KitSlide[] }) {
                   transform: `translateX(${pct}%)`,
                   // keep the neighbours mounted so a drag reveals them, park the rest
                   visibility: Math.abs(offset) <= 1 ? 'visible' : 'hidden',
+                  // only the active slide takes pointer events — otherwise the peeking
+                  // neighbours sit over the active card's edges and swallow clicks on its
+                  // image arrows / swipes (D, 24 Jul)
+                  pointerEvents: offset === 0 ? undefined : 'none',
                   ...(dragging ? { transitionDuration: '0ms' } : null),
                 }}
                 aria-hidden={i !== active}
@@ -233,17 +240,17 @@ export function KitCarousel({ slides: input }: { slides: KitSlide[] }) {
           type="button"
           aria-label="Previous item"
           onClick={() => go(active - 1)}
-          className="absolute -left-1 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-seashell/25 text-petal transition-colors hover:border-petal sm:flex"
+          className="absolute -left-1 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center text-petal/80 transition-colors hover:text-petal sm:flex"
         >
-          <CaretLeft size={20} weight="bold" aria-hidden />
+          <CaretLeft size={22} weight="bold" aria-hidden />
         </button>
         <button
           type="button"
           aria-label="Next item"
           onClick={() => go(active + 1)}
-          className="absolute -right-1 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-seashell/25 text-petal transition-colors hover:border-petal sm:flex"
+          className="absolute -right-1 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center text-petal/80 transition-colors hover:text-petal sm:flex"
         >
-          <CaretRight size={20} weight="bold" aria-hidden />
+          <CaretRight size={22} weight="bold" aria-hidden />
         </button>
       </div>
     </div>
@@ -407,26 +414,38 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
               {v.description}
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
-              {/* secondary, matching the PDP: see the note in ProductDetailClient */}
-              <a
-                href={v.buyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
-              >
-                Where to get it
-                <ArrowSquareOut size={17} aria-hidden />
-              </a>
+              {/* View pick is the PRIMARY, on the left, matching the Curated Essentials
+                  thumbnails; "Where to get this" is the secondary outline on its right */}
               <Link
                 href={`/curated-essentials/${v.id}`}
-                className="inline-flex min-h-[44px] items-center gap-1 font-sans text-sm font-semibold text-iron transition-colors hover:text-iron-deep"
+                className="inline-flex min-h-[48px] items-center gap-2 rounded-md bg-iron px-6 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-colors duration-150 ease-out hover:bg-iron-deep active:shadow-pressed"
               >
                 View pick
-                <ArrowUpRight size={15} weight="bold" aria-hidden />
+                <ArrowUpRight size={17} weight="bold" aria-hidden />
               </Link>
+              {v.hasBuyLink ? (
+                <a
+                  href={v.buyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
+                >
+                  Where to get this
+                  <ArrowSquareOut size={17} aria-hidden />
+                </a>
+              ) : (
+                // "free / not sold anywhere": no outbound CTA, the row's alt copy
+                // carried with a confetti mark (D, 25 Jul 2026)
+                <p className="inline-flex min-h-[48px] items-center gap-2 font-sans text-base font-medium text-iron">
+                  <Confetti size={20} weight="fill" className="shrink-0 text-petal-deep" aria-hidden />
+                  {v.buyNote}
+                </p>
+              )}
             </div>
             <p className="mt-2 text-xs text-ink-faint">
-              Sold by {v.retailer}. Approved &amp; curated by Whisker Wise.
+              {v.hasBuyLink
+                ? `Sold by ${v.retailer}. Approved & curated by Whisker Wise.`
+                : 'Loved by cats. Approved by Whisker Wise.'}
             </p>
           </div>
         </div>
