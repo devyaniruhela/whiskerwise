@@ -72,7 +72,18 @@ export default function Home() {
   return (
     <main>
       {/* ── Hero: the oversized stamp moment, logo left / text right ── */}
-      <div className="bg-grid-paper">
+      {/* paper-texture backdrop (D, 24 Jul): replaces the grid. A seashell wash is
+          laid OVER the photo so the grain stays subtle and the colour reads as our
+          light neutral (#FFF8F2), not the raw texture's cooler, starker grey — so
+          the hero blends with the seashell body instead of clashing with it. Raise
+          the 0.72 alpha to mute the texture further, lower it to show more grain. */}
+      <div
+        className="bg-seashell bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,248,242,0.72), rgba(255,248,242,0.72)), url('/hero-section-bg.jpg')",
+        }}
+      >
         <section className="px-5 pt-20 sm:pt-24">
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 pb-12 text-center md:flex-row md:gap-12 md:pb-14 md:text-left">
             <Image
@@ -114,7 +125,7 @@ export default function Home() {
             <span className="block">Trusted by whiskers.</span>
           </p>
           <p className="mt-6 text-lg leading-relaxed text-ink">
-            We are your partner in making good decisions for your cat. Every time.
+            Your partner in making good decisions for your cat. Every time.
           </p>
           <p className="mt-1.5 text-base leading-relaxed text-ink-muted">
             No more confusion. No more second-guessing.

@@ -135,6 +135,33 @@
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size: 22px 22px;
   }
+
+  /* Same checkered grid, but floated over a very subtle paper-grain photo so the
+     grid no longer reads as a flat, stark wash (D, 24 Jul). Layer order top→bottom:
+     grid lines, a heavy seashell wash (grain kept fainter than the home hero's), the
+     grain photo. The grain shows only through the transparent grid cells. */
+  .bg-grid-paper-grain {
+    background-color: var(--seashell);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(rgba(255, 248, 242, 0.82), rgba(255, 248, 242, 0.82)),
+      url("/hero-section-bg.jpg");
+    background-size: 22px 22px, 22px 22px, cover, cover;
+    background-position: 0 0, 0 0, center, center;
+  }
+
+  /* Dark graphite band with a whisper of the same paper grain over it (D, 24 Jul):
+     keeps the distinct "hamper" band as dark as the solid graphite it replaced.
+     `multiply` means the light paper can only ever darken the graphite, never lift
+     it — the fibres read as a faint speckle without washing the band out. */
+  .bg-graphite-grain {
+    background-color: #292c2c;
+    background-image: url("/hero-section-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: multiply;
+  }
 }
 
 /* Header Styles - responsive height & alignment */

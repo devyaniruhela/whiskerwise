@@ -76,3 +76,7 @@ create index if not exists cats_user_idx on cats (user_id);
 alter table users add column if not exists location text;
 alter table cats add column if not exists avatar text;        -- cats-*.png id, user-pickable
 alter table cats add column if not exists cat_dob date;
+
+-- profile brief 24 Jul 2026: self-reported cat-parent details (mandatory on save)
+alter table users add column if not exists num_cats int;             -- ≥1
+alter table users add column if not exists cat_parent_since int;     -- year, present or earlier

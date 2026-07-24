@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { MEDIA_FIT } from './media';
 
 const STAMP = '/whisker-wise-logo-stamp-bw.png';
 
@@ -13,7 +14,7 @@ export function ProductImage({
   src,
   alt,
   sizes,
-  className = 'object-cover',
+  className = MEDIA_FIT,
   priority = false,
 }: {
   src: string;

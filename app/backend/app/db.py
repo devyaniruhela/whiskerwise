@@ -70,16 +70,18 @@ def bump(user_id: str, field: str) -> None:
 
 
 def get_profile(user_id: str) -> dict:
-    rows = _exec("""select first_name, last_name, phone_number, email, location
+    rows = _exec("""select first_name, last_name, phone_number, email, location,
+                           num_cats, cat_parent_since
                     from users where id = :id""", id=user_id)
     return dict(rows[0]) if rows else {}
 
 
 def save_profile(user_id: str, p) -> None:
     _exec("""update users set first_name = :fn, last_name = :ln, phone_number = :ph,
-             email = :em, location = :loc, updated_at = now() where id = :id""",
+             email = :em, location = :loc, num_cats = :nc, cat_parent_since = :cps,
+             updated_at = now() where id = :id""",
           id=user_id, fn=p.first_name, ln=p.last_name, ph=p.phone_number,
-          em=p.email, loc=p.location)
+          em=p.email, loc=p.location, nc=p.num_cats, cps=p.cat_parent_since)
 
 
 # ── cats ─────────────────────────────────────────────────────────────

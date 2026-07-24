@@ -16,6 +16,9 @@ export type CatalogueItem = {
   brand: string;
   variant: string;
   description: string;
+  /** the one-sentence curation reason shown under "Why we chose this" (D, 19 Jul
+   *  2026). Claims the judgement, never a nutrition standard: see CLAUDE.md rule 4. */
+  why_chosen: string;
   buy_url: string;
   image_url: string;
   /** how many images exist as `<id>-1 … <id>-n` in Cloudinary; blank ⇒ 1 */
@@ -225,6 +228,7 @@ function loadAll(): { items: CatalogueItem[]; groups: VariantGroup[] } {
       brand: get(r, 'brand'),
       variant: get(r, 'variant'),
       description: get(r, 'description'),
+      why_chosen: get(r, 'why_chosen'),
       buy_url: get(r, 'buy_url'),
       image_url: get(r, 'image_url'),
       image_count: Math.max(0, Number(get(r, 'image_count')) || 0),

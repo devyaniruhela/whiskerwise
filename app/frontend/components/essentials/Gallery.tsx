@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { MEDIA_FIT } from './media';
 
 const STAMP = '/whisker-wise-logo-stamp-bw.png';
 /** fraction of the track width a drag must cover to commit to the next slide */
@@ -81,7 +82,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
-        className="relative aspect-square touch-pan-y select-none overflow-hidden rounded-lg border border-hairline bg-sel/40 shadow-raised"
+        className="relative aspect-square touch-pan-y select-none overflow-hidden rounded-lg border border-hairline bg-paper shadow-raised"
       >
         {slides.map((s, i) => {
           const offset = i - active;
@@ -100,7 +101,8 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
             >
               {s.kind === 'stamp' ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-6">
-                  <Image src={STAMP} alt="" width={180} height={156} className="opacity-70" aria-hidden />
+                  {/* stamp +50% (D, 24 Jul); the closing line keeps its size */}
+                  <Image src={STAMP} alt="" width={270} height={234} className="h-auto max-w-full opacity-70" aria-hidden />
                   <p className="text-center font-hand text-xl text-ink-muted">
                     Curated with care by Whisker Wise
                   </p>
@@ -116,7 +118,8 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
                   fill
                   sizes="(min-width: 768px) 45vw, 90vw"
                   priority={i === 0}
-                  className="object-cover"
+                  // whole product, never cropped: see media.ts
+                  className={`${MEDIA_FIT} p-4`}
                   onError={() => setFailed((f) => ({ ...f, [i]: true }))}
                   draggable={false}
                 />
@@ -156,7 +159,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
                 alt=""
                 fill
                 sizes="64px"
-                className={s.kind === 'stamp' ? 'object-contain p-2 opacity-40' : 'object-cover'}
+                className={s.kind === 'stamp' ? 'object-contain p-2 opacity-40' : `${MEDIA_FIT} p-1`}
               />
             </button>
           ))}
@@ -173,7 +176,9 @@ function ArrowButton({ side, onClick }: { side: 'left' | 'right'; onClick: () =>
       type="button"
       onClick={onClick}
       aria-label={side === 'left' ? 'Previous image' : 'Next image'}
-      className={`absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-faint opacity-60 transition-all duration-150 hover:bg-paper/70 hover:text-ink hover:opacity-100 ${
+      // no resting plate (D): the glyph alone sits over the photo, but hover,
+      // focus and press all still light it up the way a plated button would
+      className={`absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-faint opacity-60 transition-all duration-150 hover:bg-paper/80 hover:text-ink hover:opacity-100 focus-visible:bg-paper/80 focus-visible:text-ink focus-visible:opacity-100 active:scale-95 active:bg-paper active:text-ink active:opacity-100 ${
         side === 'left' ? 'left-1' : 'right-1'
       }`}
     >

@@ -63,22 +63,24 @@ export default function CuratedEssentials() {
           </h1>
           <p className="mt-2 font-hand text-2xl text-petal">Curated with care. Trusted by whiskers.</p>
           <p className="mt-4 max-w-md text-base leading-relaxed text-seashell">
-            No more searching for hours: everything here is vetted as safe and good for your cat.
-            Each one links straight to where it&apos;s sold.
+            No more doubt and searching for hours: what to buy and where to get, vetted to be safe
+            and good for your cat. Unsponsored.
           </p>
         </div>
       </section>
 
       {/* ── Starter kit: cross-need collection, one tile per title (§3.1) ── */}
       {starterKit.length > 0 && (
-        <div className="bg-graphite">
+        <div className="bg-graphite-grain">
           <section className="mx-auto max-w-4xl px-5 pb-12 pt-10 sm:pt-12" aria-labelledby="starter-kit">
             <div className="flex items-baseline justify-between gap-4 border-b border-seashell/20 pb-3">
               <h2 id="starter-kit" className="font-serif text-3xl text-petal sm:text-4xl">
                 New cat parent starter kit
               </h2>
+              {/* "essentials", not "items": the count is a judgement about what a
+                  cat actually needs, not an inventory figure (D, 19 Jul 2026) */}
               <p className="shrink-0 font-sans text-sm text-seashell/70">
-                {starterKit.length} {starterKit.length === 1 ? 'item' : 'items'}
+                {starterKit.length} {starterKit.length === 1 ? 'essential' : 'essentials'}
               </p>
             </div>
             <p className="mt-3 max-w-lg text-base leading-relaxed text-seashell/90">

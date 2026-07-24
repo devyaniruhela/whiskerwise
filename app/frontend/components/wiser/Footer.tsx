@@ -52,11 +52,11 @@ export function Footer() {
             </a>
             <a href="https://wa.me/919682387557" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-              <WhatsappLogo size={20} aria-hidden /> Chat with us
+              <WhatsappLogo size={20} aria-hidden /> Get a personal consult
             </a>
             <a href="mailto:ruhela.devyani@gmail.com"
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
-              <EnvelopeSimple size={20} aria-hidden /> Write to us
+              <EnvelopeSimple size={20} aria-hidden /> Send your questions
             </a>
             <Link href="/blog-cat-sense" className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <Sparkle size={20} aria-hidden /> Cat sense

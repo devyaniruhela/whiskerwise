@@ -41,7 +41,7 @@ export default function StarterKit() {
           </h1>
           <p className="mx-auto mt-2.5 max-w-lg text-base leading-relaxed text-seashell/90">
             Trusted picks to get you set-up. Swipe through the selection, here&apos;s everything
-            you&apos;ll need to welcome your cat.
+            you&apos;ll need to welcome your cat home.
           </p>
         </div>
 

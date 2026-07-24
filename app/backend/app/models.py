@@ -84,6 +84,8 @@ class UserProfile(BaseModel):
     phone_number: Optional[str] = None
     email: Optional[str] = None
     location: Optional[str] = None
+    num_cats: Optional[int] = Field(default=None, ge=1)   # self-reported, ≥1
+    cat_parent_since: Optional[int] = None                # year (present or earlier)
 
 
 class CatProfile(BaseModel):

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { PencilSimple, Plus, X } from '@phosphor-icons/react';
 import { Button, Input, Select } from '@/components/ui';
@@ -49,10 +49,11 @@ function ageFromDob(dob: string): { years: number; months: number } {
 
 type Errors = Partial<Record<'name' | 'age' | 'months' | 'dob' | 'body' | 'health' | 'other' | 'weight', string>>;
 
-export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, onSave, onClose }: {
+export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, focusField, onSave, onClose }: {
   initial?: CatProfile;
   saveLabel?: string;
   showAddAnother?: boolean;
+  focusField?: string;             // passport field key to scroll to + focus on open
   onSave: (cat: CatProfile) => Promise<void>;
   onClose: () => void;
 }) {
@@ -69,6 +70,15 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, o
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
   const maxDob = useMemo(todayISO, []);
+
+  // "Add missing details" opens the passport straight onto the first empty field
+  useEffect(() => {
+    if (!focusField) return;
+    const el = document.getElementById(`field-${focusField}`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.querySelector<HTMLElement>('input, button, select, textarea')?.focus();
+  }, [focusField]);
 
   const set = (patch: Partial<CatProfile>) => setCat((c) => ({ ...c, ...patch }));
   const clearErr = (k: keyof Errors) => setErrors((e) => ({ ...e, [k]: undefined }));
@@ -123,8 +133,10 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, o
     if (Object.values(e).some(Boolean)) return false;
     setBusy(true);
     try {
+      // "No known health conditions" (NONE) is a real, persisted answer — keep it so
+      // it shows on the card and pre-selects on edit (it can never coexist with a real
+      // condition; toggleCondition enforces that).
       const conditions = cat.health_condition
-        .filter((c) => c !== NONE)
         .map((c) => (c.startsWith('Other') && otherDesc ? `Other: ${otherDesc}` : c));
       await onSave({ ...cat, health_condition: conditions });
       return true;
@@ -180,12 +192,12 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, o
         {/* age */}
         <p className="mb-1.5 mt-5 font-sans text-sm font-semibold text-ink">Age<Req /></p>
         <div className="grid grid-cols-3 gap-3">
+          <Input label="Date of birth" type="date" max={maxDob} value={cat.cat_dob ?? ''} error={errors.dob}
+            onChange={(e) => onDob(e.target.value)} hint="auto-fills age" />
           <Input label="Age: years" type="number" min={0} max={30} value={cat.cat_age_year || ''}
             onChange={(e) => { set({ cat_age_year: +e.target.value || 0 }); clearErr('age'); }} />
           <Input label="+ months" type="number" min={0} max={12} value={cat.cat_age_month || ''} error={errors.months}
             onChange={(e) => { set({ cat_age_month: +e.target.value || 0 }); clearErr('age'); clearErr('months'); }} />
-          <Input label="Date of birth" type="date" max={maxDob} value={cat.cat_dob ?? ''} error={errors.dob}
-            onChange={(e) => onDob(e.target.value)} hint="auto-fills age" />
         </div>
         {errors.age && <p className="mt-1 text-sm text-iron">{errors.age}</p>}
 
@@ -228,24 +240,30 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, o
 
         {/* passport extras (optional) */}
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Input label="Weight (kg)" type="number" step="0.1" min={0} value={cat.weight_kg ?? ''} error={errors.weight}
-            hint="exact, if you know it" placeholder="e.g. 4.5"
-            onChange={(e) => { set({ weight_kg: e.target.value ? +e.target.value : null }); clearErr('weight'); }} />
-          <Select label="Neutering status" value={cat.neuter_status}
-            options={NEUTERING_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-            onChange={(v) => set({ neuter_status: v })} />
+          <div id="field-weight_kg">
+            <Input label="Weight (kg)" type="number" step="0.1" min={0} value={cat.weight_kg ?? ''} error={errors.weight}
+              hint="exact, if you know it" placeholder="e.g. 4.5"
+              onChange={(e) => { set({ weight_kg: e.target.value ? +e.target.value : null }); clearErr('weight'); }} />
+          </div>
+          <div id="field-neuter_status">
+            <Select label="Neutering status" value={cat.neuter_status}
+              options={NEUTERING_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(v) => set({ neuter_status: v })} />
+          </div>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
+          <div id="field-environment">
             <p className="mb-1.5 font-sans text-sm font-semibold text-ink">Goes outdoors?</p>
             <div className="flex gap-2">
               <Pill selected={cat.environment === 'indoor-outdoor'} onClick={() => set({ environment: 'indoor-outdoor' })}>Yes</Pill>
               <Pill selected={cat.environment === 'indoor only'} onClick={() => set({ environment: 'indoor only' })}>No</Pill>
             </div>
           </div>
-          <Select label="Activity level" value={cat.activity_level}
-            options={ACTIVITY_LEVELS.map((o) => ({ value: o.value, label: o.label }))}
-            onChange={(v) => set({ activity_level: v })} />
+          <div id="field-activity_level">
+            <Select label="Activity level" value={cat.activity_level}
+              options={ACTIVITY_LEVELS.map((o) => ({ value: o.value, label: o.label }))}
+              onChange={(v) => set({ activity_level: v })} />
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">

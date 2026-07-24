@@ -5,10 +5,12 @@ import { Footer } from '@/components/wiser/Footer';
 import { ProductDetailClient } from '@/components/essentials/ProductDetailClient';
 import { getAllIds, getGroupByItemId, getItem } from '@/lib/catalogue';
 import { toVariantDTOs } from '@/lib/essentials-dto';
+import { brandLine } from '@/components/essentials/product-label';
 
 /** Product detail (Curated_Essentials_PRD.md §7.2): statically generated per id.
  *  Need-led hierarchy: the use-case (`title`) is the headline; brand sits beneath
- *  and the variant is chosen in the page. Buy now is the only outbound step.
+ *  and the variant is chosen in the page. "Where to get it" is the only outbound
+ *  step, and it is deliberately a secondary CTA: the reason for the pick leads.
  *
  *  One route per VARIANT, not per product: every existing /curated-essentials/<id>
  *  link keeps working, each variant keeps its own metadata and canonical, and the
@@ -22,7 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const item = getItem(id);
   if (!item) return { title: 'Curated Essentials | Whisker Wise' };
-  const sub = [item.brand, item.variant].filter(Boolean).join(' · ');
+  // same rule as the on-page sub-line, so the tab title can't read "Savic · Savic"
+  const sub = brandLine(item.brand, item.variant, false);
   return {
     title: `${item.title}${sub ? ` (${sub})` : ''} | Curated Essentials`,
     description: item.description,

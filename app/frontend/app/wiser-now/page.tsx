@@ -39,8 +39,10 @@ const STEPS = [
 export default function WiserNow() {
   return (
     <main>
-      {/* grid-paper is scoped to the hero only, extending down to the squiggly divider */}
-      <div className="bg-grid-paper">
+      {/* grid-paper is scoped to the hero only, extending down to the squiggly divider.
+          Grid now floats over a subtle paper grain (D, 24 Jul) so it matches the home
+          hero's texture without losing the graph-paper lines. */}
+      <div className="bg-grid-paper-grain">
         {/* ── Section 1 · hero: stamp left, intro + CTA right ─────────── */}
         <section className="relative px-5 pt-24 sm:pt-28">
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 pb-14 text-center sm:pb-16 md:flex-row md:gap-12 md:text-left">

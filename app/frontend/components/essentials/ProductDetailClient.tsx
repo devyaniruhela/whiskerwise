@@ -7,6 +7,7 @@ import { ArrowSquareOut } from '@phosphor-icons/react';
 import type { VariantDTO } from '@/lib/essentials-dto';
 import { Gallery } from './Gallery';
 import { VariantSelector } from './VariantSelector';
+import { brandLine } from './product-label';
 
 const STAMP = '/whisker-wise-logo-stamp-bw.png';
 
@@ -34,8 +35,7 @@ export function ProductDetailClient({
     window.history.replaceState(null, '', `/curated-essentials/${id}`);
   }
 
-  const sub = [active.brand, variants.length > 1 ? '' : active.variant].filter(Boolean).join(' · ');
-  const showType = !title.toLowerCase().includes(itemType.toLowerCase());
+  const sub = brandLine(active.brand, active.variant, variants.length > 1);
   const alt = `${title}${active.brand ? `, ${active.brand}` : ''}`;
 
   return (
@@ -53,11 +53,9 @@ export function ProductDetailClient({
       {/* info: solid card on the grid paper (text never sits on texture) */}
       <div className="rounded-lg border border-hairline bg-paper p-6 shadow-raised sm:p-8">
         <div className="flex flex-wrap items-center gap-2">
-          {showType && (
-            <span className="rounded-sm bg-petal px-2 py-0.5 text-xs font-medium text-graphite">
-              {itemType}
-            </span>
-          )}
+          <span className="rounded-sm bg-petal px-2 py-0.5 text-xs font-medium text-graphite">
+            {itemType}
+          </span>
           {active.inStarterKit && (
             <span className="rounded-sm bg-iron-tint px-2 py-0.5 text-xs font-medium text-iron">
               Starter-kit pick
@@ -71,34 +69,50 @@ export function ProductDetailClient({
         {/* variants sit above the description (D, 18 Jul 2026) */}
         <VariantSelector variants={variants} activeId={active.id} onSelect={select} />
 
-        <p className="mt-4 max-w-prose whitespace-pre-line text-base leading-relaxed text-ink-muted">
-          {active.description}
-        </p>
+        {/* the curation reason, not a spec sheet: this is the one place the
+            judgement behind the list is stated out loud (D, 19 Jul 2026). The
+            pink rule sits beside the reason only, not the header (D, 24 Jul). */}
+        <div className="mt-5">
+          <p className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            Why we chose this
+          </p>
+          <p className="mt-1.5 max-w-prose whitespace-pre-line border-l-2 border-petal-deep pl-4 text-base leading-relaxed text-ink">
+            {active.whyChosen}
+          </p>
+        </div>
 
         <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+          {/* deliberately SECONDARY, not primary (D, 19 Jul 2026): Whisker Wise
+              curates, it does not sell, so the outbound link should not be the
+              loudest thing on the page. Outline rather than a solid plate, but
+              carried in iron rather than the system's graphite secondary, so it
+              still reads as the action (D). Iron on paper is 7.3:1. */}
           <a
             href={active.buyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-md bg-iron px-7 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-all duration-150 ease-out hover:bg-iron-deep active:shadow-pressed"
+            className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
           >
-            Buy now
-            <ArrowSquareOut size={18} weight="bold" aria-hidden />
+            Where to get this
+            <ArrowSquareOut size={17} aria-hidden />
           </a>
           {active.inStarterKit && (
             // text-only tertiary, no plate: matched to the primary's height so
-            // the two read as one row rather than two competing blocks (D)
+            // the two read as one row rather than two competing blocks (D).
+            // Dotted underline so it reads as the quieter, secondary action (D, 24 Jul).
             <Link
               href="/curated-essentials/starter-kit"
-              className="inline-flex min-h-[48px] items-center px-1 font-sans text-base font-semibold text-iron underline decoration-iron/40 underline-offset-4 transition-colors duration-150 hover:text-iron-deep hover:decoration-iron"
+              className="inline-flex min-h-[48px] items-center px-1 font-sans text-base font-semibold text-iron underline decoration-dotted decoration-iron/60 underline-offset-4 transition-colors duration-150 hover:text-iron-deep hover:decoration-iron"
             >
               View starter-kit
             </Link>
           )}
         </div>
 
+        {/* the independence claim sits with the retailer line, where the buy
+            link makes a reader wonder about it (D, 19 Jul 2026) */}
         <p className="mt-2.5 text-sm text-ink-faint">
-          Sold by {active.retailer}. Approved &amp; curated by Whisker Wise.
+          Sold by {active.retailer}. No brand pays to be on this list.
         </p>
       </div>
     </div>

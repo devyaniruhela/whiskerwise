@@ -69,9 +69,9 @@ function buildCards(essentials: EssentialsStats, essentialsArt: CardArt, wiserAr
       name: 'Wiser',
       nameColor: 'text-emerald',
       heading: 'Know what’s good, before you buy.',
-      body: 'Here to help you pick food for your cat, just like a nutritionist would. Wiser checks the label against published nutrition standards, gives you a clear Buy or Skip, and tells you the science behind it.',
+      body: 'Here to help you pick food for your cat, just like a nutritionist would. Wiser gives you a clear Buy or Skip verdict, along with the science behind it.',
       cta: {
-        label: 'Scan a pack',
+        label: 'Get wiser',
         href: '/wiser-now',
         className: 'bg-emerald text-seashell hover:bg-emerald-deep',
       },
@@ -111,7 +111,7 @@ export function ValueCardStack({
               UNDER the text zone; the paper-coloured gradient overlay is fully
               opaque before the text starts, so there is never a seam line. */}
           <div
-            className="relative h-44 w-full md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[50%]"
+            className="relative h-64 w-full md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[50%]"
             aria-hidden
           >
             <Image

@@ -12,6 +12,9 @@ export type VariantDTO = {
   variant: string;
   itemType: string;
   description: string;
+  /** the "Why we chose this" sentence; falls back to the description if a row
+   *  has not been given one yet, so a new CSV row never renders an empty reason */
+  whyChosen: string;
   images: string[];
   buyUrl: string;
   retailer: string;
@@ -27,6 +30,7 @@ export function toVariantDTO(item: CatalogueItem): VariantDTO {
     variant: item.variant,
     itemType: item.item_type,
     description: item.description,
+    whyChosen: item.why_chosen || item.description,
     images: productImages(item),
     buyUrl: buyHref(item),
     retailer: retailerName(item),

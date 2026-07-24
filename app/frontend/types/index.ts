@@ -14,6 +14,8 @@ export interface UserProfile {
   phone_number?: string | null;
   email?: string | null;
   location?: string | null;
+  num_cats?: number | null;        // self-reported, ≥1 (mandatory on save)
+  cat_parent_since?: number | null; // year, present or earlier (mandatory on save)
 }
 
 export interface CatProfile {
