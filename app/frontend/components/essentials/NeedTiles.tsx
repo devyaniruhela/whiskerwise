@@ -27,13 +27,13 @@ export function NeedTiles() {
             aria-pressed={on}
             className={`group flex min-h-[8.5rem] items-center justify-center rounded-lg border px-4 py-4 text-center shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-raised-lg active:translate-y-0 active:shadow-pressed sm:px-5 lg:min-h-[6rem] ${
               on
-                ? 'border-iron bg-iron text-petal'
-                : 'border-iron bg-petal text-iron active:bg-petal-deep'
+                ? 'border-iron bg-transparent text-iron'
+                : 'border-iron bg-iron text-seashell hover:bg-iron-deep active:bg-iron-deep'
             }`}
           >
             <span className="min-w-0">
               <span className="block font-sans text-base font-semibold">{need.name}</span>
-              <span className={`mt-0.5 block text-sm ${on ? 'text-petal/70' : 'text-iron/70'}`}>
+              <span className={`mt-0.5 block text-sm ${on ? 'text-iron/70' : 'text-seashell/70'}`}>
                 {need.count} {need.count === 1 ? 'pick' : 'picks'}
               </span>
             </span>

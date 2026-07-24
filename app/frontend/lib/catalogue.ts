@@ -107,6 +107,18 @@ export function productImages(item: CatalogueItem): string[] {
 // UTM suffix is appended only when the row carries one; Amazon short-links strip
 // query params on redirect, so their rows have a blank source_suffix and we also
 // guard on the host as belt-and-suspenders.
+// A row whose buy_url is not a real http(s) link is treated as "free / not sold
+// anywhere": the same column then carries human alt copy (e.g. "Find this at
+// home") instead of a URL. Callers use this to swap the buy CTA for that note.
+export function isBuyLink(item: CatalogueItem): boolean {
+  try {
+    const { protocol } = new URL(item.buy_url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function buyHref(item: CatalogueItem): string {
   const url = item.buy_url;
   if (!item.source_suffix) return url;
