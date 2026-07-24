@@ -8,6 +8,7 @@ import { Button, Input, VerdictBadge } from '@/components/ui';
 import { CatForm, avatarSrc } from '@/components/wiser/CatForm';
 import { BODY_CONDITIONS } from '@/constants/cat-data';
 import { api } from '@/lib/api';
+import { SHOW_WISER } from '@/lib/flags';
 import type { CatProfile, HistoryItem, UserProfile } from '@/types';
 
 const BC_LABEL: Record<number, string> = Object.fromEntries(
@@ -143,10 +144,12 @@ export default function ProfilePage() {
                 ) : (
                   <span className="text-sm font-semibold text-emerald">Passport complete</span>
                 )}
-                <Link href={`/food-input?preselectCat=${cat.id}`}
-                  className="shrink-0 rounded-md bg-emerald px-3.5 py-2 font-sans text-sm font-semibold text-seashell transition-colors hover:bg-emerald-deep">
-                  Scan food
-                </Link>
+                {SHOW_WISER && (
+                  <Link href={`/food-input?preselectCat=${cat.id}`}
+                    className="shrink-0 rounded-md bg-emerald px-3.5 py-2 font-sans text-sm font-semibold text-seashell transition-colors hover:bg-emerald-deep">
+                    Scan food
+                  </Link>
+                )}
               </div>
             </article>
           );
@@ -156,7 +159,8 @@ export default function ProfilePage() {
         </Button>
       </div>
 
-      {/* ── scan history timeline ───────────────────────────────────── */}
+      {/* ── scan history timeline (Wiser-only; hidden when SHOW_WISER off) ── */}
+      {SHOW_WISER && (<>
       <h2 className="mt-10 font-serif text-2xl text-ink">Scan history</h2>
       {history === null ? (
         <div className="mt-4 space-y-3" aria-busy>
@@ -192,6 +196,7 @@ export default function ProfilePage() {
           ))}
         </ol>
       )}
+      </>)}
 
       {editing && (
         <CatForm

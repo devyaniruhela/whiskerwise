@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr';
+import { SHOW_WISER } from '@/lib/flags';
 
 /** Home value stack, the raw-card language from ui-inspo (raw-card-stacking*.png):
  *  full-width paper cards, clean text zone left, painting bleed dissolving in from
@@ -94,9 +95,14 @@ export function ValueCardStack({
   essentialsArt: CardArt;
   wiserArt: CardArt;
 }) {
+  // SHOW_WISER off (a Curated-Essentials-only build) drops the Wiser card, leaving
+  // the single Curated Essentials door. See lib/flags.ts.
+  const cards = buildCards(essentials, essentialsArt, wiserArt).filter(
+    (card) => SHOW_WISER || card.name !== 'Wiser',
+  );
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-5 md:space-y-10">
-      {buildCards(essentials, essentialsArt, wiserArt).map((card) => (
+      {cards.map((card) => (
         <article
           key={card.name}
           className={`relative overflow-hidden rounded-lg border border-hairline bg-paper shadow-raised-lg ${card.sticky}`}
