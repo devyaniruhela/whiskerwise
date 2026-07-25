@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';
 import { Footer } from '@/components/wiser/Footer';
+import { BackLink } from '@/components/wiser/BackLink';
 import { KitCarousel, type KitSlide } from '@/components/essentials/KitCarousel';
 import { getStarterKit } from '@/lib/catalogue';
 import { toVariantDTOs } from '@/lib/essentials-dto';
@@ -27,13 +27,13 @@ export default function StarterKit() {
   return (
     <main className="flex min-h-screen flex-col bg-graphite pt-16 sm:pt-[72px] lg:pt-20">
       <div className="mx-auto w-full max-w-4xl flex-1 px-5 pb-16 pt-8 sm:pt-10">
-        <Link
+        <BackLink
           href="/curated-essentials"
           className="inline-flex min-h-[44px] items-center gap-1.5 font-sans text-sm font-semibold text-petal transition-colors hover:text-petal-deep"
         >
           <ArrowLeft size={16} weight="bold" aria-hidden />
           Curated Essentials
-        </Link>
+        </BackLink>
 
         <div className="mt-3 text-center">
           <h1 className="font-serif text-3xl leading-tight text-petal sm:text-4xl">
