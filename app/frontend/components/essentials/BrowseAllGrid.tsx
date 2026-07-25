@@ -2,6 +2,7 @@
 
 import { Children } from 'react';
 import { Check, X } from '@phosphor-icons/react';
+import { track } from '@/lib/analytics';
 import { useEssentialsFilter } from './EssentialsFilterProvider';
 import { NeedFilterMenu } from './NeedFilterMenu';
 
@@ -19,6 +20,12 @@ export function BrowseAllGrid({ children }: { children: React.ReactNode }) {
   const { kitten, setKitten, clear, hasFilters, visible, shown } = useEssentialsFilter();
   const nodes = Children.toArray(children);
 
+  // one place for both "Clear filters" buttons, so they can't drift
+  function clearWithTracking() {
+    track('filter', { filter_type: 'clear', filter_source: 'all', page: 'curated-essentials' });
+    clear();
+  }
+
   return (
     <div>
       {/* controls: kitten toggle left, filter menu right (D, 19 Jul 2026) */}
@@ -33,7 +40,14 @@ export function BrowseAllGrid({ children }: { children: React.ReactNode }) {
             <input
               type="checkbox"
               checked={kitten}
-              onChange={(e) => setKitten(e.target.checked)}
+              onChange={(e) => {
+                track('filter', {
+                  filter_type: e.target.checked ? 'add' : 'clear',
+                  filter_source: 'kitten',
+                  page: 'curated-essentials',
+                });
+                setKitten(e.target.checked);
+              }}
               className="sr-only"
             />
           </span>
@@ -47,7 +61,7 @@ export function BrowseAllGrid({ children }: { children: React.ReactNode }) {
         <div className="mt-1 flex justify-end">
           <button
             type="button"
-            onClick={clear}
+            onClick={clearWithTracking}
             className="inline-flex min-h-[36px] items-center gap-1 rounded-md px-2 font-sans text-sm font-semibold text-iron underline decoration-iron/40 underline-offset-4 transition-colors duration-150 hover:bg-iron-tint hover:text-iron-deep"
           >
             <X size={13} weight="bold" aria-hidden />
@@ -76,7 +90,7 @@ export function BrowseAllGrid({ children }: { children: React.ReactNode }) {
           </p>
           <button
             type="button"
-            onClick={clear}
+            onClick={clearWithTracking}
             className="mt-5 inline-flex min-h-[44px] items-center rounded-md bg-iron px-5 py-2.5 font-sans text-sm font-semibold text-seashell shadow-raised transition-all duration-150 hover:bg-iron-deep active:shadow-pressed"
           >
             Clear filters

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { track } from '@/lib/analytics';
 
 export type NeedOption = { name: string; slug: string; count: number };
 export type CardMeta = { key: string; categorySlug: string; kittenHidden: boolean };
@@ -88,6 +89,28 @@ export function EssentialsFilterProvider({
     window.addEventListener('popstate', readUrl);
     return () => window.removeEventListener('popstate', readUrl);
   }, [readUrl]);
+
+  // Filter state carried on page load: filters use replaceState (no real
+  // navigation), so GA never re-fires page_view on a filter change. To still
+  // capture "arrived already filtered" - a shared/bookmarked ?need= URL - emit
+  // one filter event on first mount when the URL comes in with a filter set.
+  const initTracked = useRef(false);
+  useEffect(() => {
+    if (initTracked.current) return;
+    initTracked.current = true;
+    const p = new URLSearchParams(window.location.search);
+    const need = (p.get('need') ?? '').split(',').map((s) => s.trim()).filter((s) => valid.has(s));
+    const kit = p.get('kitten') === '1';
+    if (need.length || kit) {
+      track('filter', {
+        filter_type: 'add',
+        filter_source: 'url',
+        filter_value: need.join(','),
+        kitten: kit,
+        page: 'curated-essentials',
+      });
+    }
+  }, [valid]);
 
   const apply = useCallback(
     (next: Set<string>, kit: boolean) => {

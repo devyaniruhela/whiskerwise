@@ -1,6 +1,6 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
 import { WiggleDivider } from '@/components/wiser/WiggleDivider';
 import { Footer } from '@/components/wiser/Footer';
 import { ProductCard } from '@/components/essentials/ProductCard';
@@ -93,13 +93,15 @@ export default function CuratedEssentials() {
                 </div>
               ))}
             </div>
-            <Link
+            <TrackedLink
               href="/curated-essentials/starter-kit"
+              ctaName="view_full_kit"
+              params={{ page: 'curated-essentials', section: 'kit_promo' }}
               className="mt-5 inline-flex min-h-[48px] items-center gap-2 rounded-md border border-petal/60 px-6 py-3 font-sans text-base font-semibold text-petal transition-colors duration-150 hover:bg-petal hover:text-graphite"
             >
               View the full kit
               <ArrowRight size={18} weight="bold" aria-hidden />
-            </Link>
+            </TrackedLink>
           </section>
           <WiggleDivider stroke="292C2C" />
         </div>

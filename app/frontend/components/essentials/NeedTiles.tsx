@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import { BROWSE_ID, useEssentialsFilter } from './EssentialsFilterProvider';
 
 /** Shop by need: the catalogue's front door. Each tile is a real link, so
@@ -22,6 +23,12 @@ export function NeedTiles() {
             href={`?need=${need.slug}#${BROWSE_ID}`}
             onClick={(e) => {
               e.preventDefault();
+              track('filter', {
+                filter_type: 'add',
+                filter_source: 'need_tile',
+                filter_value: need.slug,
+                page: 'curated-essentials',
+              });
               setOnlyNeed(need.slug);
             }}
             aria-pressed={on}

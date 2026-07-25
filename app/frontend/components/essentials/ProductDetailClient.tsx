@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowSquareOut, Confetti } from '@phosphor-icons/react';
+import { track } from '@/lib/analytics';
 import type { VariantDTO } from '@/lib/essentials-dto';
 import { Gallery } from './Gallery';
 import { VariantSelector } from './VariantSelector';
@@ -31,6 +32,7 @@ export function ProductDetailClient({
   const active = variants.find((v) => v.id === activeId) ?? variants[0];
 
   function select(id: string) {
+    track('variant_select', { product_id: id, page: 'pdp' });
     setActiveId(id);
     window.history.replaceState(null, '', `/curated-essentials/${id}`);
   }
@@ -92,6 +94,21 @@ export function ProductDetailClient({
               href={active.buyUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                track('cta_click', {
+                  cta_name: 'where_to_get_this',
+                  cta_type: 'outbound',
+                  page: 'pdp',
+                  section: 'pdp_actions',
+                  product_id: active.id,
+                  product_brand: active.brand,
+                  product_variant: active.variant,
+                  product_category: active.itemCategory,
+                  retailer: active.retailer,
+                  in_starter_kit: active.inStarterKit,
+                  destination: active.retailer,
+                })
+              }
               className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
             >
               Where to get this
@@ -111,6 +128,15 @@ export function ProductDetailClient({
             // Dotted underline so it reads as the quieter, secondary action (D, 24 Jul).
             <Link
               href="/curated-essentials/starter-kit"
+              onClick={() =>
+                track('cta_click', {
+                  cta_name: 'view_starter_kit',
+                  cta_type: 'internal',
+                  page: 'pdp',
+                  section: 'pdp_actions',
+                  product_id: active.id,
+                })
+              }
               className="inline-flex min-h-[48px] items-center px-1 font-sans text-base font-semibold text-iron underline decoration-dotted decoration-iron/60 underline-offset-4 transition-colors duration-150 hover:text-iron-deep hover:decoration-iron"
             >
               View starter-kit

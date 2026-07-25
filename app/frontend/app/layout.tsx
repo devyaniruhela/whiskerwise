@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Courier_Prime, Hanken_Grotesk, Oranienbaum } from 'next/font/google';
 import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 import { Header } from '@/components/wiser/Header';
+import { GA_ID } from '@/lib/flags';
 
 const serif = Oranienbaum({ weight: '400', subsets: ['latin'], variable: '--font-serif', display: 'swap' });
 const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -26,6 +28,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Free basic layer (visitors / devices / geo). Custom events go to GA,
             not here - see lib/analytics.ts. */}
         <Analytics />
+        {/* GA4: loads only once a key exists, so this is inert until then. */}
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

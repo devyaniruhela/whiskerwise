@@ -18,6 +18,7 @@ import {
   Shovel,
   Shrimp,
 } from '@phosphor-icons/react';
+import { track } from '@/lib/analytics';
 import type { VariantDTO } from '@/lib/essentials-dto';
 import { VariantSelector } from './VariantSelector';
 import { MEDIA_FIT } from './media';
@@ -395,6 +396,17 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
   const v = slide.variants.find((x) => x.id === activeId) ?? slide.variants[0];
   const sub = brandLine(v.brand, v.variant, slide.variants.length > 1);
 
+  // shared product context for this slide's CTAs (starter-kit section)
+  const productParams = {
+    page: 'starter-kit',
+    section: 'kit_slide',
+    product_id: v.id,
+    product_title: slide.title,
+    product_brand: v.brand,
+    product_variant: v.variant,
+    product_category: v.itemCategory,
+  };
+
   return (
     <article className="h-full">
       {/* height comes from CARD_H on the track, so the two cannot disagree */}
@@ -409,7 +421,14 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
           <div>
             <h3 className="font-serif text-2xl leading-tight text-ink sm:text-3xl">{slide.title}</h3>
             {sub && <p className="mt-1 text-sm text-ink-faint">{sub}</p>}
-            <VariantSelector variants={slide.variants} activeId={v.id} onSelect={setActiveId} />
+            <VariantSelector
+              variants={slide.variants}
+              activeId={v.id}
+              onSelect={(id) => {
+                track('variant_select', { product_id: id, page: 'starter-kit' });
+                setActiveId(id);
+              }}
+            />
             <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-muted sm:text-base">
               {v.description}
             </p>
@@ -418,6 +437,7 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
                   thumbnails; "Where to get this" is the secondary outline on its right */}
               <Link
                 href={`/curated-essentials/${v.id}`}
+                onClick={() => track('cta_click', { cta_name: 'view_pick', cta_type: 'internal', ...productParams })}
                 className="inline-flex min-h-[48px] items-center gap-2 rounded-md bg-iron px-6 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-colors duration-150 ease-out hover:bg-iron-deep active:shadow-pressed"
               >
                 View pick
@@ -428,6 +448,16 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
                   href={v.buyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() =>
+                    track('cta_click', {
+                      cta_name: 'where_to_get_this',
+                      cta_type: 'outbound',
+                      ...productParams,
+                      retailer: v.retailer,
+                      in_starter_kit: v.inStarterKit,
+                      destination: v.retailer,
+                    })
+                  }
                   className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
                 >
                   Where to get this

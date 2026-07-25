@@ -2,7 +2,7 @@
 // lib/catalogue.ts imports `fs`, so no client component may import it. Server
 // components map their data through here into plain serialisable objects.
 import type { CatalogueItem, VariantGroup } from './catalogue';
-import { buyHref, isBuyLink, productImages, retailerName } from './catalogue';
+import { buyHref, categorySlug, isBuyLink, productImages, retailerName } from './catalogue';
 
 export type VariantDTO = {
   id: string;
@@ -11,6 +11,9 @@ export type VariantDTO = {
   brand: string;
   variant: string;
   itemType: string;
+  /** the need this product serves, as the same slug the filters use (e.g.
+   *  'food-feeding'), so analytics can correlate a buy click with a need filter */
+  itemCategory: string;
   description: string;
   /** the "Why we chose this" sentence; falls back to the description if a row
    *  has not been given one yet, so a new CSV row never renders an empty reason */
@@ -33,6 +36,7 @@ export function toVariantDTO(item: CatalogueItem): VariantDTO {
     brand: item.brand,
     variant: item.variant,
     itemType: item.item_type,
+    itemCategory: categorySlug(item.item_category),
     description: item.description,
     whyChosen: item.why_chosen || item.description,
     images: productImages(item),

@@ -1,8 +1,8 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from '@phosphor-icons/react/dist/ssr';
 import type { VariantGroup } from '@/lib/catalogue';
-import { productImages, PLACEHOLDER_IMAGE } from '@/lib/catalogue';
+import { categorySlug, productImages, PLACEHOLDER_IMAGE } from '@/lib/catalogue';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
 import { ProductImage } from './ProductImage';
 import { MEDIA_BOX, MEDIA_PAD } from './media';
 import { brandLine } from './product-label';
@@ -18,6 +18,16 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
   const item = group.primary;
   const images = productImages(item);
   const count = group.variants.length;
+  // shared analytics context for both links on this card
+  const trackParams = {
+    page: 'curated-essentials',
+    section: 'product_card',
+    product_id: item.id,
+    product_title: item.title,
+    product_brand: item.brand,
+    product_category: categorySlug(group.item_category),
+    variant_count: count,
+  };
   // with a selector inside the product, the card leads on brand; variant is the
   // detail you choose there, so it would only add noise here
   const sub = brandLine(item.brand, item.variant, count > 1);
@@ -26,8 +36,10 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
     <div className="group relative flex h-full flex-col rounded-lg border border-hairline bg-paper p-3 shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-iron/40 hover:shadow-raised-lg">
       {/* stretched primary link: clicking anywhere on the card (except the "Why we
           chose this" link below, which sits above it) opens the PDP at the top */}
-      <Link
+      <TrackedLink
         href={`/curated-essentials/${item.id}`}
+        ctaName="view_pick"
+        params={trackParams}
         aria-label={`${item.title} — view pick`}
         className="absolute inset-0 z-10 rounded-lg"
       />
@@ -74,8 +86,10 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
         {!compact && (
           // its own link (above the stretched one, z-20) so it opens the PDP scrolled
           // straight to the "Why we chose this" section (#why)
-          <Link
+          <TrackedLink
             href={`/curated-essentials/${item.id}#why`}
+            ctaName="why_we_chose"
+            params={trackParams}
             className="relative z-20 mt-1.5 inline-flex items-center gap-1 font-sans text-sm font-medium text-iron underline decoration-iron/30 underline-offset-4 transition-colors duration-150 hover:decoration-iron"
           >
             Why we chose this
@@ -85,7 +99,7 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
               aria-hidden
               className="transition-transform duration-150 ease-out group-hover:translate-x-0.5"
             />
-          </Link>
+          </TrackedLink>
         )}
         {/* the one action on the card, so it reads as the action. mt-auto pins it
             to the bottom; the pt- is a guaranteed gap from the text above so the

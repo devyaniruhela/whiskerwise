@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, FunnelSimple } from '@phosphor-icons/react';
+import { track } from '@/lib/analytics';
 import { useEssentialsFilter } from './EssentialsFilterProvider';
 
 /** "Filter by need" as a tertiary trigger + a checkbox menu, rather than a row
@@ -106,6 +107,13 @@ export function NeedFilterMenu() {
             type="button"
             disabled={draft.size === 0}
             onClick={() => {
+              track('filter', {
+                filter_type: 'add',
+                filter_source: 'menu',
+                filter_value: [...draft].join(','),
+                need_count: draft.size,
+                page: 'curated-essentials',
+              });
               setNeeds(draft);
               setOpen(false);
             }}

@@ -1,7 +1,14 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr';
 import { SHOW_WISER } from '@/lib/flags';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
+
+/** the CSV-driven card label → a stable analytics slug, so a copy tweak to the
+ *  button text never silently renames the event */
+const CTA_NAME: Record<string, string> = {
+  'Curated Essentials': 'browse_essentials',
+  Wiser: 'get_wiser',
+};
 
 /** Home value stack, the raw-card language from ui-inspo (raw-card-stacking*.png):
  *  full-width paper cards, clean text zone left, painting bleed dissolving in from
@@ -148,10 +155,15 @@ export function ValueCardStack({
               {card.heading}
             </h2>
             <p className="mt-3 max-w-md text-base leading-relaxed text-ink-muted">{card.body}</p>
-            <Link href={card.cta.href} className={`mt-6 ${CTA_SIZE} ${card.cta.className}`}>
+            <TrackedLink
+              href={card.cta.href}
+              ctaName={CTA_NAME[card.name] ?? card.name}
+              params={{ page: 'home', section: 'value_card', card: card.name }}
+              className={`mt-6 ${CTA_SIZE} ${card.cta.className}`}
+            >
               {card.cta.label}
               <ArrowRight size={18} weight="bold" aria-hidden />
-            </Link>
+            </TrackedLink>
 
             {/* quiet evidence row. Sans, not mono: DESIGN.md reserves the mono lane
               for nutrient figures, label data and standards codes, and these are

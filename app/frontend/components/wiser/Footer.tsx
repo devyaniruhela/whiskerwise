@@ -1,6 +1,6 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { InstagramLogo, WhatsappLogo, EnvelopeSimple, Sparkle } from '@phosphor-icons/react/dist/ssr';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
 
 const STANDARDS = {
   indian: 'https://archive.org/details/gov.in.is.11968.2019/page/n3/mode/2up',
@@ -9,12 +9,13 @@ const STANDARDS = {
   wsava: 'http://wsava.org/',
 };
 
-function FootLink({ href, children }: { href: string; children: React.ReactNode }) {
+function FootLink({ href, name, children }: { href: string; name: string; children: React.ReactNode }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer"
+    <TrackedLink href={href} external ctaName={`standard_${name}`}
+      params={{ section: 'footer', destination: `standard_${name}` }}
       className="underline decoration-seashell/50 underline-offset-2 transition-colors hover:text-petal hover:decoration-petal">
       {children}
-    </a>
+    </TrackedLink>
   );
 }
 
@@ -46,21 +47,25 @@ export function Footer() {
           </p>
           {/* 2×2: Instagram + WhatsApp fill the left column, Write to us + Blogs the right */}
           <nav className="mt-6 grid w-fit grid-flow-col grid-rows-2 gap-x-10 gap-y-3 text-sm" aria-label="Footer">
-            <a href="https://instagram.com/whiskerwise.in/" target="_blank" rel="noopener noreferrer"
+            <TrackedLink href="https://instagram.com/whiskerwise.in/" external
+              ctaName="instagram" params={{ section: 'footer', destination: 'instagram' }}
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <InstagramLogo size={20} aria-hidden /> @whiskerwise.in
-            </a>
-            <a href="https://wa.me/919682387557" target="_blank" rel="noopener noreferrer"
+            </TrackedLink>
+            <TrackedLink href="https://wa.me/919682387557" external
+              ctaName="whatsapp_consult" params={{ section: 'footer', destination: 'whatsapp' }}
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <WhatsappLogo size={20} aria-hidden /> Get a personal consult
-            </a>
-            <a href="mailto:ruhela.devyani@gmail.com"
+            </TrackedLink>
+            <TrackedLink href="mailto:ruhela.devyani@gmail.com" external target="_self"
+              ctaName="email" params={{ section: 'footer', destination: 'email' }}
               className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <EnvelopeSimple size={20} aria-hidden /> Send your questions
-            </a>
-            <Link href="/blog-cat-sense" className="inline-flex items-center gap-2 transition-colors hover:text-petal">
+            </TrackedLink>
+            <TrackedLink href="/blog-cat-sense" ctaName="blog_cat_sense" params={{ section: 'footer' }}
+              className="inline-flex items-center gap-2 transition-colors hover:text-petal">
               <Sparkle size={20} aria-hidden /> Cat sense
-            </Link>
+            </TrackedLink>
           </nav>
         </div>
       </div>
@@ -69,11 +74,11 @@ export function Footer() {
         style={{ textShadow: '0 1px 5px rgba(0,0,0,0.55)' }}>
         <div className="hidden md:block" aria-hidden />
         <p className="text-sm leading-relaxed text-seashell md:col-span-2 md:text-center">
-          Grounded in <FootLink href={STANDARDS.indian}>Indian</FootLink> pet-food standards,
-          supported by <FootLink href={STANDARDS.european}>European</FootLink> and{' '}
-          <FootLink href={STANDARDS.american}>American</FootLink> standards.
+          Grounded in <FootLink href={STANDARDS.indian} name="indian">Indian</FootLink> pet-food standards,
+          supported by <FootLink href={STANDARDS.european} name="european">European</FootLink> and{' '}
+          <FootLink href={STANDARDS.american} name="american">American</FootLink> standards.
           <span className="mt-1 block">
-            In compliance with <FootLink href={STANDARDS.wsava}>WSAVA</FootLink> (the WHO for Cats
+            In compliance with <FootLink href={STANDARDS.wsava} name="wsava">WSAVA</FootLink> (the WHO for Cats
             &amp; Dogs).
           </span>
           <span className="mt-1 block">Not a substitute for veterinary advice.</span>

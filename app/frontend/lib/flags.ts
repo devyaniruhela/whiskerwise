@@ -10,3 +10,15 @@
  *  Curated-Essentials-only site. This removes the on-screen paths only; the Wiser
  *  routes (/wiser-now, /food-input, /report/*) stay reachable by direct URL. */
 export const SHOW_WISER = process.env.NEXT_PUBLIC_SHOW_WISER !== 'false';
+
+/** Analytics: custom CTA/journey events sink to GA4 (free), not Vercel (whose
+ *  per-parameter breakdowns are a paid tier). GA_ID is the only thing that turns
+ *  the sink on - it stays dormant until NEXT_PUBLIC_GA_ID is set, so the whole
+ *  system ships and is verifiable BEFORE a key exists, then lights up the day the
+ *  key lands with zero code changes. Same build-time-inlined caveat as SHOW_WISER.
+ *
+ *  ANALYTICS_ENABLED is a hard kill switch (same default-ON idiom): only the
+ *  literal 'false' disables. Vercel's <Analytics/> free basic layer
+ *  (visitors/devices/geo) is separate and always on. */
+export const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
+export const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS !== 'false';
