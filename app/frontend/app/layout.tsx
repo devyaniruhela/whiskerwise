@@ -5,6 +5,7 @@ import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 import { Header } from '@/components/wiser/Header';
+import { RouteTracker } from '@/components/analytics/RouteTracker';
 import { GA_ID } from '@/lib/flags';
 
 const serif = Oranienbaum({ weight: '400', subsets: ['latin'], variable: '--font-serif', display: 'swap' });
@@ -38,6 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Script id="ga-init" strategy="afterInteractive">
               {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
             </Script>
+            {/* Soft-navigation page_views (config above only counts the hard load). */}
+            <RouteTracker />
           </>
         )}
       </body>

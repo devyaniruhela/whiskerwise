@@ -47,3 +47,22 @@ export function track(event: AnalyticsEvent, params: AnalyticsParams = {}): void
   if (!ANALYTICS_ENABLED) return;
   window.gtag?.('event', event, clean);
 }
+
+/** GA-native page_view for client-side (SPA) navigations. Next's App Router does
+ *  soft navigations, so gtag('config') - which fires page_view only on a full
+ *  load - misses every in-app route change. The initial load is still counted by
+ *  that config, so callers must fire this ONLY on subsequent navigations (see
+ *  components/analytics/RouteTracker.tsx) to avoid double-counting the first view.
+ *  Same no-op guards as track(). */
+export function trackPageView(url: string): void {
+  if (typeof window === 'undefined') return;
+
+  if (process.env.NODE_ENV !== 'production') console.debug('[track] page_view', url);
+
+  if (!ANALYTICS_ENABLED) return;
+  window.gtag?.('event', 'page_view', {
+    page_path: url,
+    page_location: window.location.href,
+    page_title: document.title,
+  });
+}
