@@ -8,6 +8,7 @@ import { TrackedLink } from '@/components/analytics/TrackedLink';
 const CTA_NAME: Record<string, string> = {
   'Curated Essentials': 'browse_essentials',
   Wiser: 'get_wiser',
+  'Nutrition Consult': 'book_consult',
 };
 
 /** Home value stack, the raw-card language from ui-inspo (raw-card-stacking*.png):
@@ -52,7 +53,12 @@ const NUMBER_WORDS = [
 ];
 const spell = (n: number) => NUMBER_WORDS[n] ?? String(n);
 
-function buildCards(essentials: EssentialsStats, essentialsArt: CardArt, wiserArt: CardArt): Card[] {
+function buildCards(
+  essentials: EssentialsStats,
+  essentialsArt: CardArt,
+  wiserArt: CardArt,
+  consultArt: CardArt,
+): Card[] {
   return [
     {
       name: 'Curated Essentials',
@@ -90,6 +96,24 @@ function buildCards(essentials: EssentialsStats, essentialsArt: CardArt, wiserAr
       ],
       sticky: 'sticky top-24 z-20 md:top-28',
     },
+    {
+      name: 'Nutrition Consult',
+      nameColor: 'text-ochre',
+      heading: 'Expert guidance, personalised to your cat.',
+      body: 'Talk one-to-one with someone who understands cats inside out: their nutrition, biology and behaviour. Advice shaped for you, around your cat.',
+      cta: {
+        label: 'Book a call',
+        href: '/personal-consult',
+        className: 'bg-ochre text-seashell hover:bg-ochre-deep',
+      },
+      image: consultArt,
+      stats: [
+        { value: 'Book', label: 'a call' },
+        { value: 'Talk', label: 'one-to-one' },
+        { value: 'Plan', label: 'made for your cat' },
+      ],
+      sticky: 'sticky top-28 z-30 md:top-32',
+    },
   ];
 }
 
@@ -97,14 +121,17 @@ export function ValueCardStack({
   essentials,
   essentialsArt,
   wiserArt,
+  consultArt,
 }: {
   essentials: EssentialsStats;
   essentialsArt: CardArt;
   wiserArt: CardArt;
+  consultArt: CardArt;
 }) {
-  // SHOW_WISER off (a Curated-Essentials-only build) drops the Wiser card, leaving
-  // the single Curated Essentials door. See lib/flags.ts.
-  const cards = buildCards(essentials, essentialsArt, wiserArt).filter(
+  // SHOW_WISER off (a Curated-Essentials-only build) drops the Wiser card, so the
+  // Nutrition Consult card falls in right after Curated Essentials. Consult itself
+  // is not gated - it shows in both builds. See lib/flags.ts.
+  const cards = buildCards(essentials, essentialsArt, wiserArt, consultArt).filter(
     (card) => SHOW_WISER || card.name !== 'Wiser',
   );
   return (

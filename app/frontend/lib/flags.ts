@@ -21,4 +21,12 @@ export const SHOW_WISER = process.env.NEXT_PUBLIC_SHOW_WISER !== 'false';
  *  literal 'false' disables. Vercel's <Analytics/> free basic layer
  *  (visitors/devices/geo) is separate and always on. */
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
+
+/** Web3Forms access key for the consult intake (/personal-consult). The form POSTs
+ *  submissions straight to Web3Forms, which emails the team - no backend needed.
+ *  The key is public by design (it only routes to the destination inbox), so
+ *  NEXT_PUBLIC is fine. Dormant until set: like GA_ID, the form still validates and
+ *  syncs the profile when this is empty, and just skips the email. Same
+ *  build-time-inlined caveat as SHOW_WISER. */
+export const WEB3FORMS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_KEY ?? '';
 export const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS !== 'false';

@@ -18,7 +18,8 @@ export const metadata = {
 
 /** Value-card artwork, drawn fresh per visit from public/cards/:
  *  `cat-card1-*` feeds card 1 (Curated Essentials), `cat-card2-*` feeds card 2
- *  (Wiser). Dropping in cat-card1-8.jpg just works, no code change.
+ *  (Wiser), `cat-card3-*` feeds card 3 (Nutrition Consult). Dropping in
+ *  cat-card1-8.jpg just works, no code change.
  *
  *  An optional `--<x>x<y>` suffix carries the image's focal point as percentages
  *  (cat-card1-6--51x32.jpg -> object-position: 51% 32%), so the crop stays on the
@@ -54,7 +55,11 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
  *  the next reload without restarting the server. */
 const ROSTERS: Record<string, CardArt[]> = IS_DEV
   ? {}
-  : { 'cat-card1': readRoster('cat-card1'), 'cat-card2': readRoster('cat-card2') };
+  : {
+      'cat-card1': readRoster('cat-card1'),
+      'cat-card2': readRoster('cat-card2'),
+      'cat-card3': readRoster('cat-card3'),
+    };
 
 function pickCardArt(prefix: string): CardArt {
   const roster = IS_DEV ? readRoster(prefix) : ROSTERS[prefix];
@@ -114,6 +119,7 @@ export default function Home() {
           essentials={{ picks, needs: sections.length, hasStarterKit: starterKit.length > 0 }}
           essentialsArt={pickCardArt('cat-card1')}
           wiserArt={pickCardArt('cat-card2')}
+          consultArt={pickCardArt('cat-card3')}
         />
       </section>
 
