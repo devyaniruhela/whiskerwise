@@ -9,11 +9,12 @@ export interface SelectOption {
 }
 
 /** Custom on-theme listbox: native OS <select> can't be themed (BUILD-GUIDE rule). */
-export function Select({ label, value, options, placeholder = 'Choose…', onChange, className = '' }: {
+export function Select({ label, value, options, placeholder = 'Choose…', error, onChange, className = '' }: {
   label?: string;
   value: string | null | undefined;
   options: SelectOption[];
   placeholder?: string;
+  error?: string;
   onChange: (value: string) => void;
   className?: string;
 }) {
@@ -50,7 +51,10 @@ export function Select({ label, value, options, placeholder = 'Choose…', onCha
           aria-expanded={open}
           aria-labelledby={label ? `${id}-label` : undefined}
           onClick={() => setOpen((o) => !o)}
-          className="flex min-h-[44px] w-full items-center justify-between rounded-md border border-hairline-strong bg-paper px-3.5 py-2.5 text-left font-sans text-base text-ink transition-colors hover:border-graphite/50"
+          aria-invalid={!!error}
+          className={`flex min-h-[44px] w-full items-center justify-between rounded-md border bg-paper px-3.5 py-2.5 text-left font-sans text-base text-ink transition-colors ${
+            error ? 'border-iron' : 'border-hairline-strong hover:border-graphite/50'
+          }`}
         >
           <span className={selected ? '' : 'text-ink-faint'}>{selected?.label ?? placeholder}</span>
           <CaretDown size={16} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} aria-hidden />
@@ -76,6 +80,7 @@ export function Select({ label, value, options, placeholder = 'Choose…', onCha
           </ul>
         )}
       </div>
+      {error && <p className="mt-1 text-sm text-iron">{error}</p>}
     </div>
   );
 }

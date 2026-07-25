@@ -189,12 +189,12 @@ export function CatForm({ initial, saveLabel = 'Save', showAddAnother = false, f
           </div>
         )}
 
-        {/* age */}
-        <p className="mb-1.5 mt-5 font-sans text-sm font-semibold text-ink">Age<Req /></p>
-        <div className="grid grid-cols-3 gap-3">
+        {/* age: DOB first and auto-fills years+months; the required marker lives on the
+            age-years field, so there is no separate "Age" header duplicating it */}
+        <div className="mt-5 grid grid-cols-3 gap-3">
           <Input label="Date of birth" type="date" max={maxDob} value={cat.cat_dob ?? ''} error={errors.dob}
             onChange={(e) => onDob(e.target.value)} hint="auto-fills age" />
-          <Input label="Age: years" type="number" min={0} max={30} value={cat.cat_age_year || ''}
+          <Input label={<>Age: years<Req /></>} type="number" min={0} max={30} value={cat.cat_age_year || ''}
             onChange={(e) => { set({ cat_age_year: +e.target.value || 0 }); clearErr('age'); }} />
           <Input label="+ months" type="number" min={0} max={12} value={cat.cat_age_month || ''} error={errors.months}
             onChange={(e) => { set({ cat_age_month: +e.target.value || 0 }); clearErr('age'); clearErr('months'); }} />

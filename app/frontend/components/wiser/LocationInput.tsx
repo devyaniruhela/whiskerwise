@@ -38,7 +38,6 @@ export function LocationInput({
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputId = useId();
   // when a suggestion is picked we don't want the value-sync effect to reopen
@@ -51,8 +50,7 @@ export function LocationInput({
   useEffect(() => {
     if (justPicked.current) { justPicked.current = false; return; }
     const q = query.trim();
-    if (q.length < 3) { setSuggestions([]); setLoading(false); return; }
-    setLoading(true);
+    if (q.length < 3) { setSuggestions([]); return; }
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       try {
@@ -69,8 +67,6 @@ export function LocationInput({
         setOpen(out.length > 0);
       } catch {
         /* aborted or offline: leave suggestions as-is */
-      } finally {
-        setLoading(false);
       }
     }, 350);
     return () => { clearTimeout(t); ctrl.abort(); };
@@ -103,7 +99,7 @@ export function LocationInput({
         <input
           id={inputId}
           autoComplete="off"
-          placeholder="Start typing a city…"
+          placeholder="Add your city"
           value={query}
           onChange={(e) => { setQuery(e.target.value); onChange(e.target.value); }}
           onFocus={() => suggestions.length && setOpen(true)}
@@ -126,9 +122,6 @@ export function LocationInput({
           </ul>
         )}
       </div>
-      <p className="mt-1 text-sm text-ink-faint">
-        {loading ? 'Searching…' : 'Pick a suggestion to save it as city, state, country.'}
-      </p>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { CaretDown, PencilSimple, Plus, ShieldCheck, Trash } from '@phosphor-ico
 import { Button, Input, Select, VerdictBadge } from '@/components/ui';
 import { CatForm, avatarSrc } from '@/components/wiser/CatForm';
 import { LocationInput } from '@/components/wiser/LocationInput';
-import { BODY_CONDITIONS } from '@/constants/cat-data';
+import { BODY_CONDITIONS, COUNTRY_CODES } from '@/constants/cat-data';
 import { api } from '@/lib/api';
 import { SHOW_WISER } from '@/lib/flags';
 import type { CatProfile, HistoryItem, UserProfile } from '@/types';
@@ -19,9 +19,11 @@ const BC_LABEL: Record<number, string> = Object.fromEntries(
 // ── passport display rules (profile brief 24 Jul) ──────────────────────
 const IDEAL_BC = 2; // "Just Right"
 const bodyConditionText = (bc: number) => (bc === IDEAL_BC ? 'Weighs just right' : BC_LABEL[bc]);
-const ENV_LABEL: Record<string, string> = { 'indoor-outdoor': 'Indoor/Outdoor', 'indoor only': 'Indoor only' };
+const ENV_LABEL: Record<string, string> = { 'indoor-outdoor': 'Indoor/outdoor', 'indoor only': 'Indoor only' };
 const ACTIVITY_LABEL: Record<string, string> = { very: 'High', moderately: 'Moderate', lightly: 'Low' };
 const NONE_CONDITION = 'No known health conditions';
+// passport answers render in sentence case: first letter up, rest down
+const sentenceCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s);
 
 // Optional passport extras, in form order — the "completable" fields. Name, age,
 // body condition and health are already required by the form, so they're never missing.
@@ -39,7 +41,8 @@ const YEAR_OPTIONS = Array.from({ length: 81 }, (_, i) => String(CURRENT_YEAR - 
   (y) => ({ value: y, label: y }),
 );
 
-type MeErrors = Partial<Record<'first_name' | 'num_cats' | 'cat_parent_since', string>>;
+type MeErrors = Partial<Record<'first_name' | 'num_cats' | 'cat_parent_since' | 'phone' | 'email' | 'contact', string>>;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ProfilePage() {
   const [me, setMe] = useState<UserProfile>({});
@@ -52,18 +55,45 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState<CatProfile | 'new' | null>(null);
   const [focusField, setFocusField] = useState<string | undefined>(undefined);
   const [confirmDelete, setConfirmDelete] = useState<CatProfile | null>(null);
+  // phone is stored as one string ("+91 9876543210"); split into a code + 10 digits here
+  const [phoneCode, setPhoneCode] = useState('+91');
+  const [phoneDigits, setPhoneDigits] = useState('');
+  // the greeting shows the SAVED name (not the live field), and pops on each save
+  const [savedName, setSavedName] = useState<string | null>(null);
+  const [greetPop, setGreetPop] = useState(0);
 
   useEffect(() => {
-    api.me().then((m) => setMe(m ?? {})).catch(() => null);
+    api.me().then((m) => {
+      const prof = m ?? {};
+      setMe(prof);
+      setSavedName(prof.first_name ?? null);
+      const p = prof.phone_number ?? '';
+      const parts = p.match(/^(\+\d{1,4})[\s-]?(\d{0,10})$/);
+      if (parts) { setPhoneCode(parts[1]); setPhoneDigits(parts[2]); }
+      else if (p) setPhoneDigits(p.replace(/\D/g, '').slice(-10));
+    }).catch(() => null);
     api.cats().then(setCats).catch(() => setCats([]));
     api.reports().then(setHistory).catch(() => setHistory([]));
   }, []);
+
+  // keep the split fields and the combined me.phone_number in lockstep
+  function setPhone(code: string, rawDigits: string) {
+    const digits = rawDigits.replace(/\D/g, '').slice(0, 10);
+    setPhoneCode(code);
+    setPhoneDigits(digits);
+    setMe((m) => ({ ...m, phone_number: digits ? `${code} ${digits}` : null }));
+    setMeErrors((x) => ({ ...x, phone: undefined, contact: undefined }));
+  }
 
   function validateMe(): MeErrors {
     const e: MeErrors = {};
     if (!me.first_name?.trim()) e.first_name = 'Add your first name.';
     if (me.num_cats == null || me.num_cats < 1) e.num_cats = 'How many cats do you have? (1 or more)';
     if (me.cat_parent_since == null) e.cat_parent_since = 'Pick the year you became a cat parent.';
+    if (phoneDigits && phoneDigits.length !== 10) e.phone = 'Enter a 10-digit mobile number.';
+    if (me.email && !EMAIL_RE.test(me.email)) e.email = 'Enter a valid email, like name@example.com.';
+    // one contact channel is mandatory; phone OR email satisfies it
+    if (!phoneDigits && !me.email?.trim()) e.contact = 'Please help us with your contact. No spam ever, promise.';
     return e;
   }
 
@@ -75,6 +105,9 @@ export default function ProfilePage() {
     try {
       await api.saveMe(me);
       setMeSaved(true);
+      setMeOpen(false);                        // collapse the section back on its own
+      setSavedName(me.first_name ?? null);     // reveal the greeting…
+      setGreetPop((n) => n + 1);               // …and pop it for a small delight moment
       setTimeout(() => setMeSaved(false), 2500);
     } finally {
       setSavingMe(false);
@@ -89,10 +122,20 @@ export default function ProfilePage() {
     setEditing(cat);
   }
 
+  // three states (D, 25 Jul 2026): a blank profile gets the warm greeting; once any
+  // mandatory field is filled but not all, it nudges; when every one is in — first
+  // name, phone OR email, number of cats, cat-parent-since, city — the body clears.
+  const meContact = !!(me.phone_number?.trim() || me.email?.trim());
+  const meComplete = !!(me.first_name?.trim() && meContact && me.num_cats != null && me.num_cats >= 1 && me.cat_parent_since != null && me.location?.trim());
+  const meStarted = !!(me.first_name?.trim() || meContact || me.num_cats != null || me.cat_parent_since != null || me.location?.trim());
+  const meSubtitle = meComplete ? '' : meStarted ? 'Please complete your profile' : "Let's get to know you, shall we?";
+
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-24">
-      {me.first_name && (
-        <p className="mb-3 font-serif text-2xl text-ink">Hi {me.first_name}!</p>
+    <main className="mx-auto w-full max-w-2xl px-4 pb-16 pt-32">
+      {savedName && (
+        <p key={greetPop} className={`mb-3 font-serif text-2xl text-ink ${greetPop > 0 ? 'animate-pop' : ''}`}>
+          Hi {savedName}!
+        </p>
       )}
 
       {/* ── your details ───────────────────────────────────────────────── */}
@@ -105,7 +148,7 @@ export default function ProfilePage() {
         >
           <div>
             <h1 className="font-serif text-2xl text-ink">Your details</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">Let&apos;s get to know you, shall we?</p>
+            {meSubtitle && <p className="mt-0.5 text-sm text-ink-muted">{meSubtitle}</p>}
           </div>
           <CaretDown size={18} className={`shrink-0 text-ink-faint transition-transform duration-200 ${meOpen ? 'rotate-180' : ''}`} aria-hidden />
         </button>
@@ -122,11 +165,26 @@ export default function ProfilePage() {
                   setMeErrors((x) => ({ ...x, num_cats: undefined }));
                 }} />
               <Select label="Cat parent since" placeholder="Year" value={me.cat_parent_since != null ? String(me.cat_parent_since) : null}
-                options={YEAR_OPTIONS}
+                options={YEAR_OPTIONS} error={meErrors.cat_parent_since}
                 onChange={(v) => { setMe((m) => ({ ...m, cat_parent_since: +v })); setMeErrors((x) => ({ ...x, cat_parent_since: undefined })); }} />
-              {meErrors.cat_parent_since && <p className="-mt-2 text-sm text-iron sm:col-start-2">{meErrors.cat_parent_since}</p>}
-              <Input label="Phone number" type="tel" placeholder="+91…" value={me.phone_number ?? ''} onChange={setMeField('phone_number')} />
-              <Input label="Email" type="email" value={me.email ?? ''} onChange={setMeField('email')} />
+              <div>
+                <p className="mb-1.5 font-sans text-sm font-semibold text-ink">Phone number</p>
+                <div className="flex gap-2">
+                  <div className="w-24 shrink-0">
+                    <Select value={phoneCode}
+                      options={COUNTRY_CODES.map((c) => ({ value: c.code, label: c.code }))}
+                      onChange={(v) => setPhone(v, phoneDigits)} />
+                  </div>
+                  <Input className="flex-1" type="tel" inputMode="numeric" maxLength={10}
+                    placeholder="10-digit number" value={phoneDigits} error={meErrors.phone}
+                    onChange={(e) => setPhone(phoneCode, e.target.value)} />
+                </div>
+              </div>
+              <Input label="Email" type="email" value={me.email ?? ''} error={meErrors.email}
+                onChange={(e) => { setMe((m) => ({ ...m, email: e.target.value || null })); setMeErrors((x) => ({ ...x, email: undefined, contact: undefined })); }} />
+              {/* one contact channel is mandatory; the shared error sits under the
+                  phone+email pair rather than on either field alone */}
+              {meErrors.contact && <p className="-mt-2 text-sm text-iron sm:col-span-2">{meErrors.contact}</p>}
               <LocationInput className="sm:col-span-2" value={me.location ?? ''}
                 onChange={(v) => setMe((m) => ({ ...m, location: v || null }))} />
             </div>
@@ -178,10 +236,10 @@ export default function ProfilePage() {
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-hairline pt-3 text-sm sm:grid-cols-3">
                 {cat.weight_kg != null && <div><dt className="text-ink-faint">Weight</dt><dd className="font-mono text-ink">{cat.weight_kg.toFixed(1)} kg</dd></div>}
                 {cat.cat_dob && <div><dt className="text-ink-faint">Born</dt><dd className="font-mono text-ink">{cat.cat_dob}</dd></div>}
-                {cat.body_condition != null && <div><dt className="text-ink-faint">Body</dt><dd className="text-ink">{bodyConditionText(cat.body_condition)}</dd></div>}
-                {cat.neuter_status && <div><dt className="text-ink-faint">Neutering</dt><dd className="text-ink">{cat.neuter_status.replace('_', ' ')}</dd></div>}
-                {cat.environment && <div><dt className="text-ink-faint">Environment</dt><dd className="text-ink">{ENV_LABEL[cat.environment] ?? cat.environment}</dd></div>}
-                {cat.activity_level && <div><dt className="text-ink-faint">Activity</dt><dd className="text-ink">{ACTIVITY_LABEL[cat.activity_level] ?? cat.activity_level}</dd></div>}
+                {cat.body_condition != null && <div><dt className="text-ink-faint">Body condition</dt><dd className="text-ink">{sentenceCase(bodyConditionText(cat.body_condition))}</dd></div>}
+                {cat.neuter_status && <div><dt className="text-ink-faint">Neutering</dt><dd className="text-ink">{sentenceCase(cat.neuter_status.replace('_', ' '))}</dd></div>}
+                {cat.environment && <div><dt className="text-ink-faint">Access</dt><dd className="text-ink">{sentenceCase(ENV_LABEL[cat.environment] ?? cat.environment)}</dd></div>}
+                {cat.activity_level && <div><dt className="text-ink-faint">Activity</dt><dd className="text-ink">{sentenceCase(ACTIVITY_LABEL[cat.activity_level] ?? cat.activity_level)}</dd></div>}
               </dl>
               {cat.health_condition.length > 0 && (
                 <div className="mt-3 border-t border-hairline pt-3">
@@ -194,7 +252,7 @@ export default function ProfilePage() {
                 {missing.length > 0 ? (
                   <button onClick={() => editCat(cat, missing[0])}
                     className="text-left text-sm font-semibold text-iron underline underline-offset-4 hover:text-iron-deep">
-                    Add missing details
+                    Complete {cat.cat_name}&apos;s passport
                   </button>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald">
