@@ -23,10 +23,14 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
   const sub = brandLine(item.brand, item.variant, count > 1);
 
   return (
-    <Link
-      href={`/curated-essentials/${item.id}`}
-      className="group relative flex h-full flex-col rounded-lg border border-hairline bg-paper p-3 shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-iron/40 hover:shadow-raised-lg"
-    >
+    <div className="group relative flex h-full flex-col rounded-lg border border-hairline bg-paper p-3 shadow-raised transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-iron/40 hover:shadow-raised-lg">
+      {/* stretched primary link: clicking anywhere on the card (except the "Why we
+          chose this" link below, which sits above it) opens the PDP at the top */}
+      <Link
+        href={`/curated-essentials/${item.id}`}
+        aria-label={`${item.title} — view pick`}
+        className="absolute inset-0 z-10 rounded-lg"
+      />
       {/* media block: real photo when it exists, else the quiet stamp placeholder.
           Square + contain per media.ts, so the tall bags stay readable. */}
       <div className={`${MEDIA_BOX} ${MEDIA_PAD}`}>
@@ -68,7 +72,12 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
             the PDP where the sentence itself lives (D, 19 Jul 2026). Styled as a
             link but rendered as a span, since it sits inside the card's <a>. */}
         {!compact && (
-          <span className="mt-1.5 inline-flex items-center gap-1 font-sans text-sm font-medium text-iron underline decoration-iron/30 underline-offset-4 transition-colors duration-150 group-hover:decoration-iron">
+          // its own link (above the stretched one, z-20) so it opens the PDP scrolled
+          // straight to the "Why we chose this" section (#why)
+          <Link
+            href={`/curated-essentials/${item.id}#why`}
+            className="relative z-20 mt-1.5 inline-flex items-center gap-1 font-sans text-sm font-medium text-iron underline decoration-iron/30 underline-offset-4 transition-colors duration-150 hover:decoration-iron"
+          >
             Why we chose this
             <ArrowRight
               size={13}
@@ -76,7 +85,7 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
               aria-hidden
               className="transition-transform duration-150 ease-out group-hover:translate-x-0.5"
             />
-          </span>
+          </Link>
         )}
         {/* the one action on the card, so it reads as the action. mt-auto pins it
             to the bottom; the pt- is a guaranteed gap from the text above so the
@@ -97,6 +106,6 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
           </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
