@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Courier_Prime, Hanken_Grotesk, Oranienbaum } from 'next/font/google';
 import localFont from 'next/font/local';
+import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 import { Header } from '@/components/wiser/Header';
 
@@ -22,6 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <Header />
         {children}
+        {/* Free basic layer (visitors / devices / geo). Custom events go to GA,
+            not here - see lib/analytics.ts. */}
+        <Analytics />
       </body>
     </html>
   );
