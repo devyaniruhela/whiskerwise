@@ -1,5 +1,19 @@
 -- Wiser schema — mirrors wiser-extract-data-model.csv (source of truth).
--- Applied idempotently at startup by db.py. Direct Postgres (Data API off).
+-- Direct Postgres (Data API off). Idempotent: safe to re-run any time.
+-- Applied by db.py on startup once the Python backend runs; UNTIL then (no-server
+-- CRUD plan, 25 Jul 2026) apply it by hand in the Supabase SQL Editor.
+--
+-- ┌─ SCHEMA CHANGES MUST BE MADE IN THREE PLACES ─────────────────────────────┐
+-- │ A column add/rename/drop here is NOT enough. Update all three or something │
+-- │ silently breaks:                                                           │
+-- │   1. this file (schema.sql)            — the DDL / structure                │
+-- │   2. app/backend/app/db.py             — Python read+write (pipeline; CRUD  │
+-- │                                          dormant until scanning ships)      │
+-- │   3. app/frontend/lib/serverDb.ts      — TypeScript CRUD the Next.js API    │
+-- │                                          routes use (profile/cats/history)  │
+-- │ Only `cats` and `reports` are touched by BOTH #2 and #3; the rest live on  │
+-- │ one side. See code-context.md → "Persistence & identity".                  │
+-- └────────────────────────────────────────────────────────────────────────────┘
 
 create table if not exists users (
   id uuid primary key,                       -- mirrors auth.users.id (anonymous v1)
@@ -80,3 +94,18 @@ alter table cats add column if not exists cat_dob date;
 -- profile brief 24 Jul 2026: self-reported cat-parent details (mandatory on save)
 alter table users add column if not exists num_cats int;             -- ≥1
 alter table users add column if not exists cat_parent_since int;     -- year, present or earlier
+
+-- session/browser/device capture (25 Jul 2026): stamp every save with the request
+-- context. Backend fills these from headers (User-Agent, X-Forwarded-For) and the
+-- Supabase session id; `device` is derived (mobile/tablet/desktop). All nullable —
+-- a missing header must never block a save. On users these hold the LATEST context
+-- (overwritten each write); on cats they hold the context at create/edit time.
+alter table users add column if not exists session_id  text;
+alter table users add column if not exists user_agent  text;
+alter table users add column if not exists ip          text;   -- may be a proxy chain "a, b"
+alter table users add column if not exists device      text;   -- mobile | tablet | desktop
+
+alter table cats  add column if not exists session_id  text;
+alter table cats  add column if not exists user_agent  text;
+alter table cats  add column if not exists ip          text;
+alter table cats  add column if not exists device      text;

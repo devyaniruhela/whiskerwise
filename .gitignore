@@ -18,6 +18,7 @@
 !/app/
 !/.gitignore
 !/Wiser_PRD_MVP.md
+!/render.yaml
 
 # --- Below: still enforced *inside* kb/ and app/ once app/ exists ---
 

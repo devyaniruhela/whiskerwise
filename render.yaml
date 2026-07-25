@@ -1,0 +1,29 @@
+# Render blueprint for the Wiser FastAPI backend (Option A).
+# Why a single always-on instance: the analysis pipeline runs as an in-process
+# BackgroundTask over an in-memory job store (store.py) — it must NOT scale to
+# zero or run multiple instances, or a job vanishes between the 202 and the poll.
+#
+# The whole repo is checked out (rootDir: .) because the backend reads files
+# OUTSIDE app/backend at runtime: kb/ (repo root) and app/config.yaml. Commands
+# run from the repo root; --app-dir puts app/backend on sys.path so `app.main`
+# resolves without a cd.
+#
+# Secrets are set in the Render dashboard, never committed (sync: false).
+services:
+  - type: web
+    name: wiser-backend
+    runtime: python
+    plan: free                 # trials profile/cat saves; switch to "starter" ($7) before scanning goes live
+    rootDir: .
+    buildCommand: pip install -r app/backend/requirements.txt
+    startCommand: uvicorn app.main:app --app-dir app/backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: DATABASE_URL       # Supabase session-pooler URI (pooler.supabase.com:5432 + ?sslmode=require)
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL       # https://shpqpocrvmjsigvvvsuu.supabase.co — lets the backend verify anon JWTs
+        sync: false
