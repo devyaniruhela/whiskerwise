@@ -100,7 +100,7 @@ function buildCards(
       name: 'Nutrition Consult',
       nameColor: 'text-ochre',
       heading: 'Expert guidance, personalised to your cat.',
-      body: 'Talk one-to-one with someone who understands cats inside out: their nutrition, biology and behaviour. Advice shaped for you, around your cat.',
+      body: 'Talk 1:1 with a pet nutritionist: who understands cats inside out: their nutrition, biology and behaviour.',
       cta: {
         label: 'Book a call',
         href: '/personal-consult',
