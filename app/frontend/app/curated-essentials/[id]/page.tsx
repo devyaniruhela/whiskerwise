@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';
 import { Footer } from '@/components/wiser/Footer';
+import { BackLink } from '@/components/wiser/BackLink';
 import { ProductDetailClient } from '@/components/essentials/ProductDetailClient';
 import { getAllIds, getGroupByItemId, getItem } from '@/lib/catalogue';
 import { toVariantDTOs } from '@/lib/essentials-dto';
@@ -42,13 +42,13 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
     <main className="pt-16 sm:pt-[72px] lg:pt-20">
       <div className="bg-grid-paper">
         <div className="mx-auto max-w-4xl px-5 pb-16 pt-8 sm:pt-10">
-          <Link
+          <BackLink
             href="/curated-essentials"
             className="inline-flex min-h-[44px] items-center gap-1.5 font-sans text-sm font-semibold text-iron transition-colors hover:text-iron-deep"
           >
             <ArrowLeft size={16} weight="bold" aria-hidden />
             Curated Essentials
-          </Link>
+          </BackLink>
 
           <ProductDetailClient
             title={group.title}

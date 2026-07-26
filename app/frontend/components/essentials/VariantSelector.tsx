@@ -45,7 +45,7 @@ export function VariantSelector({
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <p className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-faint">
         {variants.length} variants
       </p>
@@ -53,7 +53,7 @@ export function VariantSelector({
         role="radiogroup"
         aria-label="Choose a variant"
         onKeyDown={onKeyDown}
-        className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2"
+        className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5"
       >
         {variants.map((v, i) => {
           const selected = v.id === activeId;
@@ -66,11 +66,11 @@ export function VariantSelector({
               aria-label={v.label}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(v.id)}
-              className="group flex min-h-11 items-center gap-2 rounded-md px-1 transition-colors duration-150"
+              className="group flex min-h-8 items-center gap-2 rounded-md px-1 transition-colors duration-150"
             >
               <span
                 aria-hidden
-                className={`h-[18px] w-[18px] shrink-0 rounded-full border transition-all duration-150 ${
+                className={`h-[14px] w-[14px] shrink-0 rounded-full border transition-all duration-150 ${
                   SWATCHES[i % SWATCHES.length]
                 } ${
                   selected

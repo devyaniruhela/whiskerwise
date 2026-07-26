@@ -149,26 +149,29 @@ export function KitCarousel({ slides: input }: { slides: KitSlide[] }) {
 
   return (
     <div>
-      {/* indicator: one mark per group, lit for whichever group you're inside */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5" role="tablist" aria-label="Kit sections">
+      {/* indicator: one mark per group, lit for whichever group you're inside.
+          Single row at every width (D, 25 Jul 2026): flex-nowrap with tiles that
+          shrink on the narrowest phones so all groups stay on one line rather than
+          wrapping to a second row. */}
+      <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2.5" role="tablist" aria-label="Kit sections">
         {groups.map((g) => {
           const Icon = g.icon;
           const on = activeGroup === KIT_GROUPS.findIndex((k) => k.key === g.key);
           return (
-            <span key={g.key} className="group relative flex">
+            <span key={g.key} className="group relative flex min-w-0 flex-1 justify-center sm:flex-none">
               <button
                 type="button"
                 role="tab"
                 aria-selected={on}
                 aria-label={`${g.label}, ${g.count} ${g.count === 1 ? 'essential' : 'essentials'}`}
                 onClick={() => go(g.firstSlide)}
-                className={`flex h-11 w-11 items-center justify-center rounded-md border transition-all duration-150 ease-out ${
+                className={`flex aspect-square w-full max-w-[44px] items-center justify-center rounded-md border transition-all duration-150 ease-out sm:h-11 sm:w-11 ${
                   on
                     ? 'border-petal bg-petal text-graphite shadow-raised'
                     : 'border-seashell/25 text-petal/70 hover:border-petal/60 hover:text-petal'
                 }`}
               >
-                <Icon size={22} aria-hidden />
+                <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" aria-hidden />
               </button>
               {/* names the group on hover/focus: seven glyphs alone are a guessing
                   game (D, 19 Jul 2026). Petal on graphite, since the stepper's
@@ -429,16 +432,18 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
                 setActiveId(id);
               }}
             />
-            <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink-muted sm:text-base">
-              {v.description}
-            </p>
-            <div className="mt-5 flex flex-wrap items-center gap-4">
+            {/* no per-item description in the kit view: it appeared on some cards
+                and not others (single-item vs multi-variant), which read as
+                inconsistent, and the copy pushed the buy CTA off the fixed-height
+                card. The full write-up still lives on each PDP under "Why we chose
+                this" (D, 25 Jul 2026). */}
+            <div className="mt-5 flex flex-col gap-3 min-[460px]:flex-row min-[460px]:flex-wrap min-[460px]:items-center min-[460px]:gap-4">
               {/* View pick is the PRIMARY, on the left, matching the Curated Essentials
                   thumbnails; "Where to get this" is the secondary outline on its right */}
               <Link
                 href={`/curated-essentials/${v.id}`}
                 onClick={() => track('cta_click', { cta_name: 'view_pick', cta_type: 'internal', ...productParams })}
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-md bg-iron px-6 py-3 font-sans text-base font-semibold text-seashell shadow-raised transition-colors duration-150 ease-out hover:bg-iron-deep active:shadow-pressed"
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-iron px-4 py-2.5 font-sans text-base font-semibold text-seashell shadow-raised transition-colors duration-150 ease-out hover:bg-iron-deep active:shadow-pressed min-[460px]:w-auto"
               >
                 View pick
                 <ArrowUpRight size={17} weight="bold" aria-hidden />
@@ -458,7 +463,7 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
                       destination: v.retailer,
                     })
                   }
-                  className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-iron/40 px-4 py-2.5 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px min-[460px]:w-auto"
                 >
                   Where to get this
                   <ArrowSquareOut size={17} aria-hidden />
@@ -466,7 +471,7 @@ function KitSlideCard({ slide }: { slide: KitSlide }) {
               ) : (
                 // "free / not sold anywhere": no outbound CTA, the row's alt copy
                 // carried with a confetti mark (D, 25 Jul 2026)
-                <p className="inline-flex min-h-[48px] items-center gap-2 font-sans text-base font-medium text-iron">
+                <p className="inline-flex min-h-[44px] items-center gap-2 font-sans text-base font-medium text-iron">
                   <Confetti size={20} weight="fill" className="shrink-0 text-petal-deep" aria-hidden />
                   {v.buyNote}
                 </p>

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowSquareOut, Confetti } from '@phosphor-icons/react';
 import { track } from '@/lib/analytics';
 import type { VariantDTO } from '@/lib/essentials-dto';
@@ -30,6 +30,33 @@ export function ProductDetailClient({
 }) {
   const [activeId, setActiveId] = useState(initialId);
   const active = variants.find((v) => v.id === activeId) ?? variants[0];
+
+  // Arrived from a "Why we chose this" link (`?why=1`): the page has already
+  // loaded at the top, so give it a brief beat, then smooth-scroll down to the
+  // reason. `scroll-mt-28` on #why keeps it clear of the fixed header. The
+  // gallery is fixed-aspect, so the target offset is stable whether or not the
+  // image has loaded. We then strip the flag so a refresh / shared copy of the
+  // URL stays at the top on its canonical address (D, 25 Jul 2026).
+  //
+  // Runs exactly once, guarded by a ref: React Strict Mode (dev default)
+  // double-invokes effects, and the first run cleans `?why=1` off the URL - so
+  // a second run would read no flag and, if it also cleared the pending
+  // timeout, the scroll would never fire. The ref makes the double-invoke a
+  // no-op and we deliberately do NOT clear the timeout on cleanup (a fast
+  // unmount just scrolls a now-missing #why, which is a safe no-op).
+  const whyHandled = useRef(false);
+  useEffect(() => {
+    if (whyHandled.current) return;
+    if (new URLSearchParams(window.location.search).get('why') !== '1') return;
+    whyHandled.current = true;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.setTimeout(() => {
+      document
+        .getElementById('why')
+        ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    }, reduced ? 0 : 240);
+    window.history.replaceState(null, '', `/curated-essentials/${initialId}`);
+  }, [initialId]);
 
   function select(id: string) {
     track('variant_select', { product_id: id, page: 'pdp' });
@@ -109,7 +136,7 @@ export function ProductDetailClient({
                   destination: active.retailer,
                 })
               }
-              className="inline-flex min-h-[48px] items-center gap-2 rounded-md border border-iron/40 px-6 py-3 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-iron/40 px-4 py-2.5 font-sans text-base font-medium text-iron transition-all duration-150 ease-out hover:border-iron hover:bg-iron/5 active:translate-y-px"
             >
               Where to get this
               <ArrowSquareOut size={17} aria-hidden />
@@ -117,7 +144,7 @@ export function ProductDetailClient({
           ) : (
             // "free / not sold anywhere": no outbound CTA, just the row's own
             // alt copy carried with a confetti mark (D, 25 Jul 2026)
-            <p className="inline-flex min-h-[48px] items-center gap-2 font-sans text-base font-medium text-iron">
+            <p className="inline-flex min-h-[44px] items-center gap-2 font-sans text-base font-medium text-iron">
               <Confetti size={20} weight="fill" className="shrink-0 text-petal-deep" aria-hidden />
               {active.buyNote}
             </p>
@@ -137,7 +164,7 @@ export function ProductDetailClient({
                   product_id: active.id,
                 })
               }
-              className="inline-flex min-h-[48px] items-center px-1 font-sans text-base font-semibold text-iron underline decoration-dotted decoration-iron/60 underline-offset-4 transition-colors duration-150 hover:text-iron-deep hover:decoration-iron"
+              className="inline-flex min-h-[44px] items-center px-1 font-sans text-base font-semibold text-iron underline decoration-dotted decoration-iron/60 underline-offset-4 transition-colors duration-150 hover:text-iron-deep hover:decoration-iron"
             >
               View starter-kit
             </Link>
