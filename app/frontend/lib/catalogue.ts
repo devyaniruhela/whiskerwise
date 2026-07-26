@@ -49,6 +49,9 @@ export type VariantGroup = {
 };
 
 export type Need = { name: string; slug: string; count: number };
+/** One filter chip. `categorySlug` links it back to the tile that selects the
+ *  whole category (all its item types) in one go (task, 26 Jul 2026). */
+export type ItemType = { name: string; slug: string; count: number; category: string; categorySlug: string };
 export type CategorySection = { category: string; groups: VariantGroup[] };
 
 // Section display order (D, 18 Jul 2026). Unknown categories append after, in CSV order.
@@ -62,6 +65,12 @@ export const CATEGORY_ORDER = [
 
 /** Category names carry '&' and spaces, so URLs and DOM ids use slugs instead. */
 export function categorySlug(name: string): string {
+  return slug(name);
+}
+
+/** Item-type slug (e.g. "Bowl/plate" → "bowl-plate"). Same rules as categorySlug;
+ *  named separately so the filter's granularity reads clearly at call sites. */
+export function itemTypeSlug(name: string): string {
   return slug(name);
 }
 
@@ -328,6 +337,27 @@ export function getNeeds(): Need[] {
     ...[...seen.keys()].filter((c) => !(CATEGORY_ORDER as readonly string[]).includes(c)),
   ];
   return ordered.map((name) => ({ name, slug: categorySlug(name), count: seen.get(name) ?? 0 }));
+}
+
+/** The granular filter axis: one entry per item_type, in category order (getGroups
+ *  is already ordered by CATEGORY_ORDER then title, so first-seen order groups the
+ *  types by category). count is the number of product tiles, matching the grid. */
+export function getItemTypes(): ItemType[] {
+  const byType = new Map<string, ItemType>();
+  for (const g of getGroups()) {
+    const s = itemTypeSlug(g.item_type);
+    const existing = byType.get(s);
+    if (existing) existing.count += 1;
+    else
+      byType.set(s, {
+        name: g.item_type,
+        slug: s,
+        count: 1,
+        category: g.item_category,
+        categorySlug: categorySlug(g.item_category),
+      });
+  }
+  return [...byType.values()];
 }
 
 /** The starter kit groups on TITLE alone, so "N items" counts unique titles (D). */
