@@ -12,33 +12,37 @@ export const metadata = {
  *  body, with breathing room on all four sides (Curated Essentials PRD: consult). */
 export default function PersonalConsult() {
   return (
-    <main className="min-h-screen px-5 pb-24 pt-28 sm:pt-32">
-      {/* parchment sheet: warmer than the seashell ground, grain + a faint inner
-          keyline for the aged-form feel. Centred and narrow, so seashell shows on
-          every side. */}
-      <div className="mx-auto max-w-xl">
-        <div
-          className="grain relative overflow-hidden rounded-lg p-7 shadow-raised-lg sm:p-10"
-          style={{ backgroundColor: '#FAF3E1', border: '1px solid rgba(124,86,42,0.26)' }}
-        >
-          {/* inner keyline, like the ruled border of a paper form */}
+    <>
+      {/* The form sheet keeps the page padding; the footer sits OUTSIDE it so it
+          stays full-bleed and flush to the bottom, like every other page. Inside
+          main it inherited px-5 + pb-24 and read as an inset card floating in
+          seashell (D, 26 Jul 2026). */}
+      <main className="min-h-screen px-5 pb-24 pt-28 sm:pt-32">
+        {/* parchment sheet: warmer than the seashell ground, grain + a faint inner
+            keyline for the aged-form feel. Centred and narrow, so seashell shows on
+            every side. */}
+        <div className="mx-auto max-w-xl">
           <div
-            className="pointer-events-none absolute inset-3 rounded-md"
-            style={{ border: '1px solid rgba(124,86,42,0.18)' }}
-            aria-hidden
-          />
+            className="grain relative overflow-hidden rounded-lg p-7 shadow-raised-lg sm:p-10"
+            style={{ backgroundColor: '#FAF3E1', border: '1px solid rgba(124,86,42,0.26)' }}
+          >
+            {/* inner keyline, like the ruled border of a paper form */}
+            <div
+              className="pointer-events-none absolute inset-3 rounded-md"
+              style={{ border: '1px solid rgba(124,86,42,0.18)' }}
+              aria-hidden
+            />
 
-          <div className="relative">
-            {/* Header lives inside ConsultForm so it disappears with the form on
-                submit, leaving only the thank-you note. */}
-            <ConsultForm />
+            <div className="relative">
+              {/* Header lives inside ConsultForm so it disappears with the form on
+                  submit, leaving only the thank-you note. */}
+              <ConsultForm />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      <div className="mt-20">
-        <Footer />
-      </div>
-    </main>
+      <Footer />
+    </>
   );
 }
