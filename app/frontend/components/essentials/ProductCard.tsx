@@ -84,10 +84,12 @@ export function ProductCard({ group, compact = false }: { group: VariantGroup; c
             the PDP where the sentence itself lives (D, 19 Jul 2026). Styled as a
             link but rendered as a span, since it sits inside the card's <a>. */}
         {!compact && (
-          // its own link (above the stretched one, z-20) so it opens the PDP scrolled
-          // straight to the "Why we chose this" section (#why)
+          // its own link (above the stretched one, z-20). `?why=1` (not a #why
+          // hash) so the PDP LANDS AT THE TOP and then smooth-scrolls to the
+          // reason — an "open, then glide down" beat — instead of the browser
+          // jumping straight into the middle on load (D, 25 Jul 2026).
           <TrackedLink
-            href={`/curated-essentials/${item.id}#why`}
+            href={`/curated-essentials/${item.id}?why=1`}
             ctaName="why_we_chose"
             params={trackParams}
             className="relative z-20 mt-1.5 inline-flex items-center gap-1 font-sans text-sm font-medium text-iron underline decoration-iron/30 underline-offset-4 transition-colors duration-150 hover:decoration-iron"

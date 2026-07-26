@@ -16,7 +16,7 @@ const config: Config = {
         emerald: { DEFAULT: "#08513D", deep: "#063C2D", bright: "#0C7355", tint: "#E6EFEA" },
         petal: { DEFAULT: "#FFD7DC", deep: "#F6C2C9" },
         iron: { DEFAULT: "#A02A18", deep: "#7E2113", tint: "#F4E4E1" },
-        ochre: { DEFAULT: "#A34700", tint: "#F3E7DC" },
+        ochre: { DEFAULT: "#A34700", deep: "#7C3600", tint: "#F3E7DC" },
         sel: "#F5E7CF",
         ink: { DEFAULT: "#292C2C", muted: "#57544E", faint: "#6E6A63" },
         hairline: { DEFAULT: "rgba(41,44,44,0.14)", strong: "rgba(41,44,44,0.28)" },

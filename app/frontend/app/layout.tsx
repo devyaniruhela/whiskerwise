@@ -5,6 +5,7 @@ import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 import { Header } from '@/components/wiser/Header';
+import { NavDepthTracker } from '@/components/wiser/BackLink';
 import { RouteTracker } from '@/components/analytics/RouteTracker';
 import { GA_ID } from '@/lib/flags';
 
@@ -25,6 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}>
       <body className="min-h-screen">
         <Header />
+        {/* records in-app navigations so back controls can return to the
+            previous screen (with its filters/scroll) rather than a fixed href */}
+        <NavDepthTracker />
         {children}
         {/* Free basic layer (visitors / devices / geo). Custom events go to GA,
             not here - see lib/analytics.ts. */}
