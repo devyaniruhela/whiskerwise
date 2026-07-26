@@ -5,17 +5,19 @@ import { Check, FunnelSimple } from '@phosphor-icons/react';
 import { track } from '@/lib/analytics';
 import { useEssentialsFilter } from './EssentialsFilterProvider';
 
-/** "Filter by need" as a tertiary trigger + a checkbox menu, rather than a row
+/** "Filter by type" as a tertiary trigger + a checkbox menu, rather than a row
  *  of always-on chips: the chips competed with the product grid for attention.
+ *  The list is one flat checklist of item types, ordered by category, so it is
+ *  finer-grained than the category tiles (task, 26 Jul 2026).
  *
  *  The menu holds a DRAFT selection and only commits on Apply, so the grid does
  *  not thrash while the user is still choosing. Apply stays disabled until at
- *  least one need is checked (D, 19 Jul 2026); clearing is Clear filters' job.
+ *  least one type is checked (D, 19 Jul 2026); clearing is Clear filters' job.
  *
  *  Iron/petal throughout, not the site-wide emerald selection accent: Curated
  *  Essentials carries its own identity (see design/DESIGN.md). */
 export function NeedFilterMenu() {
-  const { needs, selected, setNeeds } = useEssentialsFilter();
+  const { itemTypes, selected, setTypes } = useEssentialsFilter();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Set<string>>(selected);
   const wrap = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ export function NeedFilterMenu() {
         }`}
       >
         <FunnelSimple size={17} weight="bold" aria-hidden />
-        Filter by need
+        Filter by type
         {selected.size > 0 && (
           <span className="rounded-full bg-iron px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-seashell">
             {selected.size}
@@ -73,14 +75,14 @@ export function NeedFilterMenu() {
       {open && (
         <div
           role="group"
-          aria-label="Filter by need"
-          className="absolute right-0 z-30 mt-2 w-64 rounded-lg border border-hairline bg-paper p-2 shadow-raised-lg"
+          aria-label="Filter by type"
+          className="absolute right-0 z-30 mt-2 max-h-[70vh] w-64 overflow-y-auto rounded-lg border border-hairline bg-paper p-2 shadow-raised-lg"
         >
           <ul className="list-none">
-            {needs.map((need) => {
-              const on = draft.has(need.slug);
+            {itemTypes.map((type) => {
+              const on = draft.has(type.slug);
               return (
-                <li key={need.slug}>
+                <li key={type.slug}>
                   <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-2.5 transition-colors duration-150 hover:bg-iron-tint/60">
                     <span
                       className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border transition-colors duration-150 ${
@@ -91,12 +93,12 @@ export function NeedFilterMenu() {
                       <input
                         type="checkbox"
                         checked={on}
-                        onChange={() => toggle(need.slug)}
+                        onChange={() => toggle(type.slug)}
                         className="sr-only"
                       />
                     </span>
-                    <span className="flex-1 font-sans text-sm text-ink">{need.name}</span>
-                    <span className="font-sans text-xs text-ink-faint">{need.count}</span>
+                    <span className="flex-1 font-sans text-sm text-ink">{type.name}</span>
+                    <span className="font-sans text-xs text-ink-faint">{type.count}</span>
                   </label>
                 </li>
               );
@@ -114,7 +116,7 @@ export function NeedFilterMenu() {
                 need_count: draft.size,
                 page: 'curated-essentials',
               });
-              setNeeds(draft);
+              setTypes(draft);
               setOpen(false);
             }}
             className="mt-2 w-full rounded-md bg-iron px-4 py-2.5 font-sans text-sm font-semibold text-seashell shadow-raised transition-all duration-150 ease-out hover:bg-iron-deep active:shadow-pressed disabled:cursor-not-allowed disabled:border disabled:border-dashed disabled:border-hairline-strong disabled:bg-sel/50 disabled:text-ink-faint disabled:shadow-none"

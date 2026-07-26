@@ -12,7 +12,14 @@ import {
 } from '@/components/essentials/EssentialsFilterProvider';
 import { NeedTiles } from '@/components/essentials/NeedTiles';
 import { BrowseAllGrid } from '@/components/essentials/BrowseAllGrid';
-import { categorySlug, getGroups, getNeeds, getStarterKit, groupHiddenWhenKitten } from '@/lib/catalogue';
+import {
+  getGroups,
+  getItemTypes,
+  getNeeds,
+  getStarterKit,
+  groupHiddenWhenKitten,
+  itemTypeSlug,
+} from '@/lib/catalogue';
 
 export const metadata = {
   title: 'Curated Essentials | Whisker Wise',
@@ -30,11 +37,12 @@ export const metadata = {
 export default function CuratedEssentials() {
   const groups = getGroups();
   const needs = getNeeds();
+  const itemTypes = getItemTypes();
   const starterKit = getStarterKit();
 
   const meta: CardMeta[] = groups.map((g) => ({
     key: g.key,
-    categorySlug: categorySlug(g.item_category),
+    itemTypeSlug: itemTypeSlug(g.item_type),
     kittenHidden: groupHiddenWhenKitten(g),
   }));
 
@@ -107,7 +115,7 @@ export default function CuratedEssentials() {
         </div>
       )}
 
-      <EssentialsFilterProvider needs={needs} meta={meta}>
+      <EssentialsFilterProvider needs={needs} itemTypes={itemTypes} meta={meta}>
         <div className="bg-seashell px-5 pb-20 pt-12">
           <div className="mx-auto max-w-4xl space-y-14">
             {/* ── Shop by need ── */}

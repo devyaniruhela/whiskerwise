@@ -4,19 +4,29 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { track } from '@/lib/analytics';
 
 export type NeedOption = { name: string; slug: string; count: number };
-export type CardMeta = { key: string; categorySlug: string; kittenHidden: boolean };
+/** A filter chip: one item_type, tagged with the category it sits under so a tile
+ *  can select the whole category at once. */
+export type ItemTypeOption = { name: string; slug: string; count: number; categorySlug: string };
+export type CardMeta = { key: string; itemTypeSlug: string; kittenHidden: boolean };
 
 type Ctx = {
+  /** category tiles (each selects all its item types) */
   needs: NeedOption[];
+  /** the granular filter axis: what `selected` holds and the menu toggles */
+  itemTypes: ItemTypeOption[];
+  /** selected item_type slugs */
   selected: Set<string>;
   kitten: boolean;
   /** per-card visibility, index-aligned with the meta passed to the provider */
   visible: boolean[];
   shown: number;
   total: number;
-  toggleNeed: (slug: string) => void;
-  setNeeds: (slugs: Set<string>) => void;
-  setOnlyNeed: (slug: string) => void;
+  /** true when every item type under a category is currently selected */
+  categorySelected: (categorySlug: string) => boolean;
+  /** tile action: replace the selection with a whole category's item types, then scroll */
+  selectCategory: (categorySlug: string) => void;
+  /** menu Apply: commit a set of item_type slugs */
+  setTypes: (slugs: Set<string>) => void;
   setKitten: (on: boolean) => void;
   clear: () => void;
   hasFilters: boolean;
@@ -46,10 +56,12 @@ export function useEssentialsFilter(): Ctx {
  *  can show the live count too. */
 export function EssentialsFilterProvider({
   needs,
+  itemTypes,
   meta,
   children,
 }: {
   needs: NeedOption[];
+  itemTypes: ItemTypeOption[];
   meta: CardMeta[];
   children: React.ReactNode;
 }) {
@@ -57,7 +69,14 @@ export function EssentialsFilterProvider({
   const [kitten, setKittenState] = useState(false);
   const pendingScroll = useRef(false);
 
-  const valid = useMemo(() => new Set(needs.map((n) => n.slug)), [needs]);
+  // selection is now keyed on item_type slugs, so those are the valid ones
+  const valid = useMemo(() => new Set(itemTypes.map((t) => t.slug)), [itemTypes]);
+  // item_type slugs grouped by their category, for the tile "select all" action
+  const typesByCategory = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const t of itemTypes) m.set(t.categorySlug, [...(m.get(t.categorySlug) ?? []), t.slug]);
+    return m;
+  }, [itemTypes]);
 
   const writeUrl = useCallback((next: Set<string>, kit: boolean) => {
     const p = new URLSearchParams(window.location.search);
@@ -121,28 +140,27 @@ export function EssentialsFilterProvider({
     [writeUrl],
   );
 
-  const toggleNeed = useCallback(
-    (slug: string) => {
-      const next = new Set(selected);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      apply(next, kitten);
-    },
-    [selected, kitten, apply],
-  );
-
-  const setNeedsSelection = useCallback(
+  const setTypes = useCallback(
     (slugs: Set<string>) => apply(new Set(slugs), kitten),
     [kitten, apply],
   );
 
-  const setOnlyNeed = useCallback(
-    (slug: string) => {
-      // a need tile is a jump-to shortcut: it replaces the selection, then scrolls
-      apply(new Set([slug]), kitten);
+  const selectCategory = useCallback(
+    (catSlug: string) => {
+      // a tile is a jump-to shortcut: it replaces the selection with every item
+      // type under the category, then scrolls to the grid
+      apply(new Set(typesByCategory.get(catSlug) ?? []), kitten);
       pendingScroll.current = true;
     },
-    [kitten, apply],
+    [kitten, apply, typesByCategory],
+  );
+
+  const categorySelected = useCallback(
+    (catSlug: string) => {
+      const types = typesByCategory.get(catSlug) ?? [];
+      return types.length > 0 && types.every((s) => selected.has(s));
+    },
+    [selected, typesByCategory],
   );
 
   // Scrolling inside the click handler gets cancelled: filtering hides most of
@@ -169,7 +187,7 @@ export function EssentialsFilterProvider({
     () =>
       meta.map(
         (m) =>
-          (selected.size === 0 || selected.has(m.categorySlug)) && // no selection means show all
+          (selected.size === 0 || selected.has(m.itemTypeSlug)) && // no selection means show all
           !(kitten && m.kittenHidden),
       ),
     [meta, selected, kitten],
@@ -177,14 +195,15 @@ export function EssentialsFilterProvider({
 
   const value: Ctx = {
     needs,
+    itemTypes,
     selected,
     kitten,
     visible,
     shown: visible.filter(Boolean).length,
     total: meta.length,
-    toggleNeed,
-    setNeeds: setNeedsSelection,
-    setOnlyNeed,
+    categorySelected,
+    selectCategory,
+    setTypes,
     setKitten,
     clear,
     hasFilters: selected.size > 0 || kitten,
