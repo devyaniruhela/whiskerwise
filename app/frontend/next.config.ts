@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
       { source: "/favicon.ico", destination: "/favicon.png" },
     ];
   },
+  async redirects() {
+    return [
+      // Instagram bio short link -> home, tagged for attribution (302 so we can re-point later)
+      {
+        source: "/ig",
+        destination: "/?utm_source=instagram&utm_medium=social&utm_campaign=bio",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
