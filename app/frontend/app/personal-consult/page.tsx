@@ -29,15 +29,8 @@ export default function PersonalConsult() {
           />
 
           <div className="relative">
-            <header className="mb-6">
-              <h1 className="font-serif text-3xl leading-tight text-ink sm:text-4xl">
-                What worries you about your cat?
-              </h1>
-              <p className="mt-2 text-base leading-relaxed text-ink-muted">
-                Tell us what's going on and we'll take it from there.
-              </p>
-            </header>
-
+            {/* Header lives inside ConsultForm so it disappears with the form on
+                submit, leaving only the thank-you note. */}
             <ConsultForm />
           </div>
         </div>

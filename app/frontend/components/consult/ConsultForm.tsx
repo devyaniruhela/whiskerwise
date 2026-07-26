@@ -198,7 +198,17 @@ export function ConsultForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
+    <>
+      <header className="mb-6">
+        <h1 className="font-serif text-3xl leading-tight text-ink sm:text-4xl">
+          What worries you about your cat?
+        </h1>
+        <p className="mt-2 text-base leading-relaxed text-ink-muted">
+          Tell us what&apos;s going on and we&apos;ll take it from there.
+        </p>
+      </header>
+
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label={<>First name<Req /></>} value={firstName} error={errors.firstName}
           autoComplete="given-name" placeholder="Your first name"
@@ -276,6 +286,7 @@ export function ConsultForm() {
           Submit your concern and our team will get back to you shortly.
         </p>
       </div>
-    </form>
+      </form>
+    </>
   );
 }
