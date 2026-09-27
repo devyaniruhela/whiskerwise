@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: center;
   overflow: visible;
-  background: var(--emerald);
+  background: var(--iron);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 @media (min-width: 640px) {
