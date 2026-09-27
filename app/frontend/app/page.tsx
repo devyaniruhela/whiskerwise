@@ -110,7 +110,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <WiggleDivider />
+        <WiggleDivider stroke="A02A18" />
       </div>
 
       {/* ── The two doors: stacked value cards (pin + slide-over on scroll) ── */}
